@@ -18,7 +18,7 @@ void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, co
 Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
 void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst );
 void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels );
-int test_it( const Size & size );
+int test_it( const Size & size, String videofilename );
 String test_dir,filename;
 bool visualize;
 
@@ -324,7 +324,7 @@ void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels
     svm->save( filename );
 }
 
-int test_it( const Size & size )
+int test_it( const Size & size, String videofilename="")
 {
     cout << "Testing trained detector..." << endl;
     Ptr<SVM> svm;
@@ -342,11 +342,36 @@ int test_it( const Size & size )
     vector<String> files;
     glob(test_dir, files);
 
-    for( int i=0; i<files.size(); i++)
+    int delay = 0;
+    VideoCapture cap;
+    if (videofilename != "")
     {
-        Mat img = imread(files[i]);
+        cap.open(videofilename);
+        if (cap.isOpened())
+        {
+            delay = 1;
+        }
+    }
+
+
+    namedWindow("detections", WINDOW_NORMAL);
+
+    for( int i=0; ; i++)
+    {
+        Mat img;
+
+        if (delay)
+            cap >> img;
+        else
+            img = imread(files[i]);
+
+        if (img.empty())
+            return 0;
+
         vector<Rect> detections;
         vector<double> foundWeights;
+
+        //resize(img, img, Size(), 0.5, 0.5);
 
         my_hog.detectMultiScale(img, detections, foundWeights);
         for (int j = 0; j < detections.size(); j++)
@@ -357,7 +382,7 @@ int test_it( const Size & size )
         }
 
         imshow( "detections", img);
-        if( 27 == waitKey(0))
+        if( 27 == waitKey(delay))
             return 0;
     }
     return 0;
@@ -366,7 +391,9 @@ int test_it( const Size & size )
 int main( int argc, char** argv )
 {
     cv::CommandLineParser parser(argc, argv, "{help h|| show help message}"
-                                 "{pd||pos_dir}{nd||neg_dir}{td || test dir} {fn || file name}{v |false| visualization}");
+                                 "{pd||pos_dir}{nd||neg_dir}{td || test dir}"
+                                 "{fn || file name}{tv || test video file name}"
+                                 "{v |false| visualization}");
     if (parser.has("help"))
     {
         parser.printMessage();
@@ -378,6 +405,7 @@ int main( int argc, char** argv )
     string neg_dir = parser.get<string>("nd");
     test_dir = parser.get<string>("td");
     filename = parser.get<string>("fn");
+    String videofilename = parser.get<string>("tv");
     visualize = parser.get<bool>("v");
     if( pos_dir.empty() || neg_dir.empty() )
     {
@@ -420,7 +448,7 @@ int main( int argc, char** argv )
 
     pos_image_size.height = pos_image_size.height / 8 * 8;
     pos_image_size.width = pos_image_size.width / 8 * 8;
-    test_it( pos_image_size );
+    test_it( pos_image_size, videofilename );
 
     return 0;
 }

@@ -64,7 +64,7 @@ void convert_to_ml(const vector< Mat > & train_samples, Mat& trainData )
         }
         else if(train_samples[i].rows == 1 )
         {
-			train_samples[i].copyTo( trainData.row((int)i ) );
+            train_samples[i].copyTo( trainData.row((int)i ) );
         }
     }
 }
@@ -352,7 +352,7 @@ int test_it( const Size & size, String SVMfilename, String test_dir, String vide
 
     namedWindow("detections", WINDOW_NORMAL);
 
-    for(int i=0;;i++)
+    for(int i=0;; i++)
     {
         Mat img;
 
@@ -396,14 +396,14 @@ int main( int argc, char** argv )
     }
     vector< Mat > pos_lst, full_neg_lst, neg_lst, gradient_lst;
     vector< int > labels;
-	String pos_dir = parser.get<String>("pd");
-	String neg_dir = parser.get<String>("nd");
-	String test_dir = parser.get<String>("td");
-	String SVMfilename = parser.get<String>("fn");
+    String pos_dir = parser.get<String>("pd");
+    String neg_dir = parser.get<String>("nd");
+    String test_dir = parser.get<String>("td");
+    String SVMfilename = parser.get<String>("fn");
     String videofilename = parser.get<String>("tv");
     bool visualize = parser.get<bool>("v");
-    
-	if( pos_dir.empty() || neg_dir.empty() )
+
+    if( pos_dir.empty() || neg_dir.empty() )
     {
         parser.printMessage();
         cout << "Wrong number of parameters." << endl
@@ -422,11 +422,11 @@ int main( int argc, char** argv )
             exit( 1 );
         }
     }
-    
-	labels.assign( pos_lst.size(), +1 );
+
+    labels.assign( pos_lst.size(), +1 );
     const unsigned int old = (unsigned int)labels.size();
-    
-	clog << "Negative images are being loaded...";
+
+    clog << "Negative images are being loaded...";
     load_images( neg_dir, full_neg_lst,false );
     sample_neg( full_neg_lst, neg_lst, pos_image_size );
     clog << "...[done]" << endl;
@@ -448,5 +448,5 @@ int main( int argc, char** argv )
     pos_image_size.width = pos_image_size.width / 8 * 8;
     test_it( pos_image_size, SVMfilename, test_dir, videofilename);
 
-	return 0;
+    return 0;
 }

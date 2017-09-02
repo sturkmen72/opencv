@@ -69,14 +69,13 @@ void convert_to_ml(const vector< Mat > & train_samples, Mat& trainData )
     }
 }
 
-void load_images( const String & prefix, vector< Mat > & img_lst, bool showImages = true )
+void load_images( const String & prefix, vector< Mat > & img_lst, bool showImages = false )
 {
     vector<String> files;
     glob(prefix, files);
 
     for (size_t i = 0; i < files.size(); ++i)
     {
-
         Mat img = imread(files[i]); // load the image
         if (img.empty()) // invalid image, just skip it.
         {
@@ -87,7 +86,7 @@ void load_images( const String & prefix, vector< Mat > & img_lst, bool showImage
         if ( showImages )
         {
             imshow("image", img);
-            waitKey(10);
+            waitKey(1);
         }
         img_lst.push_back(img);
     }
@@ -104,13 +103,11 @@ void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, co
 
     srand( (unsigned int)time( NULL ) );
 
-    vector< Mat >::const_iterator img = full_neg_lst.begin();
-    vector< Mat >::const_iterator end = full_neg_lst.end();
-    for( ; img != end ; ++img )
+    for (size_t i = 0; i < full_neg_lst.size(); i++)
     {
-        box.x = rand() % (img->cols - size_x);
-        box.y = rand() % (img->rows - size_y);
-        Mat roi = (*img)(box);
+        box.x = rand() % (full_neg_lst[i].cols - size_x);
+        box.y = rand() % (full_neg_lst[i].rows - size_y);
+        Mat roi = full_neg_lst[i](box);
         neg_lst.push_back( roi.clone() );
     }
 }
@@ -367,13 +364,11 @@ int test_it( const Size & size, String SVMfilename, String test_dir, String vide
         vector<Rect> detections;
         vector<double> foundWeights;
 
-        //resize(img, img, Size(), 0.5, 0.5);
-
         my_hog.detectMultiScale(img, detections, foundWeights);
         for (size_t j = 0; j < detections.size(); j++)
         {
             Scalar color = Scalar(0, foundWeights[j]* foundWeights[j]*200, 0);
-            rectangle(img, detections[j], color, img.cols/150+1);
+            rectangle(img, detections[j], color, img.cols/400+1);
         }
 
         imshow( "detections", img);
@@ -388,7 +383,7 @@ int main( int argc, char** argv )
     cv::CommandLineParser parser(argc, argv, "{help h|| show help message}"
                                  "{pd||pos_dir}{nd||neg_dir}{td || test dir}"
                                  "{fn |my_dedector.yml| file name}{tv || test video file name}"
-                                 "{v |false| visualization}");
+                                 "{d |false| train twice}{v |false| visualization}");
     if (parser.has("help"))
     {
         parser.printMessage();
@@ -402,6 +397,7 @@ int main( int argc, char** argv )
     String SVMfilename = parser.get<String>("fn");
     String videofilename = parser.get<String>("tv");
     bool visualize = parser.get<bool>("v");
+    bool train_twice = parser.get<bool>("d");
 
     if( pos_dir.empty() || neg_dir.empty() )
     {
@@ -411,9 +407,10 @@ int main( int argc, char** argv )
         exit( -1 );
     }
     clog << "Positive images are being loaded..." ;
-    load_images( pos_dir, pos_lst,false );
+    load_images( pos_dir, pos_lst, visualize);
     clog << "...[done]" << endl;
     Size pos_image_size = pos_lst[0].size();
+
     for (size_t i = 0; i < pos_lst.size(); ++i)
     {
         if( pos_lst[i].size() != pos_image_size)
@@ -422,6 +419,7 @@ int main( int argc, char** argv )
             exit( 1 );
         }
     }
+    pos_image_size = pos_image_size / 8 * 8;
 
     labels.assign( pos_lst.size(), +1 );
     const unsigned int old = (unsigned int)labels.size();
@@ -442,10 +440,78 @@ int main( int argc, char** argv )
     compute_hog( neg_lst, gradient_lst, visualize);
     clog << "...[done]" << endl;
 
-    train_svm( gradient_lst, labels, SVMfilename );
 
-    pos_image_size.height = pos_image_size.height / 8 * 8;
-    pos_image_size.width = pos_image_size.width / 8 * 8;
+    /*
+    train_svm( gradient_lst, labels, SVMfilename );
+    */
+    //
+    Mat train_data;
+    convert_to_ml( gradient_lst, train_data );
+
+    clog << "Training SVM...";
+    Ptr<SVM> svm = SVM::create();
+    /* Default values to train SVM */
+    svm->setCoef0(0.0);
+    svm->setDegree(3);
+    svm->setTermCriteria(TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 1000, 1e-3));
+    svm->setGamma(0);
+    svm->setKernel(SVM::LINEAR);
+    svm->setNu(0.5);
+    svm->setP(0.1); // for EPSILON_SVR, epsilon in loss function?
+    svm->setC(0.01); // From paper, soft classifier
+    svm->setType(SVM::EPS_SVR); // C_SVC; // EPSILON_SVR; // may be also NU_SVR; // do regression task
+    svm->train(train_data, ROW_SAMPLE, Mat(labels));
+    clog << "...[done]" << endl;
+
+    if (train_twice)
+    {
+        clog << "Testing trained detector on negative images.this may take a long time...";
+        HOGDescriptor my_hog;
+        my_hog.winSize = pos_image_size;
+        vector< Rect > locations;
+
+        // Set the trained svm to my_hog
+        vector< float > hog_detector;
+        get_svm_detector(svm, hog_detector);
+        my_hog.setSVMDetector(hog_detector);
+
+        vector<Rect> detections;
+        vector<double> foundWeights;
+
+        for (size_t i = 0; i < full_neg_lst.size(); i++)
+        {
+            my_hog.detectMultiScale(full_neg_lst[i], detections, foundWeights);
+            for (size_t j = 0; j < detections.size(); j++)
+            {
+
+                Mat detection = full_neg_lst[i](detections[j]).clone();
+                resize(detection, detection, pos_image_size);
+                neg_lst.push_back(detection);
+            }
+        }
+        clog << "...[done]" << endl;
+
+        labels.clear();
+        labels.assign(pos_lst.size(), +1);
+        labels.insert(labels.end(), neg_lst.size(), -1);
+
+        gradient_lst.clear();
+        clog << "Histogram of Gradients are being calculated for positive images...";
+        compute_hog(pos_lst, gradient_lst, visualize);
+        clog << "...[done]" << endl;
+
+        clog << "Histogram of Gradients are being calculated for negative images...";
+        compute_hog(neg_lst, gradient_lst, visualize);
+        clog << "...[done]" << endl;
+
+        clog << "Training SVM again...";
+        convert_to_ml(gradient_lst, train_data);
+        svm->train(train_data, ROW_SAMPLE, Mat(labels));
+        clog << "...[done]" << endl;
+    }
+
+    svm->save(SVMfilename);
+
     test_it( pos_image_size, SVMfilename, test_dir, videofilename);
 
     return 0;

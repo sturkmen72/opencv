@@ -19,7 +19,7 @@ Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorVa
 void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst );
 void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels );
 int test_it( const Size & size, String videofilename );
-String test_dir,filename;
+String test_dir,SVMfilename;
 bool visualize;
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
@@ -321,7 +321,7 @@ void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels
     svm->train(train_data, ROW_SAMPLE, Mat(labels));
     clog << "...[done]" << endl;
 
-    svm->save( filename );
+    svm->save(SVMfilename);
 }
 
 int test_it( const Size & size, String videofilename="")
@@ -333,7 +333,7 @@ int test_it( const Size & size, String videofilename="")
     vector< Rect > locations;
 
     // Load the trained SVM.
-    svm = StatModel::load<SVM>( filename );
+    svm = StatModel::load<SVM>( SVMfilename );
     // Set the trained svm to my_hog
     vector< float > hog_detector;
     get_svm_detector( svm, hog_detector );
@@ -353,10 +353,9 @@ int test_it( const Size & size, String videofilename="")
         }
     }
 
-
     namedWindow("detections", WINDOW_NORMAL);
 
-    for( int i=0; ; i++)
+    for(int i=0;; i++)
     {
         Mat img;
 
@@ -374,7 +373,7 @@ int test_it( const Size & size, String videofilename="")
         //resize(img, img, Size(), 0.5, 0.5);
 
         my_hog.detectMultiScale(img, detections, foundWeights);
-        for (int j = 0; j < detections.size(); j++)
+        for (size_t j = 0; j < detections.size(); j++)
         {
             cout << foundWeights[j]<< endl;
             Scalar color = Scalar(0, foundWeights[j]* foundWeights[j]*200, 0);
@@ -404,7 +403,7 @@ int main( int argc, char** argv )
     string pos_dir = parser.get<string>("pd");
     string neg_dir = parser.get<string>("nd");
     test_dir = parser.get<string>("td");
-    filename = parser.get<string>("fn");
+    SVMfilename = parser.get<string>("fn");
     String videofilename = parser.get<string>("tv");
     visualize = parser.get<bool>("v");
     if( pos_dir.empty() || neg_dir.empty() )

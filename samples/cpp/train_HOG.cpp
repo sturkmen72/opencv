@@ -1,9 +1,11 @@
-#include <opencv2/opencv.hpp>
+
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/ml.hpp"
+#include "opencv2/objdetect.hpp"
 
 #include <iostream>
 #include <time.h>
-
-#define _DEBUG
 
 using namespace cv;
 using namespace cv::ml;
@@ -11,13 +13,15 @@ using namespace std;
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector );
 void convert_to_ml(const std::vector< cv::Mat > & train_samples, cv::Mat& trainData );
-void load_images( const string & prefix, vector< Mat > & img_lst );
+void load_images( const string & prefix, vector< Mat > & img_lst, bool showImages);
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
 Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
-void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, const Size & size );
+void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst );
 void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels );
 void draw_locations( Mat & img, const vector< Rect > & locations, const Scalar & color );
-void test_it( const Size & size );
+int test_it( const Size & size );
+String test_dir,filename;
+bool visualize;
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
 {
@@ -70,7 +74,7 @@ void convert_to_ml(const std::vector< cv::Mat > & train_samples, cv::Mat& trainD
     }
 }
 
-void load_images( const string & prefix, vector< Mat > & img_lst )
+void load_images( const string & prefix, vector< Mat > & img_lst, bool showImages = true )
 {
     vector<String> files;
     glob(prefix, files);
@@ -85,10 +89,11 @@ void load_images( const string & prefix, vector< Mat > & img_lst )
             continue;
         }
 
-#ifdef _DEBUG
-        imshow("image", img);
-        waitKey(10);
-#endif
+        if (visualize & showImages)
+        {
+            imshow("image", img);
+            waitKey(10);
+        }
         img_lst.push_back(img);
     }
 }
@@ -112,10 +117,6 @@ void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, co
         box.y = rand() % (img->rows - size_y);
         Mat roi = (*img)(box);
         neg_lst.push_back( roi.clone() );
-#ifdef _DEBUG
-        imshow( "img", roi.clone() );
-        waitKey( 10 );
-#endif
     }
 }
 
@@ -278,25 +279,28 @@ Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorVa
 
 } // get_hogdescriptor_visu
 
-void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, const Size & size )
+void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst )
 {
     HOGDescriptor hog;
-    hog.winSize = size;
+    Rect r = Rect(0, 0, (img_lst[0].cols / 8) * 8, (img_lst[0].rows/8)*8);
+    r.x += (img_lst[0].cols - r.width) / 2;
+    r.y += (img_lst[0].rows - r.height) / 2;
+    hog.winSize = r.size();
     Mat gray;
     vector< Point > location;
     vector< float > descriptors;
 
-    vector< Mat >::const_iterator img = img_lst.begin();
-    vector< Mat >::const_iterator end = img_lst.end();
-    for( ; img != end ; ++img )
+    for(int i=0 ; i< img_lst.size(); i++ )
     {
-        cvtColor( *img, gray, COLOR_BGR2GRAY );
+        cvtColor(img_lst[i](r), gray, COLOR_BGR2GRAY );
         hog.compute( gray, descriptors, Size( 8, 8 ), Size( 0, 0 ), location );
         gradient_lst.push_back( Mat( descriptors ).clone() );
-#ifdef _DEBUG
-        imshow( "gradient", get_hogdescriptor_visu( img->clone(), descriptors, size ) );
-        waitKey( 10 );
-#endif
+        if (visualize)
+        {
+            //imshow("gradient", get_hogdescriptor_visu(img_lst[i](r), descriptors));
+            imshow("gradient", img_lst[i](r));
+            waitKey(10);
+        }
     }
 }
 
@@ -306,7 +310,7 @@ void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels
     Mat train_data;
     convert_to_ml( gradient_lst, train_data );
 
-    clog << "Start training...";
+    clog << "Training SVM...";
     Ptr<SVM> svm = SVM::create();
     /* Default values to train SVM */
     svm->setCoef0(0.0);
@@ -321,7 +325,7 @@ void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels
     svm->train(train_data, ROW_SAMPLE, Mat(labels));
     clog << "...[done]" << endl;
 
-    svm->save( "my_people_detector.yml" );
+    svm->save( filename );
 }
 
 void draw_locations( Mat & img, const vector< Rect > & locations, const Scalar & color )
@@ -332,114 +336,108 @@ void draw_locations( Mat & img, const vector< Rect > & locations, const Scalar &
         vector< Rect >::const_iterator end = locations.end();
         for( ; loc != end ; ++loc )
         {
-            rectangle( img, *loc, color, 2 );
+
         }
     }
 }
 
-void test_it( const Size & size )
+int test_it( const Size & size )
 {
-    char key = 27;
-    Scalar reference( 0, 255, 0 );
-    Scalar trained( 0, 0, 255 );
-    Mat img, draw;
+    cout << "Testing trained detector..." << endl;
     Ptr<SVM> svm;
-    HOGDescriptor hog;
     HOGDescriptor my_hog;
     my_hog.winSize = size;
-    VideoCapture video;
     vector< Rect > locations;
 
     // Load the trained SVM.
-    svm = StatModel::load<SVM>( "my_people_detector.yml" );
+    svm = StatModel::load<SVM>( filename );
     // Set the trained svm to my_hog
     vector< float > hog_detector;
     get_svm_detector( svm, hog_detector );
     my_hog.setSVMDetector( hog_detector );
-    // Set the people detector.
-    hog.setSVMDetector( hog.getDefaultPeopleDetector() );
-    // Open the camera.
-    video.open(0);
-    if( !video.isOpened() )
+
+    vector<String> files;
+    glob(test_dir, files);
+
+    for( int i=0; i<files.size(); i++)
     {
-        cerr << "Unable to open the device 0" << endl;
-        exit( -1 );
+        Mat img = imread(files[i]);
+        vector<Rect> detections;
+        vector<double> foundWeights;
+
+        my_hog.detectMultiScale(img, detections, foundWeights);
+        for (int j = 0; j < detections.size(); j++)
+        {
+            cout << foundWeights[j]<< endl;
+            Scalar color = Scalar(0, foundWeights[j]* foundWeights[j]*200, 0);
+            rectangle(img, detections[j], color, 2);
+        }
+
+        imshow( "detections", img);
+        if( 27 == waitKey(0))
+            return 0;
     }
-
-    bool end_of_process = false;
-    while( !end_of_process )
-    {
-        video >> img;
-        if( img.empty() )
-            break;
-
-        draw = img.clone();
-
-        locations.clear();
-        hog.detectMultiScale( img, locations );
-        draw_locations( draw, locations, reference );
-
-        locations.clear();
-        my_hog.detectMultiScale( img, locations );
-        draw_locations( draw, locations, trained );
-
-        imshow( "Video", draw );
-        key = (char)waitKey( 10 );
-        if( 27 == key )
-            end_of_process = true;
-    }
+    return 0;
 }
 
 int main( int argc, char** argv )
 {
     cv::CommandLineParser parser(argc, argv, "{help h|| show help message}"
-                                 "{pd|./pos|pos_dir}{nd|./neg|neg_dir}");
+                                 "{pd||pos_dir}{nd||neg_dir}{td || test dir} {fn || file name}{v |false| visualization}");
     if (parser.has("help"))
     {
         parser.printMessage();
         exit(0);
     }
-    vector< Mat > pos_lst;
-    vector< Mat > full_neg_lst;
-    vector< Mat > neg_lst;
-    vector< Mat > gradient_lst;
+    vector< Mat > pos_lst, full_neg_lst, neg_lst, gradient_lst;
     vector< int > labels;
     string pos_dir = parser.get<string>("pd");
     string neg_dir = parser.get<string>("nd");
+    test_dir = parser.get<string>("td");
+    filename = parser.get<string>("fn");
+    visualize = parser.get<bool>("v");
     if( pos_dir.empty() || neg_dir.empty() )
     {
+        parser.printMessage();
         cout << "Wrong number of parameters." << endl
-             << "Usage: " << argv[0] << " --pd=pos_dir --nd=neg_dir" << endl
-             << "example: " << argv[0] << " --pd=/INRIA_dataset/ --nd=/INRIA_dataset/" << endl;
+             << "example: " << argv[0] << " --pd=./INRIA_dataset_pos/ --nd=./INRIA_dataset_neg/" << endl;
         exit( -1 );
     }
-    cout << "positive images are being loaded." << endl;
-    load_images( pos_dir, pos_lst );
-
+    clog << "Positive images are being loaded..." ;
+    load_images( pos_dir, pos_lst,false );
+    clog << "...[done]" << endl;
     Size pos_image_size = pos_lst[0].size();
     for (size_t i = 0; i < pos_lst.size(); ++i)
     {
         if( pos_lst[i].size() != pos_image_size)
         {
             cout << "All positive images should be same size!" << endl;
-            exit( -1 );
+            exit( 1 );
         }
     }
     labels.assign( pos_lst.size(), +1 );
     const unsigned int old = (unsigned int)labels.size();
-    cout << "negative images are being loaded." << endl;
-    load_images( neg_dir, full_neg_lst );
+    clog << "Negative images are being loaded...";
+    load_images( neg_dir, full_neg_lst,false );
     sample_neg( full_neg_lst, neg_lst, pos_image_size );
+    clog << "...[done]" << endl;
 
     labels.insert( labels.end(), neg_lst.size(), -1 );
     CV_Assert( old < labels.size() );
 
-    compute_hog( pos_lst, gradient_lst, pos_image_size );
-    compute_hog( neg_lst, gradient_lst, pos_image_size );
+    clog << "Histogram of Gradients are being calculated for positive images...";
+    compute_hog( pos_lst, gradient_lst );
+    clog << "...[done]" << endl;
+
+    clog << "Histogram of Gradients are being calculated for negative images...";
+    compute_hog( neg_lst, gradient_lst );
+    clog << "...[done]" << endl;
 
     train_svm( gradient_lst, labels );
 
-    test_it( pos_image_size ); // change with your parameters
+    pos_image_size.height = pos_image_size.height / 8 * 8;
+    pos_image_size.width = pos_image_size.width / 8 * 8;
+    test_it( pos_image_size );
 
     return 0;
 }

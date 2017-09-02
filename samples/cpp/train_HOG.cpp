@@ -17,7 +17,7 @@ void load_images( const String & prefix, vector< Mat > & img_lst, bool showImage
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
 Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
 void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
-void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels, String SVMfilename );
+//void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels, String SVMfilename );
 int test_it( const Size & size, String SVMfilename, String test_dir, String videofilename = "" );
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
@@ -295,14 +295,14 @@ void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, b
     }
 }
 
-void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels, String SVMfilename)
+/*void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels, String SVMfilename)
 {
     Mat train_data;
     convert_to_ml( gradient_lst, train_data );
 
     clog << "Training SVM...";
     Ptr<SVM> svm = SVM::create();
-    /* Default values to train SVM */
+    /* Default values to train SVM
     svm->setCoef0(0.0);
     svm->setDegree(3);
     svm->setTermCriteria(TermCriteria( CV_TERMCRIT_ITER+CV_TERMCRIT_EPS, 1000, 1e-3 ));
@@ -316,7 +316,7 @@ void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels
     clog << "...[done]" << endl;
 
     svm->save(SVMfilename);
-}
+}*/
 
 int test_it( const Size & size, String SVMfilename, String test_dir, String videofilename )
 {
@@ -440,11 +440,6 @@ int main( int argc, char** argv )
     compute_hog( neg_lst, gradient_lst, visualize);
     clog << "...[done]" << endl;
 
-
-    /*
-    train_svm( gradient_lst, labels, SVMfilename );
-    */
-    //
     Mat train_data;
     convert_to_ml( gradient_lst, train_data );
 
@@ -483,7 +478,6 @@ int main( int argc, char** argv )
             my_hog.detectMultiScale(full_neg_lst[i], detections, foundWeights);
             for (size_t j = 0; j < detections.size(); j++)
             {
-
                 Mat detection = full_neg_lst[i](detections[j]).clone();
                 resize(detection, detection, pos_image_size);
                 neg_lst.push_back(detection);

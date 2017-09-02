@@ -18,7 +18,6 @@ void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, co
 Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
 void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst );
 void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels );
-void draw_locations( Mat & img, const vector< Rect > & locations, const Scalar & color );
 int test_it( const Size & size );
 String test_dir,filename;
 bool visualize;
@@ -43,7 +42,6 @@ void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
     hog_detector[sv.cols] = (float)-rho;
 }
 
-
 /*
 * Convert training/testing set to be used by OpenCV Machine Learning algorithms.
 * TrainData is a matrix of size (#samples x max(#cols,#rows) per samples), in 32FC1.
@@ -60,8 +58,8 @@ void convert_to_ml(const std::vector< cv::Mat > & train_samples, cv::Mat& trainD
     vector< Mat >::const_iterator end = train_samples.end();
     for( int i = 0 ; itr != end ; ++itr, ++i )
     {
-        CV_Assert( itr->cols == 1 ||
-                   itr->rows == 1 );
+        CV_Assert( itr->cols == 1 || itr->rows == 1 );
+
         if( itr->cols == 1 )
         {
             transpose( *(itr), tmp );
@@ -297,8 +295,7 @@ void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst )
         gradient_lst.push_back( Mat( descriptors ).clone() );
         if (visualize)
         {
-            //imshow("gradient", get_hogdescriptor_visu(img_lst[i](r), descriptors));
-            imshow("gradient", img_lst[i](r));
+            imshow("gradient", get_hogdescriptor_visu(img_lst[i](r), descriptors,r.size()));
             waitKey(10);
         }
     }
@@ -306,7 +303,6 @@ void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst )
 
 void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels )
 {
-
     Mat train_data;
     convert_to_ml( gradient_lst, train_data );
 
@@ -326,19 +322,6 @@ void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels
     clog << "...[done]" << endl;
 
     svm->save( filename );
-}
-
-void draw_locations( Mat & img, const vector< Rect > & locations, const Scalar & color )
-{
-    if( !locations.empty() )
-    {
-        vector< Rect >::const_iterator loc = locations.begin();
-        vector< Rect >::const_iterator end = locations.end();
-        for( ; loc != end ; ++loc )
-        {
-
-        }
-    }
 }
 
 int test_it( const Size & size )

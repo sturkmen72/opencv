@@ -13,11 +13,11 @@ using namespace std;
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector );
 void convert_to_ml(const std::vector< cv::Mat > & train_samples, cv::Mat& trainData );
-void load_images( const String & prefix, vector< Mat > & img_lst, bool showImages);
+void load_images( const String & dirname, vector< Mat > & img_lst, bool showImages);
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
 Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
 void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
-int test_it( const Size & size, String SVMfilename, String test_dir, String videofilename = "" );
+int test_trained_detector( const Size & size, String SVMfilename, String test_dir, String videofilename);
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
 {
@@ -68,10 +68,10 @@ void convert_to_ml(const vector< Mat > & train_samples, Mat& trainData )
     }
 }
 
-void load_images( const String & prefix, vector< Mat > & img_lst, bool showImages = false )
+void load_images( const String & dirname, vector< Mat > & img_lst, bool showImages = false )
 {
     vector<String> files;
-    glob(prefix, files);
+    glob(dirname, files);
 
     for (size_t i = 0; i < files.size(); ++i)
     {
@@ -294,7 +294,7 @@ void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, b
     }
 }
 
-int test_it( const Size & size, String SVMfilename, String test_dir, String videofilename )
+int test_trained_detector( const Size & size, String SVMfilename, String test_dir, String videofilename )
 {
     cout << "Testing trained detector..." << endl;
     Ptr<SVM> svm;
@@ -303,8 +303,15 @@ int test_it( const Size & size, String SVMfilename, String test_dir, String vide
     vector< Rect > locations;
 
     // Load the trained SVM.
-    cout << SVMfilename + "being loaded...";
+    cout << SVMfilename << " is being loaded...";
     svm = StatModel::load<SVM>( SVMfilename );
+    if (!svm)
+    {
+        cout << SVMfilename << " could not loaded! exiting...";
+        return 1;
+    }
+    else cout << "...[done]";
+
     // Set the trained svm to my_hog
     vector< float > hog_detector;
     get_svm_detector( svm, hog_detector );
@@ -393,15 +400,16 @@ int main( int argc, char** argv )
 
     if (test_detector & (detector_width*detector_height > 0))
     {
-        test_it(Size(detector_width, detector_height), SVMfilename, test_dir, videofilename);
+        test_trained_detector(Size(detector_width, detector_height), SVMfilename, test_dir, videofilename);
         return 0;
     }
 
     if( pos_dir.empty() || neg_dir.empty() )
     {
         parser.printMessage();
-        cout << "Wrong number of parameters." << endl
-             << "example: " << argv[0] << " --pd=./INRIA_dataset_pos/ --nd=./INRIA_dataset_neg/ " << endl;
+        cout << "Wrong number of parameters.\n\n"
+             << "Example command line:\n" << argv[0] << " -pd=/INRIAPerson/96X160H96/Train/pos -nd=/INRIAPerson/neg -td=/INRIAPerson/Test/pos -fn=HOGpedestrian96x160.yml -d\n"
+             << "\nExample command line for testing trained detector:\n" << argv[0] << " -t -dw=96 -dh=160 -fn=HOGpedestrian96x160.yml -td=/INRIAPerson/Test/pos";
         exit( -1 );
     }
 
@@ -508,7 +516,7 @@ int main( int argc, char** argv )
 
     svm->save(SVMfilename);
 
-    test_it( pos_image_size, SVMfilename, test_dir, videofilename);
+    test_trained_detector( pos_image_size, SVMfilename, test_dir, videofilename);
 
     return 0;
 }

@@ -17,7 +17,6 @@ void load_images( const String & prefix, vector< Mat > & img_lst, bool showImage
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
 Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
 void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
-//void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels, String SVMfilename );
 int test_it( const Size & size, String SVMfilename, String test_dir, String videofilename = "" );
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
@@ -295,29 +294,6 @@ void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, b
     }
 }
 
-/*void train_svm( const vector< Mat > & gradient_lst, const vector< int > & labels, String SVMfilename)
-{
-    Mat train_data;
-    convert_to_ml( gradient_lst, train_data );
-
-    clog << "Training SVM...";
-    Ptr<SVM> svm = SVM::create();
-    /* Default values to train SVM
-    svm->setCoef0(0.0);
-    svm->setDegree(3);
-    svm->setTermCriteria(TermCriteria( CV_TERMCRIT_ITER+CV_TERMCRIT_EPS, 1000, 1e-3 ));
-    svm->setGamma(0);
-    svm->setKernel(SVM::LINEAR);
-    svm->setNu(0.5);
-    svm->setP(0.1); // for EPSILON_SVR, epsilon in loss function?
-    svm->setC(0.01); // From paper, soft classifier
-    svm->setType(SVM::EPS_SVR); // C_SVC; // EPSILON_SVR; // may be also NU_SVR; // do regression task
-    svm->train(train_data, ROW_SAMPLE, Mat(labels));
-    clog << "...[done]" << endl;
-
-    svm->save(SVMfilename);
-}*/
-
 int test_it( const Size & size, String SVMfilename, String test_dir, String videofilename )
 {
     cout << "Testing trained detector..." << endl;
@@ -327,6 +303,7 @@ int test_it( const Size & size, String SVMfilename, String test_dir, String vide
     vector< Rect > locations;
 
     // Load the trained SVM.
+    cout << SVMfilename + "being loaded...";
     svm = StatModel::load<SVM>( SVMfilename );
     // Set the trained svm to my_hog
     vector< float > hog_detector;
@@ -380,24 +357,45 @@ int test_it( const Size & size, String SVMfilename, String test_dir, String vide
 
 int main( int argc, char** argv )
 {
-    cv::CommandLineParser parser(argc, argv, "{help h|| show help message}"
-                                 "{pd||pos_dir}{nd||neg_dir}{td || test dir}"
-                                 "{fn |my_dedector.yml| file name}{tv || test video file name}"
-                                 "{d |false| train twice}{v |false| visualization}");
+    const char* keys =
+    {
+        "{help h|     | show help message}"
+        "{pd    |     | path of directory contains possitive images}"
+        "{nd    |     | path of directory contains negative images}"
+        "{td    |     | path of directory contains test images}"
+        "{tv    |     | test video file name}"
+        "{dw    |     | width of the detector}"
+        "{dh    |     | height of the detector}"
+        "{d     |false| train twice}"
+        "{t     |false| test a trained detector}"
+        "{v     |false| visualize training steps}"
+        "{fn    |my_dedector.yml| file name of trained SVM}"
+    };
+
+    cv::CommandLineParser parser(argc, argv,keys);
+
     if (parser.has("help"))
     {
         parser.printMessage();
         exit(0);
     }
-    vector< Mat > pos_lst, full_neg_lst, neg_lst, gradient_lst;
-    vector< int > labels;
+
     String pos_dir = parser.get<String>("pd");
     String neg_dir = parser.get<String>("nd");
     String test_dir = parser.get<String>("td");
     String SVMfilename = parser.get<String>("fn");
     String videofilename = parser.get<String>("tv");
-    bool visualize = parser.get<bool>("v");
+    int detector_width = parser.get<int>("dw");
+    int detector_height = parser.get<int>("dh");
+    bool test_detector = parser.get<bool>("t");
     bool train_twice = parser.get<bool>("d");
+    bool visualize = parser.get<bool>("v");
+
+    if (test_detector & (detector_width*detector_height > 0))
+    {
+        test_it(Size(detector_width, detector_height), SVMfilename, test_dir, videofilename);
+        return 0;
+    }
 
     if( pos_dir.empty() || neg_dir.empty() )
     {
@@ -406,6 +404,10 @@ int main( int argc, char** argv )
              << "example: " << argv[0] << " --pd=./INRIA_dataset_pos/ --nd=./INRIA_dataset_neg/ " << endl;
         exit( -1 );
     }
+
+    vector< Mat > pos_lst, full_neg_lst, neg_lst, gradient_lst;
+    vector< int > labels;
+
     clog << "Positive images are being loaded..." ;
     load_images( pos_dir, pos_lst, visualize);
     clog << "...[done]" << endl;

@@ -516,7 +516,10 @@ int main( int argc, char** argv )
 
     svm->save(SVMfilename);
 
-    test_trained_detector( pos_image_size, SVMfilename, test_dir, videofilename);
+    if (!test_dir.empty() && !videofilename.empty())
+    {
+        test_trained_detector(pos_image_size, SVMfilename, test_dir, videofilename);
+    }
 
     return 0;
 }

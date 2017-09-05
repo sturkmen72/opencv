@@ -11,13 +11,13 @@ using namespace cv;
 using namespace cv::ml;
 using namespace std;
 
-void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector );
-void convert_to_ml(const std::vector< cv::Mat > & train_samples, cv::Mat& trainData );
-void load_images( const String & dirname, vector< Mat > & img_lst, bool showImages);
+void get_svm_detector( const Ptr<SVM>& svm, vector< float > & hog_detector );
+void convert_to_ml( const std::vector< cv::Mat > & train_samples, cv::Mat& trainData );
+void load_images( const String & dirname, vector< Mat > & img_lst, bool showImages );
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
-Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
-void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
-int test_trained_detector( const Size & size, String SVMfilename, String test_dir, String videofilename);
+Mat get_hogdescriptor_visu( const Mat& color_origImg, vector<float>& descriptorValues, const Size & size );
+void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
+int test_trained_detector( String obj_det_filename, String test_dir, String videofilename);
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
 {
@@ -270,13 +270,15 @@ Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorVa
 
 } // get_hogdescriptor_visu
 
-void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages )
+void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages )
 {
     HOGDescriptor hog;
-    Rect r = Rect(0, 0, (img_lst[0].cols / 8) * 8, (img_lst[0].rows/8)*8);
+	hog.winSize = wsize;
+
+	Rect r = Rect( 0, 0, wsize.width, wsize.height );
     r.x += (img_lst[0].cols - r.width) / 2;
     r.y += (img_lst[0].rows - r.height) / 2;
-    hog.winSize = r.size();
+
     Mat gray;
     vector< Point > location;
     vector< float > descriptors;
@@ -294,30 +296,14 @@ void compute_hog( const vector< Mat > & img_lst, vector< Mat > & gradient_lst, b
     }
 }
 
-int test_trained_detector( const Size & size, String SVMfilename, String test_dir, String videofilename )
+int test_trained_detector( String obj_det_filename, String test_dir, String videofilename )
 {
     cout << "Testing trained detector..." << endl;
-    Ptr<SVM> svm;
-    HOGDescriptor my_hog;
-    my_hog.winSize = size;
-    vector< Rect > locations;
+	vector< Rect > locations;
+	HOGDescriptor hog;
+	hog.load(obj_det_filename);
 
-    // Load the trained SVM.
-    cout << SVMfilename << " is being loaded...";
-    svm = StatModel::load<SVM>( SVMfilename );
-    if (!svm)
-    {
-        cout << SVMfilename << " could not loaded! exiting...";
-        return 1;
-    }
-    else cout << "...[done]";
-
-    // Set the trained svm to my_hog
-    vector< float > hog_detector;
-    get_svm_detector( svm, hog_detector );
-    my_hog.setSVMDetector( hog_detector );
-
-    vector<String> files;
+	vector<String> files;
     glob(test_dir, files);
 
     int delay = 0;
@@ -348,7 +334,7 @@ int test_trained_detector( const Size & size, String SVMfilename, String test_di
         vector<Rect> detections;
         vector<double> foundWeights;
 
-        my_hog.detectMultiScale(img, detections, foundWeights);
+        hog.detectMultiScale(img, detections, foundWeights);
         for (size_t j = 0; j < detections.size(); j++)
         {
             Scalar color = Scalar(0, foundWeights[j]* foundWeights[j]*200, 0);
@@ -376,7 +362,7 @@ int main( int argc, char** argv )
         "{d     |false| train twice}"
         "{t     |false| test a trained detector}"
         "{v     |false| visualize training steps}"
-        "{fn    |my_dedector.yml| file name of trained SVM}"
+        "{fn    |my_detector.yml| file name of trained SVM}"
     };
 
     cv::CommandLineParser parser(argc, argv,keys);
@@ -390,7 +376,7 @@ int main( int argc, char** argv )
     String pos_dir = parser.get<String>("pd");
     String neg_dir = parser.get<String>("nd");
     String test_dir = parser.get<String>("td");
-    String SVMfilename = parser.get<String>("fn");
+    String obj_det_filename = parser.get<String>("fn");
     String videofilename = parser.get<String>("tv");
     int detector_width = parser.get<int>("dw");
     int detector_height = parser.get<int>("dh");
@@ -398,9 +384,9 @@ int main( int argc, char** argv )
     bool train_twice = parser.get<bool>("d");
     bool visualize = parser.get<bool>("v");
 
-    if (test_detector & (detector_width*detector_height > 0))
+    if (test_detector)
     {
-        test_trained_detector(Size(detector_width, detector_height), SVMfilename, test_dir, videofilename);
+        test_trained_detector(obj_det_filename, test_dir, videofilename);
         return 0;
     }
 
@@ -430,6 +416,8 @@ int main( int argc, char** argv )
         }
     }
     pos_image_size = pos_image_size / 8 * 8;
+	if (detector_width*detector_height)
+		pos_image_size = Size(detector_width, detector_height);
 
     labels.assign( pos_lst.size(), +1 );
     const unsigned int old = (unsigned int)labels.size();
@@ -443,11 +431,11 @@ int main( int argc, char** argv )
     CV_Assert( old < labels.size() );
 
     clog << "Histogram of Gradients are being calculated for positive images...";
-    compute_hog( pos_lst, gradient_lst, visualize );
+    compute_hog(pos_image_size,pos_lst, gradient_lst, visualize );
     clog << "...[done]" << endl;
 
     clog << "Histogram of Gradients are being calculated for negative images...";
-    compute_hog( neg_lst, gradient_lst, visualize);
+    compute_hog(pos_image_size,neg_lst, gradient_lst, visualize);
     clog << "...[done]" << endl;
 
     Mat train_data;
@@ -501,11 +489,11 @@ int main( int argc, char** argv )
 
         gradient_lst.clear();
         clog << "Histogram of Gradients are being calculated for positive images...";
-        compute_hog(pos_lst, gradient_lst, visualize);
+        compute_hog(pos_image_size,pos_lst, gradient_lst, visualize);
         clog << "...[done]" << endl;
 
         clog << "Histogram of Gradients are being calculated for negative images...";
-        compute_hog(neg_lst, gradient_lst, visualize);
+        compute_hog(pos_image_size,neg_lst, gradient_lst, visualize);
         clog << "...[done]" << endl;
 
         clog << "Training SVM again...";
@@ -514,12 +502,15 @@ int main( int argc, char** argv )
         clog << "...[done]" << endl;
     }
 
-    svm->save(SVMfilename);
+    //svm->save(SVMfilename);
+	vector< float > hog_detector;
+	get_svm_detector(svm, hog_detector);
+	HOGDescriptor hog;
+	hog.winSize = pos_image_size;
+	hog.setSVMDetector(hog_detector);
+	hog.save(obj_det_filename, "HOGSVM");
 
-    if (!test_dir.empty() && !videofilename.empty())
-    {
-        test_trained_detector(pos_image_size, SVMfilename, test_dir, videofilename);
-    }
+    test_trained_detector( obj_det_filename, test_dir, videofilename );
 
     return 0;
 }

@@ -273,9 +273,9 @@ Mat get_hogdescriptor_visu(const Mat& color_origImg, vector<float>& descriptorVa
 void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages )
 {
     HOGDescriptor hog;
-	hog.winSize = wsize;
+    hog.winSize = wsize;
 
-	Rect r = Rect( 0, 0, wsize.width, wsize.height );
+    Rect r = Rect( 0, 0, wsize.width, wsize.height );
     r.x += (img_lst[0].cols - r.width) / 2;
     r.y += (img_lst[0].rows - r.height) / 2;
 
@@ -299,11 +299,13 @@ void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat >
 int test_trained_detector( String obj_det_filename, String test_dir, String videofilename )
 {
     cout << "Testing trained detector..." << endl;
-	vector< Rect > locations;
-	HOGDescriptor hog;
-	hog.load(obj_det_filename);
+    vector< Rect > locations;
+    HOGDescriptor hog;
+    HOGDescriptor DefaultPeopleDetector;
+    DefaultPeopleDetector.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
+    hog.load(obj_det_filename);
 
-	vector<String> files;
+    vector<String> files;
     glob(test_dir, files);
 
     int delay = 0;
@@ -333,6 +335,13 @@ int test_trained_detector( String obj_det_filename, String test_dir, String vide
 
         vector<Rect> detections;
         vector<double> foundWeights;
+
+        DefaultPeopleDetector.detectMultiScale(img, detections, foundWeights);
+        for (size_t j = 0; j < detections.size(); j++)
+        {
+            Scalar color = Scalar(0, foundWeights[j] * foundWeights[j] * 200, 0);
+            rectangle(img, detections[j], Scalar(0,0,255), 4);
+        }
 
         hog.detectMultiScale(img, detections, foundWeights);
         for (size_t j = 0; j < detections.size(); j++)
@@ -416,8 +425,8 @@ int main( int argc, char** argv )
         }
     }
     pos_image_size = pos_image_size / 8 * 8;
-	if (detector_width*detector_height)
-		pos_image_size = Size(detector_width, detector_height);
+    if (detector_width*detector_height)
+        pos_image_size = Size(detector_width, detector_height);
 
     labels.assign( pos_lst.size(), +1 );
     const unsigned int old = (unsigned int)labels.size();
@@ -458,7 +467,7 @@ int main( int argc, char** argv )
 
     if (train_twice)
     {
-        clog << "Testing trained detector on negative images.this may take a long time...";
+        clog << "Testing trained detector on negative images.this may take a few minutes...";
         HOGDescriptor my_hog;
         my_hog.winSize = pos_image_size;
         vector< Rect > locations;
@@ -502,13 +511,12 @@ int main( int argc, char** argv )
         clog << "...[done]" << endl;
     }
 
-    //svm->save(SVMfilename);
-	vector< float > hog_detector;
-	get_svm_detector(svm, hog_detector);
-	HOGDescriptor hog;
-	hog.winSize = pos_image_size;
-	hog.setSVMDetector(hog_detector);
-	hog.save(obj_det_filename, "HOGSVM");
+    vector< float > hog_detector;
+    get_svm_detector(svm, hog_detector);
+    HOGDescriptor hog;
+    hog.winSize = pos_image_size;
+    hog.setSVMDetector(hog_detector);
+    hog.save(obj_det_filename);
 
     test_trained_detector( obj_det_filename, test_dir, videofilename );
 

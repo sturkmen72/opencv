@@ -336,10 +336,10 @@ int test_trained_detector( String obj_det_filename, String test_dir, String vide
         vector<Rect> detections;
         vector<double> foundWeights;
 
-        DefaultPeopleDetector.detectMultiScale(img, detections, foundWeights);
+       //this is for test it will be removed before merge
+		DefaultPeopleDetector.detectMultiScale(img, detections, foundWeights);
         for (size_t j = 0; j < detections.size(); j++)
         {
-            Scalar color = Scalar(0, foundWeights[j] * foundWeights[j] * 200, 0);
             rectangle(img, detections[j], Scalar(0,0,255), 4);
         }
 

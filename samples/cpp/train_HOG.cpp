@@ -328,7 +328,10 @@ int test_trained_detector( String obj_det_filename, String test_dir, String vide
         if (delay)
             cap >> img;
         else
+        {
+            if(i < files.size()-1)
             img = imread(files[i]);
+        }
 
         if (img.empty())
             return 0;

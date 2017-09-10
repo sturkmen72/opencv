@@ -14,7 +14,7 @@ void get_svm_detector( const Ptr<SVM>& svm, vector< float > & hog_detector );
 void convert_to_ml( const std::vector< cv::Mat > & train_samples, cv::Mat& trainData );
 void load_images( const String & dirname, vector< Mat > & img_lst, bool showImages );
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
-void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
+void computeHOGs( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst );
 int test_trained_detector( String obj_det_filename, String test_dir, String videofilename);
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
@@ -109,7 +109,7 @@ void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, co
     }
 }
 
-void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages )
+void computeHOGs( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst )
 {
     HOGDescriptor hog;
     hog.winSize = wsize;
@@ -164,11 +164,12 @@ int test_trained_detector( String obj_det_filename, String test_dir, String vide
         else if( i < files.size() )
         {
             img = imread( files[i] );
-            delay = 0;
         }
 
-        if ( img.empty() )
+        if (img.empty())
+        {
             return 0;
+        }
 
         vector<Rect> detections;
         vector<double> foundWeights;
@@ -272,8 +273,11 @@ int main( int argc, char** argv )
     }
 
     pos_image_size = pos_image_size / 8 * 8;
+
     if (detector_width*detector_height)
+    {
         pos_image_size = Size(detector_width, detector_height);
+    }
 
     labels.assign( pos_lst.size(), +1 );
     const unsigned int old = (unsigned int)labels.size();
@@ -287,11 +291,11 @@ int main( int argc, char** argv )
     CV_Assert( old < labels.size() );
 
     clog << "Histogram of Gradients are being calculated for positive images...";
-    compute_hog(pos_image_size,pos_lst, gradient_lst, visualize );
+    computeHOGs(pos_image_size,pos_lst, gradient_lst);
     clog << "...[done]" << endl;
 
     clog << "Histogram of Gradients are being calculated for negative images...";
-    compute_hog(pos_image_size,neg_lst, gradient_lst, visualize);
+    computeHOGs(pos_image_size,neg_lst, gradient_lst);
     clog << "...[done]" << endl;
 
     Mat train_data;
@@ -354,11 +358,11 @@ int main( int argc, char** argv )
 
         gradient_lst.clear();
         clog << "Histogram of Gradients are being calculated for positive images...";
-        compute_hog(pos_image_size,pos_lst, gradient_lst, visualize);
+        computeHOGs(pos_image_size,pos_lst, gradient_lst);
         clog << "...[done]" << endl;
 
         clog << "Histogram of Gradients are being calculated for negative images...";
-        compute_hog(pos_image_size,neg_lst, gradient_lst, visualize);
+        computeHOGs(pos_image_size,neg_lst, gradient_lst);
         clog << "...[done]" << endl;
 
         clog << "Training SVM again...";

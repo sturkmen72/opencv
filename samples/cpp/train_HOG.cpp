@@ -16,12 +16,6 @@ void load_images( const String & dirname, vector< Mat > & img_lst, bool showImag
 void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, const Size & size );
 void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages );
 int test_trained_detector( String obj_det_filename, String test_dir, String videofilename);
-Mat get_hogdescriptor_visual_image(Mat& origImg,
-                                   vector<float>& descriptorValues,
-                                   Size winSize,
-                                   Size cellSize,
-                                   int scaleFactor,
-                                   float viz_factor);
 
 void get_svm_detector(const Ptr<SVM>& svm, vector< float > & hog_detector )
 {
@@ -115,175 +109,6 @@ void sample_neg( const vector< Mat > & full_neg_lst, vector< Mat > & neg_lst, co
     }
 }
 
-// From http://www.juergenwiki.de/old_wiki/doku.php?id=public:hog_descriptor_computation_and_visualization
-Mat get_hogdescriptor_visual_image(Mat& origImg,
-                                   vector<float>& descriptorValues,
-                                   Size winSize,
-                                   Size cellSize,
-                                   int scaleFactor,
-                                   float viz_factor)
-{
-    if (origImg.empty())
-    {
-        origImg = Mat::zeros(winSize, CV_8UC3);
-    }
-
-    Mat visual_image;
-    resize(origImg, visual_image, Size(origImg.cols*scaleFactor, origImg.rows*scaleFactor));
-
-    int gradientBinSize = 9;
-    // dividing 180° into 9 bins, how large (in rad) is one bin?
-    float radRangeForOneBin = (float)CV_PI/gradientBinSize;
-
-    // prepare data structure: 9 orientation / gradient strenghts for each cell
-    int cells_in_x_dir = winSize.width / cellSize.width;
-    int cells_in_y_dir = winSize.height / cellSize.height;
-    int totalnrofcells = cells_in_x_dir * cells_in_y_dir;
-    float*** gradientStrengths = new float**[cells_in_y_dir];
-    int** cellUpdateCounter = new int*[cells_in_y_dir];
-    for (int y=0; y<cells_in_y_dir; y++)
-    {
-        gradientStrengths[y] = new float*[cells_in_x_dir];
-        cellUpdateCounter[y] = new int[cells_in_x_dir];
-        for (int x=0; x<cells_in_x_dir; x++)
-        {
-            gradientStrengths[y][x] = new float[gradientBinSize];
-            cellUpdateCounter[y][x] = 0;
-
-            for (int bin=0; bin<gradientBinSize; bin++)
-                gradientStrengths[y][x][bin] = 0.0;
-        }
-    }
-
-    // nr of blocks = nr of cells - 1
-    // since there is a new block on each cell (overlapping blocks!) but the last one
-    int blocks_in_x_dir = cells_in_x_dir - 1;
-    int blocks_in_y_dir = cells_in_y_dir - 1;
-
-    // compute gradient strengths per cell
-    int descriptorDataIdx = 0;
-    int cellx = 0;
-    int celly = 0;
-
-    for (int blockx=0; blockx<blocks_in_x_dir; blockx++)
-    {
-        for (int blocky=0; blocky<blocks_in_y_dir; blocky++)
-        {
-            // 4 cells per block ...
-            for (int cellNr=0; cellNr<4; cellNr++)
-            {
-                // compute corresponding cell nr
-                int cellx = blockx;
-                int celly = blocky;
-                if (cellNr==1) celly++;
-                if (cellNr==2) cellx++;
-                if (cellNr==3)
-                {
-                    cellx++;
-                    celly++;
-                }
-
-                for (int bin=0; bin<gradientBinSize; bin++)
-                {
-                    float gradientStrength = descriptorValues[ descriptorDataIdx ];
-                    descriptorDataIdx++;
-
-                    gradientStrengths[celly][cellx][bin] += gradientStrength;
-
-                } // for (all bins)
-
-
-                // note: overlapping blocks lead to multiple updates of this sum!
-                // we therefore keep track how often a cell was updated,
-                // to compute average gradient strengths
-                cellUpdateCounter[celly][cellx]++;
-            } // for (all cells)
-        } // for (all block x pos)
-    } // for (all block y pos)
-
-    // compute average gradient strengths
-    for (int celly=0; celly<cells_in_y_dir; celly++)
-    {
-        for (int cellx=0; cellx<cells_in_x_dir; cellx++)
-        {
-            float NrUpdatesForThisCell = (float)cellUpdateCounter[celly][cellx];
-
-            // compute average gradient strenghts for each gradient bin direction
-            for (int bin=0; bin<gradientBinSize; bin++)
-            {
-                gradientStrengths[celly][cellx][bin] /= NrUpdatesForThisCell;
-            }
-        }
-    }
-
-    // draw cells
-    for (int celly=0; celly<cells_in_y_dir; celly++)
-    {
-        for (int cellx=0; cellx<cells_in_x_dir; cellx++)
-        {
-            int drawX = cellx * cellSize.width;
-            int drawY = celly * cellSize.height;
-
-            int mx = drawX + cellSize.width/2;
-            int my = drawY + cellSize.height/2;
-
-            rectangle(visual_image,
-                      Point(drawX*scaleFactor,drawY*scaleFactor),
-                      Point((drawX+cellSize.width)*scaleFactor,
-                            (drawY+cellSize.height)*scaleFactor),
-                      Scalar(100,100,100), 1);
-
-            // draw in each cell all 9 gradient strengths
-            for (int bin=0; bin<gradientBinSize; bin++)
-            {
-                float currentGradStrength = gradientStrengths[celly][cellx][bin];
-
-                // no line to draw?
-                if (currentGradStrength==0)
-                    continue;
-
-                float currRad = bin * radRangeForOneBin + radRangeForOneBin/2;
-
-                float dirVecX = cos( currRad );
-                float dirVecY = sin( currRad );
-                float maxVecLen = (float)cellSize.width/2;
-                float scale = viz_factor; // just a visual_imagealization scale,
-                // to see the lines better
-
-                // compute line coordinates
-                float x1 = mx - dirVecX * currentGradStrength * maxVecLen * scale;
-                float y1 = my - dirVecY * currentGradStrength * maxVecLen * scale;
-                float x2 = mx + dirVecX * currentGradStrength * maxVecLen * scale;
-                float y2 = my + dirVecY * currentGradStrength * maxVecLen * scale;
-
-                // draw gradient visual_imagealization
-                line(visual_image,
-                     Point(cvRound(x1*scaleFactor), cvRound(y1*scaleFactor)),
-                     Point(cvRound(x2*scaleFactor), cvRound(y2*scaleFactor)),
-                     Scalar(255,0,0),
-                     1);
-
-            } // for (all bins)
-
-        } // for (cellx)
-    } // for (celly)
-
-    // don't forget to free memory allocated by helper data structures!
-    for (int y=0; y<cells_in_y_dir; y++)
-    {
-        for (int x=0; x<cells_in_x_dir; x++)
-        {
-            delete[] gradientStrengths[y][x];
-        }
-        delete[] gradientStrengths[y];
-        delete[] cellUpdateCounter[y];
-    }
-    delete[] gradientStrengths;
-    delete[] cellUpdateCounter;
-
-    return visual_image;
-}
-
 void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat > & gradient_lst, bool showImages )
 {
     HOGDescriptor hog;
@@ -302,12 +127,6 @@ void compute_hog( const Size wsize, const vector< Mat > & img_lst, vector< Mat >
         cvtColor(img_lst[i](r), gray, COLOR_BGR2GRAY );
         hog.compute( gray, descriptors, Size( 8, 8 ), Size( 0, 0 ), location );
         gradient_lst.push_back( Mat( descriptors ).clone() );
-
-        if ( showImages )
-        {
-            imshow("gradient", get_hogdescriptor_visual_image(Mat(), descriptors, wsize, Size(8, 8), 4, 4));
-            waitKey(10);
-        }
     }
 }
 
@@ -421,8 +240,8 @@ int main( int argc, char** argv )
     {
         parser.printMessage();
         cout << "Wrong number of parameters.\n\n"
-             << "Example command line:\n" << argv[0] << " -d -dw=64 -dh=128 -pd=/INRIAPerson/96X160H96/Train/pos -nd=/INRIAPerson/neg -td=/INRIAPerson/Test/pos -fn=HOGpedestrian64x128.yml\n"
-             << "\nExample command line for testing trained detector:\n" << argv[0] << " -t -dw=64 -dh=128 -fn=HOGpedestrian64x128.yml -td=/INRIAPerson/Test/pos";
+             << "Example command line:\n" << argv[0] << " -pd=/INRIAPerson/96X160H96/Train/pos -nd=/INRIAPerson/neg -td=/INRIAPerson/Test/pos -fn=HOGpedestrian96x160.yml -d\n"
+             << "\nExample command line for testing trained detector:\n" << argv[0] << " -t -dw=96 -dh=160 -fn=HOGpedestrian96x160.yml -td=/INRIAPerson/Test/pos";
         exit( -1 );
     }
 
@@ -517,6 +336,15 @@ int main( int argc, char** argv )
                 resize(detection, detection, pos_image_size);
                 neg_lst.push_back(detection);
             }
+            if (visualize)
+            {
+                for (size_t j = 0; j < detections.size(); j++)
+                {
+                    rectangle(full_neg_lst[i], detections[j], Scalar(0, 255, 0), 2);
+                }
+                imshow("testing trained detector on negative images", full_neg_lst[i]);
+                waitKey(5);
+            }
         }
         clog << "...[done]" << endl;
 
@@ -550,4 +378,3 @@ int main( int argc, char** argv )
 
     return 0;
 }
-

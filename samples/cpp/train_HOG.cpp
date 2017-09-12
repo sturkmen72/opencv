@@ -219,7 +219,7 @@ int main( int argc, char** argv )
     int detector_height = parser.get< int >( "dh" );
     bool test_detector = parser.get< bool >( "t" );
     bool train_twice = parser.get< bool >( "d" );
-    bool visualize = parser.get< bool >( "v" );
+    bool visualization = parser.get< bool >( "v" );
 
     if ( test_detector )
     {
@@ -240,7 +240,7 @@ int main( int argc, char** argv )
     vector< int > labels;
 
     clog << "Positive images are being loaded..." ;
-    load_images( pos_dir, pos_lst, visualize );
+    load_images( pos_dir, pos_lst, visualization );
     if ( pos_lst.size() > 0 )
     {
         clog << "...[done]" << endl;
@@ -308,10 +308,9 @@ int main( int argc, char** argv )
 
     if ( train_twice )
     {
-        clog << "Testing trained detector on negative images.this may take a few minutes...";
+        clog << "Testing trained detector on negative images. This may take a few minutes...";
         HOGDescriptor my_hog;
         my_hog.winSize = pos_image_size;
-        vector< Rect > locations;
 
         // Set the trained svm to my_hog
         vector< float > hog_detector;
@@ -330,7 +329,7 @@ int main( int argc, char** argv )
                 resize( detection, detection, pos_image_size );
                 neg_lst.push_back( detection );
             }
-            if (visualize)
+            if ( visualization )
             {
                 for ( size_t j = 0; j < detections.size(); j++ )
                 {

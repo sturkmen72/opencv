@@ -40,37 +40,8 @@ class ROISelector
         // end selection process on SPACE (32) ESC (27) or ENTER (13)
         while (!(key == 32 || key == 27 || key == 13))
         {
-            // draw the selected object
-            rectangle(selectorParams.image, selectorParams.box, Scalar(255, 0, 0), 2, 1);
-
-            // draw cross air in the middle of bounding box
-            if (showCrosshair)
-            {
-                // horizontal line
-                line(selectorParams.image,
-                     Point((int)selectorParams.box.x,
-                           (int)(selectorParams.box.y + selectorParams.box.height / 2)),
-                     Point((int)(selectorParams.box.x + selectorParams.box.width),
-                           (int)(selectorParams.box.y + selectorParams.box.height / 2)),
-                     Scalar(255, 0, 0), 2, 1);
-
-                // vertical line
-                line(selectorParams.image,
-                     Point((int)(selectorParams.box.x + selectorParams.box.width / 2),
-                           (int)selectorParams.box.y),
-                     Point((int)(selectorParams.box.x + selectorParams.box.width / 2),
-                           (int)(selectorParams.box.y + selectorParams.box.height)),
-                     Scalar(255, 0, 0), 2, 1);
-            }
-
-            // show the image bounding box
-            imshow(windowName, selectorParams.image);
-
-            // reset the image
-            selectorParams.image = img.clone();
-
             // get keyboard event
-            key = waitKey(30);
+            key = waitKey(0);
 
             if (key == 'c' || key == 'C')//cancel selection
             {
@@ -197,6 +168,26 @@ class ROISelector
             
             // draw the selected object
             rectangle(selectorParams.image, selectorParams.box, Scalar(255, 0, 0), 2, 1);
+
+            // draw cross air in the middle of bounding box
+            if (showCrosshair)
+            {
+                // horizontal line
+                line(selectorParams.image,
+                     Point((int)selectorParams.box.x,
+                           (int)(selectorParams.box.y + selectorParams.box.height / 2)),
+                     Point((int)(selectorParams.box.x + selectorParams.box.width),
+                           (int)(selectorParams.box.y + selectorParams.box.height / 2)),
+                     Scalar(255, 0, 0), 2, 1);
+
+                // vertical line
+                line(selectorParams.image,
+                     Point((int)(selectorParams.box.x + selectorParams.box.width / 2),
+                           (int)selectorParams.box.y),
+                     Point((int)(selectorParams.box.x + selectorParams.box.width / 2),
+                           (int)(selectorParams.box.y + selectorParams.box.height)),
+                     Scalar(255, 0, 0), 2, 1);
+            }
 
             imshow(windowName, selectorParams.image);
         }

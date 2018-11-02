@@ -13,14 +13,17 @@ namespace
 class ROISelector
 {
   public:
-    Rect select(const String &windowName, Mat img, bool showCrossair = true, bool fromCenter = true)
+    Rect select(const String &caption, InputArray _img, bool _showCrosshair = true, bool fromCenter = true)
     {
         // show notice to user
         printf("Select a ROI and then press SPACE or ENTER button!\n");
         printf("Cancel the selection process by pressing c button!\n");
 
         key = 0;
+        img = _img.getMat();
         imageSize = img.size();
+        windowName = caption;
+        showCrosshair = _showCrosshair;
 
         // set the drawing mode
         selectorParams.drawFromCenter = fromCenter;
@@ -41,7 +44,7 @@ class ROISelector
             rectangle(selectorParams.image, selectorParams.box, Scalar(255, 0, 0), 2, 1);
 
             // draw cross air in the middle of bounding box
-            if (showCrossair)
+            if (showCrosshair)
             {
                 // horizontal line
                 line(selectorParams.image,
@@ -82,8 +85,8 @@ class ROISelector
         return selectorParams.box;
     }
 
-    void select(const String &windowName, Mat img, std::vector<Rect> &boundingBoxes,
-                bool showCrosshair = true, bool fromCenter = true)
+    void select(const String &caption, InputArray _img, std::vector<Rect> &boundingBoxes,
+                bool _showCrosshair = true, bool fromCenter = true)
     {
         printf("Finish the selection process by pressing ESC button!\n");
         boundingBoxes.clear();
@@ -92,7 +95,7 @@ class ROISelector
         // while key is not ESC (27)
         for (;;)
         {
-            Rect temp = select(windowName, img, showCrosshair, fromCenter);
+            Rect temp = select(caption, _img, _showCrosshair, fromCenter);
             if (key == 27)
                 break;
             if (temp.width > 0 && temp.height > 0)
@@ -128,6 +131,9 @@ class ROISelector
 
     void opencv_mouse_callback(int event, int x, int y, int)
     {
+        mPoint.x = x;
+        mPoint.y = y;
+
         switch (event)
         {
         // update the selected bounding box
@@ -175,11 +181,33 @@ class ROISelector
             }
             break;
         }
+
+        if (mPoint.inside(Rect(0, 0, selectorParams.image.cols, selectorParams.image.rows)))
+        {
+            Rect rv(mPoint.x, 0, 1, selectorParams.image.rows);
+            Rect rh(0, mPoint.y, selectorParams.image.cols, 1);
+
+            selectorParams.image = img.clone();
+
+            Mat vline = selectorParams.image(rv);
+            Mat hline = selectorParams.image(rh);
+
+            vline = vline*3;
+            hline = hline * 3;
+            
+            // draw the selected object
+            rectangle(selectorParams.image, selectorParams.box, Scalar(255, 0, 0), 2, 1);
+
+            imshow(windowName, selectorParams.image);
+        }
     }
 
-    // save the keypressed character
-    int key;
+    Mat img;
+    String windowName;
+    bool showCrosshair;
+    int key;         // save the keypressed character
     Size imageSize;
+    Point mPoint;
 };
 }
 

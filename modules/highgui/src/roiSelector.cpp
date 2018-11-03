@@ -100,7 +100,7 @@ class ROISelector
         self->opencv_mouse_callback(event, x, y, flags);
     }
 
-    void opencv_mouse_callback(int event, int x, int y, int)
+    void opencv_mouse_callback(int event, int x, int y, int flags)
     {
         mPoint.x = x;
         mPoint.y = y;
@@ -155,17 +155,20 @@ class ROISelector
 
         if (mPoint.inside(Rect(0, 0, selectorParams.image.cols, selectorParams.image.rows)))
         {
-            Rect rv(mPoint.x, 0, 1, selectorParams.image.rows);
-            Rect rh(0, mPoint.y, selectorParams.image.cols, 1);
-
             selectorParams.image = img.clone();
 
-            Mat vline = selectorParams.image(rv);
-            Mat hline = selectorParams.image(rh);
+            if(flags & EVENT_FLAG_SHIFTKEY)
+            {
+                Rect rv(mPoint.x, 0, 1, selectorParams.image.rows);
+                Rect rh(0, mPoint.y, selectorParams.image.cols, 1);
 
-            vline = vline*3;
-            hline = hline * 3;
-            
+                Mat vline = selectorParams.image(rv);
+                Mat hline = selectorParams.image(rh);
+
+                vline = vline*3;
+                hline = hline * 3;
+            }
+
             // draw the selected object
             rectangle(selectorParams.image, selectorParams.box, Scalar(255, 0, 0), 2, 1);
 

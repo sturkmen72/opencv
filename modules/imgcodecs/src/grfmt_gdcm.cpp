@@ -156,6 +156,8 @@ bool  DICOMDecoder::readHeader()
             DBG("GDCM | Invalid dimensions: %d x %d\n", piDimension[0], piDimension[1]);
             bOK = false;
         }
+        else
+            m_number_of_pages = 1;
     }
 
     return(bOK);

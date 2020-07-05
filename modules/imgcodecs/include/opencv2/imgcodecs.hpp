@@ -185,11 +185,15 @@ CV_EXPORTS_W Mat imread( const String& filename, int flags = IMREAD_COLOR );
 
 The function imreadmulti loads a multi-page image from the specified file into a vector of Mat objects.
 @param filename Name of file to be loaded.
-@param flags Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
 @param mats A vector of Mat objects holding each page, if more than one.
+@param flags Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
 @sa cv::imread
 */
 CV_EXPORTS_W bool imreadmulti(const String& filename, CV_OUT std::vector<Mat>& mats, int flags = IMREAD_ANYCOLOR);
+
+/** test
+*/
+CV_EXPORTS_W bool imreadmulti(const String& filename, OutputArray mat, int flags = IMREAD_ANYCOLOR, int index = 0);
 
 /** @brief Saves an image to a specified file.
 
@@ -253,6 +257,123 @@ result. See cv::imwrite for the list of supported formats and flags description.
 CV_EXPORTS_W bool imencode( const String& ext, InputArray img,
                             CV_OUT std::vector<uchar>& buf,
                             const std::vector<int>& params = std::vector<int>());
+
+class BaseImageDecoder;
+typedef Ptr<BaseImageDecoder> ImageDecoder;
+
+///////////////////////////////// base class for decoders ////////////////////////
+class BaseImageDecoder
+{
+public:
+    BaseImageDecoder();
+    virtual ~BaseImageDecoder() {}
+
+    int width() const { return m_width; }
+    int height() const { return m_height; }
+    virtual int type() const { return m_type; }
+    virtual int getNumPages() const { return m_number_of_pages; }
+    virtual String getFilename() const { return m_filename; }
+    virtual bool setSource(const String& filename);
+    virtual bool setSource(const Mat& buf);
+    virtual int setScale(const int& scale_denom);
+    virtual bool readHeader() = 0;
+    virtual bool readData(Mat& img) = 0;
+
+    /// Called after readData to advance to the next page, if any.
+    virtual bool nextPage() { return false; }
+
+    virtual size_t signatureLength() const;
+    virtual bool checkSignature(const String& signature) const;
+    virtual ImageDecoder newDecoder() const;
+
+protected:
+    int  m_width;  // width  of the image ( filled by readHeader )
+    int  m_height; // height of the image ( filled by readHeader )
+    int  m_number_of_pages;
+    int  m_page_index;
+    int  m_type;
+    int  m_scale_denom;
+    String m_filename;
+    String m_signature;
+    Mat m_buf;
+    bool m_buf_supported;
+};
+
+
+class CV_EXPORTS_W ImageLoader
+{
+public:
+    /** @brief Default constructor
+     */
+    CV_WRAP ImageLoader();
+
+    /** @overload
+    @brief  Opens a file and get its properties
+
+    @param filename file name
+    @param flags Flag that can take values of cv::ImreadModes
+    */
+    CV_WRAP ImageLoader(const String& filename, int flags = 1);
+
+    /** @brief Default destructor
+    */
+     ~ImageLoader();
+
+    /** @brief  Opens a file.
+
+    @overload
+
+    Parameters are same as the constructor ImageLoader(const String& filename, int flags = 1)
+    @return `true` if the file has been successfully opened
+     */
+    CV_WRAP bool open(const String& filename, int flags = 1);
+
+    /** @brief Returns true if ImageLoader has been initialized already.
+
+    If the previous call to ImageLoader constructor or ImageLoader::open() succeeded, the method returns true.
+     */
+    CV_WRAP bool isOpened() const { return (decoder->getNumPages() > 0); }
+
+    /** @brief Stream operator to ImageLoader.load()
+    @sa load()
+    */
+    ImageLoader& operator >> (CV_OUT Mat& image);
+
+    /** @overload
+    @sa load()
+    */
+    ImageLoader& operator >> (CV_OUT UMat& image);
+
+    /** @brief loads image data
+
+    @param [out] image Array, if loding has failed image will be empty.
+    @return `false` if loding has failed.
+     */
+    CV_WRAP bool load(OutputArray image);
+
+    CV_WRAP int getNumPages() { return decoder->getNumPages(); }
+
+    CV_WRAP bool nextPage() { return decoder->nextPage(); }
+
+    CV_WRAP int width() { return decoder->width(); }
+
+    CV_WRAP int height() { return decoder->height(); }
+
+
+    /** Switches exceptions mode
+     *
+     * methods raise exceptions if not successful instead of returning an error code
+     */
+    CV_WRAP void setExceptionMode(bool enable) { throwOnFail = enable; }
+
+    /// query if exception mode is active
+    CV_WRAP bool getExceptionMode() { return throwOnFail; }
+
+protected:
+    ImageDecoder decoder;
+    bool throwOnFail;
+    int flags;
+};
 
 //! @} imgcodecs
 

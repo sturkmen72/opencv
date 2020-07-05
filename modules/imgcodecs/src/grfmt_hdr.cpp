@@ -79,6 +79,9 @@ bool  HdrDecoder::readHeader()
         file = NULL;
         return false;
     }
+    else
+        m_number_of_pages = 1;
+
     return true;
 }
 

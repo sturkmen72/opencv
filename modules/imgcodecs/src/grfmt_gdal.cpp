@@ -526,6 +526,7 @@ bool GdalDecoder::readHeader(){
         }
         m_type = tempType;
     }
+    m_number_of_pages = 1;
 
     return true;
 }

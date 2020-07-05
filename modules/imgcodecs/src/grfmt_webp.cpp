@@ -140,6 +140,7 @@ bool WebPDecoder::readHeader()
             channels = 3;
         }
 
+        m_number_of_pages = 1;
         return true;
     }
 

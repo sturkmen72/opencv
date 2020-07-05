@@ -254,11 +254,14 @@ bool  JpegDecoder::readHeader()
             m_height = state->cinfo.output_height;
             m_type = state->cinfo.num_components > 1 ? CV_8UC3 : CV_8UC1;
             result = true;
+            m_number_of_pages = 1;
         }
     }
 
     if( !result )
         close();
+    else
+        m_number_of_pages = 1;
 
     return result;
 }

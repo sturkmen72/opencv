@@ -350,13 +350,11 @@ public:
 
     CV_WRAP bool nextPage() { return decoder->nextPage(); }
 
-    CV_WRAP int width() { return decoder->width(); }
-
-    CV_WRAP int height() { return decoder->height(); }
+    CV_WRAP int getSize() { return Size(decoder->width(), decoder->height()); }
 
     CV_WRAP int flags;
 
-    CV_WRAP int type() { return decoder->type(); }
+    CV_WRAP int getType() { return decoder->type(); }
 
     /** Switches exceptions mode
      *

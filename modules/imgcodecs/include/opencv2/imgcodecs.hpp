@@ -354,6 +354,9 @@ public:
 
     CV_WRAP int height() { return decoder->height(); }
 
+    CV_WRAP int flags;
+
+    CV_WRAP int type() { return decoder->type(); }
 
     /** Switches exceptions mode
      *
@@ -367,7 +370,6 @@ public:
 protected:
     ImageDecoder decoder;
     bool throwOnFail;
-    int flags;
 };
 
 //! @} imgcodecs

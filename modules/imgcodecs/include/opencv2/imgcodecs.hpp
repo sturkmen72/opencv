@@ -48,7 +48,6 @@
 /**
   @defgroup imgcodecs Image file reading and writing
   @{
-    @defgroup imgcodecs_c C API
     @defgroup imgcodecs_ios iOS glue
   @}
 */

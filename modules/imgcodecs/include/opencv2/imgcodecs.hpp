@@ -308,7 +308,7 @@ public:
     @param filename file name
     @param flags Flag that can take values of cv::ImreadModes
     */
-    CV_WRAP ImageLoader(const String& filename, int flags = 1);
+    CV_WRAP ImageLoader(const String& filename, int flags = IMREAD_COLOR);
 
     /** @brief Default destructor
     */
@@ -318,7 +318,7 @@ public:
 
     @overload
 
-    Parameters are same as the constructor ImageLoader(const String& filename, int flags = 1)
+    Parameters are same as the constructor ImageLoader(const String& filename, int flags = IMREAD_COLOR)
     @return `true` if the file has been successfully opened
      */
     CV_WRAP bool open(const String& filename, int flags = 1);
@@ -355,15 +355,6 @@ public:
     CV_WRAP int flags;
 
     CV_WRAP int getType() { return decoder->type(); }
-
-    /** Switches exceptions mode
-     *
-     * methods raise exceptions if not successful instead of returning an error code
-     */
-    CV_WRAP void setExceptionMode(bool enable) { throwOnFail = enable; }
-
-    /// query if exception mode is active
-    CV_WRAP bool getExceptionMode() { return throwOnFail; }
 
 protected:
     ImageDecoder decoder;

@@ -473,6 +473,7 @@ bool PAMDecoder::readHeader()
             }
             m_type = CV_MAKETYPE(m_sampledepth, m_channels);
             m_offset = m_strm.getPos();
+            m_number_of_pages = 1;
 
             return true;
         }

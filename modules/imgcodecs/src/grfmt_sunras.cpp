@@ -154,6 +154,9 @@ bool  SunRasterDecoder::readHeader()
         m_width = m_height = -1;
         m_strm.close();
     }
+    else
+        m_number_of_pages = 1;
+
     return result;
 }
 

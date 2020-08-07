@@ -140,6 +140,8 @@ bool WebPDecoder::readHeader()
             channels = 3;
         }
 
+        m_number_of_pages = 1; // TODO : multipage image support
+
         return true;
     }
 

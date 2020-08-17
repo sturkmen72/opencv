@@ -86,7 +86,7 @@ bool BaseImageDecoder::checkSignature( const String& signature ) const
 int BaseImageDecoder::setScale( const int& scale_denom )
 {
     int temp = m_scale_denom;
-    if (scale_denom > 0)
+    if( scale_denom > 0 )
         m_scale_denom = scale_denom;
     return temp;
 }

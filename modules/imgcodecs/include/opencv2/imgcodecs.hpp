@@ -254,47 +254,6 @@ CV_EXPORTS_W bool imencode( const String& ext, InputArray img,
                             CV_OUT std::vector<uchar>& buf,
                             const std::vector<int>& params = std::vector<int>());
 
-class BaseImageDecoder;
-typedef Ptr<BaseImageDecoder> ImageDecoder;
-
-///////////////////////////////// base class for decoders ////////////////////////
-class BaseImageDecoder
-{
-public:
-    BaseImageDecoder();
-    virtual ~BaseImageDecoder() {}
-
-    int width() const { return m_width; }
-    int height() const { return m_height; }
-    virtual int type() const { return m_type; }
-    virtual int getNumPages() const { return m_number_of_pages; }
-    virtual String getFilename() const { return m_filename; }
-    virtual bool setSource(const String& filename);
-    virtual bool setSource(const Mat& buf);
-    virtual int setScale(const int& scale_denom);
-    virtual bool readHeader() = 0;
-    virtual bool readData(Mat& img) = 0;
-
-    /// Called after readData to advance to the next page, if any.
-    virtual bool nextPage() { return false; }
-
-    virtual size_t signatureLength() const;
-    virtual bool checkSignature(const String& signature) const;
-    virtual ImageDecoder newDecoder() const;
-
-protected:
-    int  m_width;  // width  of the image ( filled by readHeader )
-    int  m_height; // height of the image ( filled by readHeader )
-    int  m_number_of_pages;
-    int  m_page_index;
-    int  m_type;
-    int  m_scale_denom;
-    String m_filename;
-    String m_signature;
-    Mat m_buf;
-    bool m_buf_supported;
-};
-
 
 class CV_EXPORTS_W ImageLoader
 {
@@ -324,7 +283,7 @@ public:
     /** @brief Returns true if ImageLoader has been initialized already.
     If the previous call to ImageLoader constructor or ImageLoader::open() succeeded, the method returns true.
      */
-    CV_WRAP bool isOpened() const { return (decoder->getNumPages() > 0); }
+    CV_WRAP bool isOpened() const { return m_NumPages; }
 
     /** @brief Stream operator to ImageLoader.load()
     @sa load()
@@ -342,18 +301,25 @@ public:
      */
     CV_WRAP bool load(OutputArray image);
 
-    CV_WRAP int getNumPages() { return decoder->getNumPages(); }
+    CV_WRAP int getNumPages() { return m_NumPages; }
 
-    CV_WRAP bool nextPage() { return decoder->nextPage(); }
+    CV_WRAP bool nextPage();
 
-    CV_WRAP Size getSize() { return Size(decoder->width(), decoder->height()); }
+    CV_WRAP Size getSize() { return Size(m_width, m_height); }
+
+    CV_WRAP int getType() { return m_type; }
 
     CV_WRAP int flags;
 
-    CV_WRAP int getType() { return decoder->type(); }
+    CV_WRAP String filepath;
 
 protected:
-    ImageDecoder decoder;
+    int scaledenom;
+    int m_type;
+    int m_NumPages;
+    int m_width;
+    int m_height;
+    int m_page_index;
 };
 
 //! @} imgcodecs

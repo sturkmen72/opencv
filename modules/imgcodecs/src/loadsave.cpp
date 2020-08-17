@@ -260,6 +260,7 @@ static ImageDecoder findDecoder( const Mat& buf )
     return ImageDecoder();
 }
 
+
 static ImageEncoder findEncoder( const String& _ext )
 {
     if( _ext.size() <= 1 )
@@ -396,7 +397,7 @@ static void ApplyExifOrientation(const Mat& buf, Mat& img)
  *
 */
 static void*
-imread_( const String& filename, int flags, int hdrtype, Mat* mat=0 )
+imread_( const String& filename, int flags, int hdrtype, Mat* mat=0, int index = -1 )
 {
     CV_Assert(mat || hdrtype != LOAD_MAT); // mat is required in LOAD_MAT case
 
@@ -456,72 +457,89 @@ imread_( const String& filename, int flags, int hdrtype, Mat* mat=0 )
         return 0;
     }
 
+    int counter = 0;
 
-    // established the required input image size
-    Size size = validateInputImageSize(Size(decoder->width(), decoder->height()));
-
-    // grab the decoded type
-    int type = decoder->type();
-    if( (flags & IMREAD_LOAD_GDAL) != IMREAD_LOAD_GDAL && flags != IMREAD_UNCHANGED )
+    for (;;)
     {
-        if( (flags & IMREAD_ANYDEPTH) == 0 )
-            type = CV_MAKETYPE(CV_8U, CV_MAT_CN(type));
-
-        if( (flags & IMREAD_COLOR) != 0 ||
-           ((flags & IMREAD_ANYCOLOR) != 0 && CV_MAT_CN(type) > 1) )
-            type = CV_MAKETYPE(CV_MAT_DEPTH(type), 3);
-        else
-            type = CV_MAKETYPE(CV_MAT_DEPTH(type), 1);
-    }
-
-    if( hdrtype == LOAD_CVMAT || hdrtype == LOAD_MAT )
-    {
-        if( hdrtype == LOAD_CVMAT )
+        if( (index < 0) | (counter == index) )
         {
-            matrix = cvCreateMat( size.height, size.width, type );
-            temp = cvarrToMat( matrix );
+           // established the required input image size
+           Size size = validateInputImageSize( Size(decoder->width(), decoder->height()) );
+
+           // grab the decoded type
+           int type = decoder->type();
+           if( (flags & IMREAD_LOAD_GDAL) != IMREAD_LOAD_GDAL && flags != IMREAD_UNCHANGED )
+           {
+               if( (flags & IMREAD_ANYDEPTH) == 0 )
+                   type = CV_MAKETYPE(CV_8U, CV_MAT_CN(type));
+
+               if( (flags & IMREAD_COLOR) != 0 ||
+                  ((flags & IMREAD_ANYCOLOR) != 0 && CV_MAT_CN(type) > 1) )
+                   type = CV_MAKETYPE(CV_MAT_DEPTH(type), 3);
+               else
+                   type = CV_MAKETYPE(CV_MAT_DEPTH(type), 1);
+           }
+
+           if( hdrtype == LOAD_CVMAT || hdrtype == LOAD_MAT )
+           {
+               if( hdrtype == LOAD_CVMAT )
+               {
+                   matrix = cvCreateMat( size.height, size.width, type );
+                   temp = cvarrToMat( matrix );
+               }
+               else
+               {
+                   mat->create( size.height, size.width, type );
+                   data = mat;
+               }
+           }
+           else
+           {
+               image = cvCreateImage( cvSize(size), cvIplDepth(type), CV_MAT_CN(type) );
+               temp = cvarrToMat( image );
+           }
+
+           // read the image data
+           bool success = false;
+           try
+           {
+               if( decoder->readData(*data) )
+                   success = true;
+           }
+           catch (const cv::Exception& e)
+           {
+               std::cerr << "imread_('" << filename << "'): can't read data: " << e.what() << std::endl << std::flush;
+           }
+           catch (...)
+           {
+               std::cerr << "imread_('" << filename << "'): can't read data: unknown exception" << std::endl << std::flush;
+           }
+           if( !success )
+           {
+           cvReleaseImage( &image );
+           cvReleaseMat( &matrix );
+           if( mat )
+               mat->release();
+           return 0;
+           }
+
+           if( (counter == index) | (!decoder->nextPage()) )
+           {
+               if( decoder->setScale(scale_denom) > 1 ) // if decoder is JpegDecoder then decoder->setScale always returns 1
+               {
+                   resize( *mat, *mat, Size(size.width / scale_denom, size.height / scale_denom), 0, 0, INTER_LINEAR_EXACT );
+               }
+               break;
+           }
+        }
+
+        if( !decoder->nextPage() )
+        {
+            break;
         }
         else
-        {
-            mat->create( size.height, size.width, type );
-            data = mat;
-        }
+            counter++;
     }
-    else
-    {
-        image = cvCreateImage(cvSize(size), cvIplDepth(type), CV_MAT_CN(type));
-        temp = cvarrToMat( image );
-    }
-
-    // read the image data
-    bool success = false;
-    try
-    {
-        if (decoder->readData(*data))
-            success = true;
-    }
-    catch (const cv::Exception& e)
-    {
-        std::cerr << "imread_('" << filename << "'): can't read data: " << e.what() << std::endl << std::flush;
-    }
-    catch (...)
-    {
-        std::cerr << "imread_('" << filename << "'): can't read data: unknown exception" << std::endl << std::flush;
-    }
-    if (!success)
-    {
-        cvReleaseImage( &image );
-        cvReleaseMat( &matrix );
-        if( mat )
-            mat->release();
-        return 0;
-    }
-
-    if( decoder->setScale( scale_denom ) > 1 ) // if decoder is JpegDecoder then decoder->setScale always returns 1
-    {
-        resize( *mat, *mat, Size( size.width / scale_denom, size.height / scale_denom ), 0, 0, INTER_LINEAR_EXACT);
-    }
-
     return hdrtype == LOAD_CVMAT ? (void*)matrix :
         hdrtype == LOAD_IMAGE ? (void*)image : (void*)mat;
 }
@@ -541,10 +559,9 @@ Mat imread( const String& filename, int flags )
     /// create the basic container
     Mat img;
 
-    /// load the data
     ImageLoader imageloader;
 
-    if(imageloader.open(filename, flags))
+    if( imageloader.open(filename, flags) )
         imageloader.load(img);
 
     /// optionally rotate the data if EXIF' orientation flag says so
@@ -573,11 +590,11 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int flags)
 
     ImageLoader imageloader;
 
-    if(imageloader.open(filename, flags))
+    if( imageloader.open(filename, flags) )
         for (int i = 0; i < imageloader.getNumPages(); i++)
         {
             Mat page;
-            if (imageloader.load(page))
+            if( imageloader.load(page) )
                 mats.push_back(page);
             imageloader.nextPage();
         }
@@ -923,10 +940,11 @@ bool imencode( const String& ext, InputArray _image,
 ImageLoader::ImageLoader()
 {}
 
-ImageLoader::ImageLoader(const String& filename, int _flags)
+ImageLoader::ImageLoader( const String& filename, int _flags )
 {
     CV_TRACE_FUNCTION();
-    open(filename, _flags);
+
+    open( filename, _flags );
 }
 
 ImageLoader::~ImageLoader()
@@ -934,41 +952,52 @@ ImageLoader::~ImageLoader()
     CV_TRACE_FUNCTION();
 }
 
-bool ImageLoader::open(const String& filename, int _flags)
+bool ImageLoader::open( const String& filename, int _flags )
 {
     CV_TRACE_FUNCTION();
 
+    filepath = filename;
     flags = _flags;
 
-/// Search for the relevant decoder to handle the imagery
+    m_type = -1;
+    m_NumPages = 0;
+    m_width = 0;
+    m_height = 0;
+    m_page_index = 0;
+
+    /// Search for the relevant decoder to handle the imagery
+    ImageDecoder decoder;
+
 #ifdef HAVE_GDAL
-    if (flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL) {
+    if( flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL) {
         decoder = GdalDecoder().newDecoder();
     }
     else {
 #endif
-        decoder = findDecoder(filename);
+        decoder = findDecoder( filename );
 #ifdef HAVE_GDAL
     }
 #endif
 
     /// if no decoder was found, return false.
-    if (!decoder) {
+    if( !decoder ) {
         return false;
     }
 
     int scale_denom = 1;
-    if (flags > IMREAD_LOAD_GDAL)
+    if( flags > IMREAD_LOAD_GDAL )
     {
-        if (flags & IMREAD_REDUCED_GRAYSCALE_2)
+        if( flags & IMREAD_REDUCED_GRAYSCALE_2 )
             scale_denom = 2;
-        else if (flags & IMREAD_REDUCED_GRAYSCALE_4)
+        else if( flags & IMREAD_REDUCED_GRAYSCALE_4 )
             scale_denom = 4;
-        else if (flags & IMREAD_REDUCED_GRAYSCALE_8)
+        else if( flags & IMREAD_REDUCED_GRAYSCALE_8 )
             scale_denom = 8;
     }
 
     /// set the scale_denom in the driver
+    scaledenom = scale_denom;
+
     decoder->setScale(scale_denom);
 
     /// set the filename in the driver
@@ -978,7 +1007,7 @@ bool ImageLoader::open(const String& filename, int _flags)
     try
     {
         // read the header to make sure it succeeds
-        if (!decoder->readHeader())
+        if( !decoder->readHeader() )
             return false;
     }
     catch (const cv::Exception& e)
@@ -991,61 +1020,36 @@ bool ImageLoader::open(const String& filename, int _flags)
         std::cerr << "ImageLoader.open('" << filename << "'): can't read header: unknown exception" << std::endl << std::flush;
         return 0;
     }
+
+    m_type = decoder->type();
+    m_width = decoder->width();
+    m_height = decoder->height();
+    m_NumPages = decoder->getNumPages();
+
     return true;
 }
 
-bool ImageLoader::load(OutputArray image)
+bool ImageLoader::load( OutputArray image )
 {
     CV_TRACE_FUNCTION();
 
-    // grab the decoded type
-    int type = decoder->type();
+    Mat img;
+    imread_(filepath, flags, LOAD_MAT, &img, m_page_index);
+    image.assign(img);
+    return !img.empty();
+}
 
-    if ((flags & IMREAD_LOAD_GDAL) != IMREAD_LOAD_GDAL && flags != IMREAD_UNCHANGED)
-    {
-        if ((flags & IMREAD_ANYDEPTH) == 0)
-            type = CV_MAKETYPE(CV_8U, CV_MAT_CN(type));
-
-        if ((flags & IMREAD_COLOR) != 0 ||
-            ((flags & IMREAD_ANYCOLOR) != 0 && CV_MAT_CN(type) > 1))
-            type = CV_MAKETYPE(CV_MAT_DEPTH(type), 3);
-        else
-            type = CV_MAKETYPE(CV_MAT_DEPTH(type), 1);
-    }
-    // established the required input image size
-    Size size = validateInputImageSize(Size(decoder->width(), decoder->height()));
-
-    // read the image data
-    Mat mat(size.height, size.width, type);
-    bool success = false;
-    try
-    {
-        if (decoder->readData(mat))
-            success = true;
-    }
-    catch (const cv::Exception& e)
-    {
-        std::cerr << "ImageLoader.open('" << decoder->getFilename() << "'): can't read data: " << e.what() << std::endl << std::flush;
-    }
-    catch (...)
-    {
-        std::cerr << "ImageLoader.open('" << decoder->getFilename() << "'): can't read data: unknown exception" << std::endl << std::flush;
-    }
-
-    int scale_denom = decoder->setScale(0);
-    if (scale_denom > 1) // if decoder is JpegDecoder then decoder->setScale always returns 1
-    {
-        resize(mat, mat, Size(size.width / scale_denom, size.height / scale_denom), 0, 0, INTER_LINEAR_EXACT);
-    }
-    image.assign(mat);
-    return success;
+bool ImageLoader::nextPage()
+{
+    return  m_page_index++ <= m_NumPages;
+    // TO DO : read header and update variables
 }
 
 ImageLoader& ImageLoader::operator >> (Mat& image)
 {
     CV_INSTRUMENT_REGION();
 
-    load(image);
+    load( image );
     return *this;
 }
 
@@ -1053,7 +1057,7 @@ ImageLoader& ImageLoader::operator >> (UMat& image)
 {
     CV_INSTRUMENT_REGION();
 
-    load(image);
+    load( image );
     return *this;
 }
 

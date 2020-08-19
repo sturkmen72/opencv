@@ -198,7 +198,7 @@ static ImageCodecInitializer codecs;
  *
  * @return Image decoder to parse image file.
 */
-static ImageDecoder findDecoder( const String& filename ) {
+static ImageDecoder findDecoder( const String& filename, int& exception_code ) {
 
     size_t i, maxlen = 0;
 
@@ -214,7 +214,11 @@ static ImageDecoder findDecoder( const String& filename ) {
 
     /// in the event of a failure, return an empty image decoder
     if( !f )
+    {
+        exception_code = IMLOADER_FILE_NOT_OPENED;
         return ImageDecoder();
+    }
+
 
     // read the file signature
     String signature(maxlen, ' ');
@@ -230,6 +234,7 @@ static ImageDecoder findDecoder( const String& filename ) {
     }
 
     /// If no decoder was found, return base type
+    exception_code = IMLOADER_UNKNOWN_FILE_TYPE;
     return ImageDecoder();
 }
 
@@ -413,7 +418,8 @@ imread_( const String& filename, int flags, int hdrtype, Mat* mat=0, int index =
         decoder = GdalDecoder().newDecoder();
     }else{
 #endif
-        decoder = findDecoder( filename );
+        int exception_code;
+        decoder = findDecoder( filename, exception_code );
 #ifdef HAVE_GDAL
     }
 #endif
@@ -584,7 +590,7 @@ Mat imread( const String& filename, int flags )
 * @param[in] flags Flags you wish to set.
 *
 */
-bool imreadmulti(const String& filename, std::vector<Mat>& mats, int flags)
+bool imreadmulti( const String& filename, std::vector<Mat>& mats, int flags )
 {
     CV_TRACE_FUNCTION();
 
@@ -646,7 +652,7 @@ static bool imwrite_( const String& filename, const std::vector<Mat>& img_vec,
         if (!isMultiImg)
             code = encoder->write( write_vec[0], params );
         else
-            code = encoder->writemulti( write_vec, params ); //to be implemented
+            code = encoder->writemulti( write_vec, params );
 
         if (!code)
         {
@@ -773,7 +779,7 @@ imdecode_( const Mat& buf, int flags, int hdrtype, Mat* mat=0 )
     }
 
     // established the required input image size
-    Size size = validateInputImageSize(Size(decoder->width(), decoder->height()));
+    Size size = validateInputImageSize( Size(decoder->width(), decoder->height()) );
 
     int type = decoder->type();
     if( (flags & IMREAD_LOAD_GDAL) != IMREAD_LOAD_GDAL && flags != IMREAD_UNCHANGED )
@@ -841,7 +847,7 @@ imdecode_( const Mat& buf, int flags, int hdrtype, Mat* mat=0 )
 
     if( decoder->setScale( scale_denom ) > 1 ) // if decoder is JpegDecoder then decoder->setScale always returns 1
     {
-        resize( *mat, *mat, Size( size.width / scale_denom, size.height / scale_denom ), 0, 0, INTER_LINEAR_EXACT);
+        resize( *mat, *mat, Size( size.width / scale_denom, size.height / scale_denom ), 0, 0, INTER_LINEAR_EXACT );
     }
 
     decoder.release();
@@ -964,17 +970,18 @@ bool ImageLoader::open( const String& filename, int _flags )
     m_width = 0;
     m_height = 0;
     m_page_index = 0;
+    m_last_exception_code = -1;
 
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
 
 #ifdef HAVE_GDAL
-    if( flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL) {
+    if( flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL ) {
         decoder = GdalDecoder().newDecoder();
     }
     else {
 #endif
-        decoder = findDecoder( filename );
+        decoder = findDecoder( filename, m_last_exception_code );
 #ifdef HAVE_GDAL
     }
 #endif
@@ -1034,7 +1041,7 @@ bool ImageLoader::load( OutputArray image )
     CV_TRACE_FUNCTION();
 
     Mat img;
-    imread_(filepath, flags, LOAD_MAT, &img, m_page_index);
+    imread_( filepath, flags, LOAD_MAT, &img, m_page_index );
     image.assign(img);
     return !img.empty();
 }
@@ -1045,7 +1052,7 @@ bool ImageLoader::nextPage()
     // TO DO : read header and update variables
 }
 
-ImageLoader& ImageLoader::operator >> (Mat& image)
+ImageLoader& ImageLoader::operator >> ( Mat& image )
 {
     CV_INSTRUMENT_REGION();
 
@@ -1053,7 +1060,7 @@ ImageLoader& ImageLoader::operator >> (Mat& image)
     return *this;
 }
 
-ImageLoader& ImageLoader::operator >> (UMat& image)
+ImageLoader& ImageLoader::operator >> ( UMat& image )
 {
     CV_INSTRUMENT_REGION();
 
@@ -1070,7 +1077,8 @@ ImageLoader& ImageLoader::operator >> (UMat& image)
 CV_IMPL int
 cvHaveImageReader( const char* filename )
 {
-    cv::ImageDecoder decoder = cv::findDecoder(filename);
+    int exception_code;
+    cv::ImageDecoder decoder = cv::findDecoder( filename, exception_code );
     return !decoder.empty();
 }
 

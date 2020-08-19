@@ -126,7 +126,13 @@ enum ImwritePAMFlags {
        IMWRITE_PAM_FORMAT_GRAYSCALE = 2,
        IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA = 3,
        IMWRITE_PAM_FORMAT_RGB = 4,
-       IMWRITE_PAM_FORMAT_RGB_ALPHA = 5,
+       IMWRITE_PAM_FORMAT_RGB_ALPHA = 5
+     };
+
+//! ImageLoader Exception Codes.
+enum ImageLoaderExceptionCodes {
+       IMLOADER_FILE_NOT_OPENED = 0,
+       IMLOADER_UNKNOWN_FILE_TYPE = 1
      };
 
 /** @brief Loads an image from a file.
@@ -300,17 +306,12 @@ public:
     @return `false` if loding has failed.
      */
     CV_WRAP bool load(OutputArray image);
-
     CV_WRAP int getNumPages() { return m_NumPages; }
-
     CV_WRAP bool nextPage();
-
     CV_WRAP Size getSize() { return Size(m_width, m_height); }
-
     CV_WRAP int getType() { return m_type; }
-
+    CV_WRAP int getLastException() { return m_last_exception_code; }
     CV_WRAP int flags;
-
     CV_WRAP String filepath;
 
 protected:
@@ -320,6 +321,7 @@ protected:
     int m_width;
     int m_height;
     int m_page_index;
+    int m_last_exception_code;
 };
 
 //! @} imgcodecs

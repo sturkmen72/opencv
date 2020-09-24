@@ -18,9 +18,9 @@
 #include "precomp.hpp"
 #include <iostream>
 
-#ifdef _MSC_VER
-#pragma warning( disable: 4305 )  // FIXIT remove this
-#endif
+//#ifdef _MSC_VER
+//#pragma warning( disable: 4305 )  // FIXIT remove this
+//#endif
 
 namespace cv
 {

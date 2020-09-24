@@ -1003,7 +1003,7 @@ bool ImageLoader::open( const String& filename, int _flags )
     }
 
     /// set the scale_denom in the driver
-    scaledenom = scale_denom;
+    m_scale_denom = scale_denom;
 
     decoder->setScale(scale_denom);
 

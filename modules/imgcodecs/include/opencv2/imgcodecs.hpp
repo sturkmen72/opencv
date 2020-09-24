@@ -315,7 +315,7 @@ public:
     CV_WRAP String filepath;
 
 protected:
-    int m_scaledenom;
+    int m_scale_denom;
     int m_type;
     int m_NumPages;
     int m_width;

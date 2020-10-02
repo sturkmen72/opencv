@@ -48,7 +48,6 @@
 /**
   @defgroup imgcodecs Image file reading and writing
   @{
-    @defgroup imgcodecs_c C API
     @defgroup imgcodecs_ios iOS glue
   @}
 */
@@ -127,7 +126,13 @@ enum ImwritePAMFlags {
        IMWRITE_PAM_FORMAT_GRAYSCALE = 2,
        IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA = 3,
        IMWRITE_PAM_FORMAT_RGB = 4,
-       IMWRITE_PAM_FORMAT_RGB_ALPHA = 5,
+       IMWRITE_PAM_FORMAT_RGB_ALPHA = 5
+     };
+
+//! ImageLoader Exception Codes.
+enum ImageLoaderExceptionCodes {
+       IMLOADER_FILE_NOT_OPENED = 0,
+       IMLOADER_UNKNOWN_FILE_TYPE = 1
      };
 
 /** @brief Loads an image from a file.
@@ -185,8 +190,8 @@ CV_EXPORTS_W Mat imread( const String& filename, int flags = IMREAD_COLOR );
 
 The function imreadmulti loads a multi-page image from the specified file into a vector of Mat objects.
 @param filename Name of file to be loaded.
-@param flags Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
 @param mats A vector of Mat objects holding each page, if more than one.
+@param flags Flag that can take values of cv::ImreadModes, default with cv::IMREAD_ANYCOLOR.
 @sa cv::imread
 */
 CV_EXPORTS_W bool imreadmulti(const String& filename, CV_OUT std::vector<Mat>& mats, int flags = IMREAD_ANYCOLOR);
@@ -254,6 +259,70 @@ result. See cv::imwrite for the list of supported formats and flags description.
 CV_EXPORTS_W bool imencode( const String& ext, InputArray img,
                             CV_OUT std::vector<uchar>& buf,
                             const std::vector<int>& params = std::vector<int>());
+
+
+class CV_EXPORTS_W ImageLoader
+{
+public:
+    /** @brief Default constructor
+     */
+    CV_WRAP ImageLoader();
+
+    /** @overload
+    @brief  Opens a file and get its properties
+    @param filename file name
+    @param flags Flag that can take values of cv::ImreadModes
+    */
+    CV_WRAP ImageLoader(const String& filename, int flags = IMREAD_COLOR);
+
+    /** @brief Default destructor
+    */
+    ~ImageLoader();
+
+    /** @brief  Opens a file.
+    @overload
+    Parameters are same as the constructor ImageLoader(const String& filename, int flags = IMREAD_COLOR)
+    @return `true` if the file has been successfully opened
+     */
+    CV_WRAP bool open(const String& filename, int flags = IMREAD_COLOR);
+
+    /** @brief Returns true if ImageLoader has been initialized already.
+    If the previous call to ImageLoader constructor or ImageLoader::open() succeeded, the method returns true.
+     */
+    CV_WRAP bool isOpened() const { return m_NumPages; }
+
+    /** @brief Stream operator to ImageLoader.load()
+    @sa load()
+    */
+    ImageLoader& operator >> (CV_OUT Mat& image);
+
+    /** @overload
+    @sa load()
+    */
+    ImageLoader& operator >> (CV_OUT UMat& image);
+
+    /** @brief loads image data
+    @param [out] image Array, if loding has failed image will be empty.
+    @return `false` if loding has failed.
+     */
+    CV_WRAP bool load(OutputArray image);
+    CV_WRAP int getNumPages() { return m_NumPages; }
+    CV_WRAP bool nextPage();
+    CV_WRAP Size getSize() { return Size(m_width, m_height); }
+    CV_WRAP int getType() { return m_type; }
+    CV_WRAP int getLastException() { return m_last_exception_code; }
+    CV_WRAP int flags;
+    CV_WRAP String filepath;
+
+protected:
+    int m_scale_denom;
+    int m_type;
+    int m_NumPages;
+    int m_width;
+    int m_height;
+    int m_page_index;
+    int m_last_exception_code;
+};
 
 //! @} imgcodecs
 

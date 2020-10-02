@@ -202,6 +202,8 @@ bool  Jpeg2KDecoder::readHeader()
 
     if( !result )
         close();
+    else
+        m_number_of_pages = 1;
 
     return result;
 }

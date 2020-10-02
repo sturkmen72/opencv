@@ -70,15 +70,21 @@ size_t HdrDecoder::signatureLength() const
 bool  HdrDecoder::readHeader()
 {
     file = fopen(m_filename.c_str(), "rb");
+
     if(!file) {
         return false;
     }
+
     RGBE_ReadHeader(file, &m_width, &m_height, NULL);
+
     if(m_width <= 0 || m_height <= 0) {
         fclose(file);
         file = NULL;
         return false;
     }
+    else
+        m_number_of_pages = 1;
+
     return true;
 }
 

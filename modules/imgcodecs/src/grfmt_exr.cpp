@@ -91,7 +91,6 @@ ExrDecoder::ExrDecoder()
     m_isfloat = false;
     m_ischroma = false;
     m_native_depth = false;
-
 }
 
 
@@ -170,6 +169,8 @@ bool  ExrDecoder::readHeader()
 
     if( !result )
         close();
+    else
+        m_number_of_pages = 1;
 
     return result;
 }

@@ -65,6 +65,8 @@ public:
     int height() const { return m_height; }
     virtual int type() const { return m_type; }
 
+    virtual int getNumPages() const { return m_number_of_pages; }
+    virtual String getFilename() const { return m_filename; }
     virtual bool setSource( const String& filename );
     virtual bool setSource( const Mat& buf );
     virtual int setScale( const int& scale_denom );
@@ -81,6 +83,8 @@ public:
 protected:
     int  m_width;  // width  of the image ( filled by readHeader )
     int  m_height; // height of the image ( filled by readHeader )
+    int  m_number_of_pages;
+    int  m_page_index;
     int  m_type;
     int  m_scale_denom;
     String m_filename;

@@ -609,19 +609,21 @@ bool imreadmulti( const String& filename, std::vector<Mat>& mats, int flags )
     CV_TRACE_FUNCTION();
 
     ImageLoader imageloader;
+    bool result = false;
 
     if( imageloader.open(filename, flags) )
         for (int i = 0; i < imageloader.getNumPages(); i++)
         {
             Mat page;
             if( imageloader.load(page) )
+            {
                 mats.push_back(page);
+                result = true;
+            }
             imageloader.nextPage();
         }
-    else
-        return false;
 
-    return true;
+    return result;
 }
 
 static bool imwrite_( const String& filename, const std::vector<Mat>& img_vec,

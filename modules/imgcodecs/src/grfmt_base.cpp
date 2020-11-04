@@ -53,6 +53,8 @@ BaseImageDecoder::BaseImageDecoder()
     m_type = -1;
     m_buf_supported = false;
     m_scale_denom = 1;
+    m_number_of_pages = 1;
+    m_page_index = -1;
 }
 
 bool BaseImageDecoder::setSource( const String& filename )
@@ -85,7 +87,8 @@ bool BaseImageDecoder::checkSignature( const String& signature ) const
 int BaseImageDecoder::setScale( const int& scale_denom )
 {
     int temp = m_scale_denom;
-    m_scale_denom = scale_denom;
+    if( scale_denom > 0 )
+        m_scale_denom = scale_denom;
     return temp;
 }
 

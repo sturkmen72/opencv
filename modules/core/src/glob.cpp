@@ -224,7 +224,7 @@ static bool wildcmp(const char *string, const char *wild)
 }
 
 static void glob_rec(const cv::String& directory, const cv::String& wildchart, std::vector<cv::String>& result,
-        bool recursive, bool includeDirectories, const cv::String& pathPrefix)
+        bool recursive, bool includeDirectories, const cv::String& pathPrefix, cv::globCallback onFileFound)
 {
     DIR *dir;
 
@@ -246,13 +246,17 @@ static void glob_rec(const cv::String& directory, const cv::String& wildchart, s
                 if (isDir(path, dir))
                 {
                     if (recursive)
-                        glob_rec(path, wildchart, result, recursive, includeDirectories, entry);
+                        glob_rec(path, wildchart, result, recursive, includeDirectories, entry, onFileFound);
                     if (!includeDirectories)
                         continue;
                 }
 
                 if (wildchart.empty() || wildcmp(name, wildchart.c_str()))
+                {
                     result.push_back(entry);
+                    if (onFileFound && !onFileFound(entry))
+                        CV_Error(CV_StsOk, "glob canceled!");
+                }
             }
         }
         catch (...)
@@ -264,7 +268,8 @@ static void glob_rec(const cv::String& directory, const cv::String& wildchart, s
     }
     else
     {
-        CV_Error_(CV_StsObjectNotFound, ("could not open directory: %s", directory.c_str()));
+        if(!onFileFound)
+            CV_Error_(CV_StsObjectNotFound, ("could not open directory: %s", directory.c_str()));
     }
 }
 
@@ -301,7 +306,7 @@ void cv::glob(String pattern, std::vector<String>& result, bool recursive)
         }
     }
 
-    glob_rec(path, wildchart, result, recursive, false, path);
+    glob_rec(path, wildchart, result, recursive, false, path, NULL);
     std::sort(result.begin(), result.end());
 }
 
@@ -309,7 +314,7 @@ void cv::utils::fs::glob(const cv::String& directory, const cv::String& pattern,
         std::vector<cv::String>& result,
         bool recursive, bool includeDirectories)
 {
-    glob_rec(directory, pattern, result, recursive, includeDirectories, directory);
+    glob_rec(directory, pattern, result, recursive, includeDirectories, directory, NULL);
     std::sort(result.begin(), result.end());
 }
 
@@ -317,6 +322,13 @@ void cv::utils::fs::glob_relative(const cv::String& directory, const cv::String&
         std::vector<cv::String>& result,
         bool recursive, bool includeDirectories)
 {
-    glob_rec(directory, pattern, result, recursive, includeDirectories, cv::String());
+    glob_rec(directory, pattern, result, recursive, includeDirectories, cv::String(), NULL);
     std::sort(result.begin(), result.end());
+}
+
+void cv::glob(const cv::String& directory, const cv::String& pattern,
+    globCallback onFileFound, bool recursive)
+{
+    std::vector<cv::String> result;
+    glob_rec(directory, pattern, result, recursive, false, directory, onFileFound);
 }

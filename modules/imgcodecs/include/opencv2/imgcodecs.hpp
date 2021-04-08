@@ -314,8 +314,8 @@ public:
     CV_WRAP ImageLoader();
 
     /** @overload
-    @brief  Opens a file and get its properties
-    @param filename file name
+    @brief  Opens a file and gets its properties
+    @param filename Name of file to be loaded.
     @param flags Flag that can take values of cv::ImreadModes
     */
     CV_WRAP ImageLoader(const String& filename, int flags = IMREAD_COLOR);

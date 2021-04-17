@@ -266,6 +266,7 @@ bool TiffDecoder::readHeader()
         uint32 wdth = 0, hght = 0;
         uint16 photometric = 0;
 
+        m_number_of_pages = TIFFNumberOfDirectories(tif);
         CV_TIFF_CHECK_CALL(TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &wdth));
         CV_TIFF_CHECK_CALL(TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &hght));
         CV_TIFF_CHECK_CALL(TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric));
@@ -326,6 +327,8 @@ bool TiffDecoder::readHeader()
 
     if( !result )
         close();
+    else
+        m_page_index++;
 
     return result;
 }

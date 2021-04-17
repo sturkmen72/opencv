@@ -7,6 +7,9 @@ before_script:
   - mkdir build-opencv
   - cd build-opencv
   - cmake 
+    -DBUILD_opencv_line_descriptor=OFF
+    -DBUILD_opencv_video=OFF
+    -DBUILD_opencv_videoio=OFF
     -DBUILD_opencv_flann=OFF
     -DBUILD_opencv_features2d=OFF
     -DBUILD_opencv_java=OFF

@@ -336,16 +336,6 @@ public:
      */
     CV_WRAP bool isOpened() const { return m_NumPages > 0; }
 
-    /** @brief Stream operator to ImageLoader.load()
-    @sa load()
-    */
-    ImageLoader& operator >> (CV_OUT Mat& image);
-
-    /** @overload
-    @sa load()
-    */
-    ImageLoader& operator >> (CV_OUT UMat& image);
-
     /** @brief loads image data
     @param [out] image Array, if loading has failed image will be empty.
     @return `true` if image data loaded successfully.
@@ -357,8 +347,6 @@ public:
     CV_WRAP Size getSize() { return Size(m_width, m_height); }
     CV_WRAP int getType() { return m_type; }
     CV_WRAP int getLastException() { return m_last_exception_code; }
-    //CV_PROP_RW int flags;
-    //CV_PROP String filename;
 
 protected:
     String m_filename;

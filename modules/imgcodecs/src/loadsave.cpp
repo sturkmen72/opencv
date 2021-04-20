@@ -923,26 +923,9 @@ bool ImageLoader::open( const String& filename, int flags )
         return false;
     }
 
-    int scale_denom = 1;
-    if( flags > IMREAD_LOAD_GDAL )
-    {
-        if( flags & IMREAD_REDUCED_GRAYSCALE_2 )
-            scale_denom = 2;
-        else if( flags & IMREAD_REDUCED_GRAYSCALE_4 )
-            scale_denom = 4;
-        else if( flags & IMREAD_REDUCED_GRAYSCALE_8 )
-            scale_denom = 8;
-    }
-
-    /// set the scale_denom in the driver
-    m_scale_denom = scale_denom;
-
-    decoder->setScale(scale_denom);
-
     /// set the filename in the driver
     decoder->setSource(filename);
 
-    // read the header to make sure it succeeds
     try
     {
         // read the header to make sure it succeeds
@@ -1004,27 +987,6 @@ bool ImageLoader::nextPage()
     return  false;
     // TO DO : read header and update variables
 }
-
-ImageLoader& ImageLoader::operator >> ( Mat& image )
-{
-    CV_TRACE_FUNCTION();
-
-    load( image );
-    if( m_page_index < m_NumPages )
-        m_page_index++;
-    return *this;
-}
-
-ImageLoader& ImageLoader::operator >> ( UMat& image )
-{
-    CV_TRACE_FUNCTION();
-
-    load( image );
-    if( m_page_index < m_NumPages )
-        m_page_index++;
-    return *this;
-}
-
 }
 
 /* End of file. */

@@ -147,10 +147,38 @@ enum ImwritePAMFlags {
        IMWRITE_PAM_FORMAT_GRAYSCALE = 2,
        IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA = 3,
        IMWRITE_PAM_FORMAT_RGB = 4,
-       IMWRITE_PAM_FORMAT_RGB_ALPHA = 5,
+       IMWRITE_PAM_FORMAT_RGB_ALPHA = 5
      };
 
+//! imread Return Codes.
+enum ImreadResults {
+    IMREAD_SUCCESS = 0,
+    IMREAD_FILE_NOT_OPENED = 1,
+    IMREAD_UNKNOWN_FILE_TYPE = 2,
+    IMREAD_READ_DATA_ERROR = 3
+};
 //! @} imgcodecs_flags
+
+struct CV_EXPORTS_W_SIMPLE pageInfo
+{
+    CV_PROP int type;
+    CV_PROP int width;
+    CV_PROP int height;
+    CV_PROP bool scalable;
+};
+
+struct CV_EXPORTS_W_SIMPLE imInfo
+{
+    CV_PROP int errorcode;
+    CV_PROP int page_count;
+    CV_WRAP std::vector<pageInfo> pages;
+};
+
+/** @brief Reads the image file header and gets image properties.
+
+The function fills image information into returned struct cv::imInfo
+*/
+CV_EXPORTS_W imInfo imquery(const String& filename);
 
 /** @brief Loads an image from a file.
 
@@ -204,6 +232,14 @@ Currently, the following file formats are supported:
 @param flags Flag that can take values of cv::ImreadModes
 */
 CV_EXPORTS_W Mat imread( const String& filename, int flags = IMREAD_COLOR );
+
+/** @overload
+@param filename Name of file to be loaded.
+@param image OutputArray where the image data will be loaded.
+@param flags Flag that can take values of cv::ImreadModes
+@param index page index to be loaded for multipage image files.
+*/
+CV_EXPORTS_W int imread(const String& filename, OutputArray image, int flags = IMREAD_COLOR, int index = 0);
 
 /** @brief Loads a multi-page image from a file.
 

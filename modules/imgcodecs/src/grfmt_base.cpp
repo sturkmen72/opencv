@@ -53,6 +53,7 @@ BaseImageDecoder::BaseImageDecoder()
     m_type = -1;
     m_buf_supported = false;
     m_scale_denom = 1;
+    m_page_count = 1;
 }
 
 
@@ -60,6 +61,7 @@ ExifEntry_t BaseImageDecoder::getExifTag(const ExifTagName tag) const
 {
     return m_exif.getTag(tag);
 }
+
 bool BaseImageDecoder::setSource( const String& filename )
 {
     m_filename = filename;
@@ -90,7 +92,8 @@ bool BaseImageDecoder::checkSignature( const String& signature ) const
 int BaseImageDecoder::setScale( const int& scale_denom )
 {
     int temp = m_scale_denom;
-    m_scale_denom = scale_denom;
+    if( scale_denom > 0 )
+        m_scale_denom = scale_denom;
     return temp;
 }
 

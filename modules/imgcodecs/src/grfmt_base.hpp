@@ -67,6 +67,7 @@ public:
     virtual int type() const { return m_type; }
 
     ExifEntry_t getExifTag(const ExifTagName tag) const;
+    virtual int getPageCount() const { return m_page_count; }
     virtual bool setSource( const String& filename );
     virtual bool setSource( const Mat& buf );
     virtual int setScale( const int& scale_denom );
@@ -85,6 +86,7 @@ protected:
     int  m_height; // height of the image ( filled by readHeader )
     int  m_type;
     int  m_scale_denom;
+    int  m_page_count;
     String m_filename;
     String m_signature;
     Mat m_buf;

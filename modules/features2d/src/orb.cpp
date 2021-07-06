@@ -661,6 +661,9 @@ public:
         scoreType(_scoreType), patchSize(_patchSize), fastThreshold(_fastThreshold)
     {}
 
+    void read( const FileNode& fn) CV_OVERRIDE;
+    void write( FileStorage& fs) const CV_OVERRIDE;
+
     void setMaxFeatures(int maxFeatures) CV_OVERRIDE { nfeatures = maxFeatures; }
     int getMaxFeatures() const CV_OVERRIDE { return nfeatures; }
 
@@ -711,6 +714,34 @@ protected:
     int patchSize;
     int fastThreshold;
 };
+
+void ORB_Impl::read( const FileNode& fn)
+{
+  fn["nfeatures"] >> nfeatures;
+  fn["scaleFactor"] >> scaleFactor;
+  fn["nlevels"] >> nlevels;
+  fn["edgeThreshold"] >> edgeThreshold;
+  fn["firstLevel"] >> firstLevel;
+  fn["wta_k"] >> wta_k;
+  fn["scoreType"] >> scoreType;
+  fn["patchSize"] >> patchSize;
+}
+void ORB_Impl::write( FileStorage& fs) const
+{
+  if(fs.isOpened())
+  {
+    fs << "name" << getDefaultName();
+    fs << "nfeatures" << nfeatures;
+    fs << "scaleFactor" << scaleFactor;
+    fs << "nlevels" << nlevels;
+    fs << "edgeThreshold" << edgeThreshold;
+    fs << "firstLevel" << firstLevel;
+    fs << "wta_k" << wta_k;
+    fs << "scoreType" << scoreType;
+    fs << "patchSize" << patchSize;
+    fs << "fastThreshold" << fastThreshold;
+  }
+}
 
 int ORB_Impl::descriptorSize() const
 {

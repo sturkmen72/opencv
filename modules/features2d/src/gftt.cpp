@@ -55,6 +55,29 @@ public:
     {
     }
 
+    void read( const FileNode& fn) CV_OVERRIDE
+    {
+      fn["nfeatures"] >> nfeatures;
+      fn["qualityLevel"] >> qualityLevel;
+      fn["minDistance"] >> minDistance;
+      fn["blockSize"] >> blockSize;
+      fn["gradSize"] >> gradSize;
+      fn["useHarrisDetector"] >> useHarrisDetector;
+    }
+    void write( FileStorage& fs) const CV_OVERRIDE
+    {
+      if(fs.isOpened())
+      {
+        fs << "name" << getDefaultName();
+        fs << "nfeatures" << nfeatures;
+        fs << "qualityLevel" << qualityLevel;
+        fs << "minDistance" << minDistance;
+        fs << "blockSize" << blockSize;
+        fs << "gradSize" << gradSize;
+        fs << "useHarrisDetector" << useHarrisDetector;
+      }
+    }
+
     void setMaxFeatures(int maxFeatures) CV_OVERRIDE { nfeatures = maxFeatures; }
     int getMaxFeatures() const CV_OVERRIDE { return nfeatures; }
 
@@ -146,7 +169,7 @@ Ptr<GFTTDetector> GFTTDetector::create( int _nfeatures, double _qualityLevel,
 
 String GFTTDetector::getDefaultName() const
 {
-    return (Feature2D::getDefaultName() + ".GFTTDetector");
+    return (Feature2D::getDefaultName() + ".GFTT");
 }
 
 }

@@ -7948,6 +7948,23 @@ public:
     : threshold(_threshold), nonmaxSuppression(_nonmaxSuppression), type(_type)
     {}
 
+    void read( const FileNode& fn) CV_OVERRIDE
+    {
+      fn["threshold"] >> threshold;
+      fn["nonmaxSuppression"] >> nonmaxSuppression;
+      fn["type"] >> type;
+    }
+    void write( FileStorage& fs) const CV_OVERRIDE
+    {
+      if(fs.isOpened())
+      {
+        fs << "name" << getDefaultName();
+        fs << "threshold" << threshold;
+        fs << "nonmaxSuppression" << nonmaxSuppression;
+        fs << "type" << type;
+      }
+    }
+
     void detect( InputArray _image, std::vector<KeyPoint>& keypoints, InputArray _mask ) CV_OVERRIDE
     {
         CV_INSTRUMENT_REGION();
@@ -8172,7 +8189,7 @@ void AGAST(InputArray _img, std::vector<KeyPoint>& keypoints, int threshold, boo
 
 String AgastFeatureDetector::getDefaultName() const
 {
-    return(Feature2D::getDefaultName() + ".AgastFeatureDetector");
+    return(Feature2D::getDefaultName() + ".AGAST");
 }
 
 } // END NAMESPACE CV

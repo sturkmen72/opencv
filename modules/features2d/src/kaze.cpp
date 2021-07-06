@@ -163,6 +163,7 @@ namespace cv
         void write(FileStorage& fs) const CV_OVERRIDE
         {
             writeFormat(fs);
+            fs << "name" << getDefaultName();
             fs << "extended" << (int)extended;
             fs << "upright" << (int)upright;
             fs << "threshold" << threshold;

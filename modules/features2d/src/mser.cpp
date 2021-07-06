@@ -87,6 +87,37 @@ public:
 
     virtual ~MSER_Impl() CV_OVERRIDE {}
 
+    void read( const FileNode& fn) CV_OVERRIDE
+    {
+      fn["delta"] >> params.delta;
+      fn["maxArea"] >> params.maxArea;
+      fn["minArea"] >> params.minArea;
+      fn["maxVariation"] >> params.maxVariation;
+      fn["minDiversity"] >> params.minDiversity;
+      fn["pass2Only"] >> params.pass2Only;
+      fn["maxEvolution"] >> params.maxEvolution;
+      fn["areaThreshold"] >> params.areaThreshold;
+      fn["minMargin"] >> params.minMargin;
+      fn["edgeBlurSize"] >> params.edgeBlurSize;
+    }
+    void write( FileStorage& fs) const CV_OVERRIDE
+    {
+      if(fs.isOpened())
+      {
+        fs << "name" << getDefaultName();
+        fs << "delta" << params.delta;
+        fs << "maxArea" << params.maxArea;
+        fs << "minArea" << params.minArea;
+        fs << "maxVariation" << params.maxVariation;
+        fs << "minDiversity" << params.minDiversity;
+        fs << "pass2Only" << params.pass2Only;
+        fs << "maxEvolution" << params.maxEvolution;
+        fs << "areaThreshold" << params.areaThreshold;
+        fs << "minMargin" << params.minMargin;
+        fs << "edgeBlurSize" << params.edgeBlurSize;
+      }
+    }
+
     void setDelta(int delta) CV_OVERRIDE { params.delta = delta; }
     int getDelta() const CV_OVERRIDE { return params.delta; }
 

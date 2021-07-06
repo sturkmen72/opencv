@@ -65,6 +65,9 @@ public:
 
     virtual ~BRISK_Impl();
 
+    void read( const FileNode& fn) CV_OVERRIDE;
+    void write( FileStorage& fs) const CV_OVERRIDE;
+
     int descriptorSize() const CV_OVERRIDE
     {
         return strings_;
@@ -357,6 +360,21 @@ BRISK_Impl::BRISK_Impl(int thresh,
   generateKernel(radiusList, numberList, dMax, dMin, indexChange);
   threshold = thresh;
   octaves = octaves_in;
+}
+
+void BRISK_Impl::read( const FileNode& fn)
+{
+  fn["threshold"] >> threshold;
+  fn["octaves"] >> octaves;
+}
+void BRISK_Impl::write( FileStorage& fs) const
+{
+  if(fs.isOpened())
+  {
+    fs << "name" << getDefaultName();
+    fs << "threshold" << threshold;
+    fs << "octaves" << octaves;
+  }
 }
 
 void

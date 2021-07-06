@@ -207,6 +207,7 @@ namespace cv
         void write(FileStorage& fs) const CV_OVERRIDE
         {
             writeFormat(fs);
+            fs << "name" << getDefaultName();
             fs << "descriptor" << descriptor;
             fs << "descriptor_channels" << descriptor_channels;
             fs << "descriptor_size" << descriptor_size;

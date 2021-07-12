@@ -424,9 +424,6 @@ public:
     CV_WRAP static Ptr<ORB> create(int nfeatures=500, float scaleFactor=1.2f, int nlevels=8, int edgeThreshold=31,
         int firstLevel=0, int WTA_K=2, ORB::ScoreType scoreType=ORB::HARRIS_SCORE, int patchSize=31, int fastThreshold=20);
 
-    virtual void read( const FileNode& fn) CV_OVERRIDE = 0;
-    virtual void write( FileStorage& fs) const CV_OVERRIDE = 0;
-
     CV_WRAP virtual void setMaxFeatures(int maxFeatures) = 0;
     CV_WRAP virtual int getMaxFeatures() const = 0;
 

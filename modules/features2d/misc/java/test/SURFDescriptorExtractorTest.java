@@ -29,7 +29,7 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
         super.setUp();
 
         Class[] cParams = {double.class, int.class, int.class, boolean.class, boolean.class};
-        Object[] oValues = {100, 2, 4, true, false};
+        Object[] oValues = {100, 4, 2, true, false};
         extractor = createClassInstance(XFEATURES2D+"SURF", DEFAULT_FACTORY, cParams, oValues);
 
         matSize = 100;
@@ -89,11 +89,16 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
 
     public void testRead() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\n---\nnOctaves: 4\nnOctaveLayers: 2\nextended: 1\nupright: 0\n");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 4\nnOctaveLayers: 2\n");
 
         extractor.read(filename);
 
         assertEquals(128, extractor.descriptorSize());
+        //assertEquals(100., extractor.getHessianThreshold());
+        //assertEquals(1, extractor.getExtended());
+        //assertEquals(0, extractor.getUpright());
+        //assertEquals(4, extractor.getNOctaves());
+        //assertEquals(2, extractor.getNOctaveLayers());
     }
 
     public void testWrite() {
@@ -101,8 +106,8 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<extended>1</extended>\n<hessianThreshold>100.</hessianThreshold>\n<nOctaveLayers>2</nOctaveLayers>\n<nOctaves>4</nOctaves>\n<upright>0</upright>\n</opencv_storage>\n";
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
+        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>4</nOctaves>\n<nOctaveLayers>2</nOctaveLayers>\n</opencv_storage>\n";
+ //       String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
         assertEquals(truth, readFile(filename));
     }
 
@@ -111,8 +116,8 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-//        String truth = "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nextended: 1\nhessianThreshold: 100.\nnOctaveLayers: 2\nnOctaves: 4\nupright: 0\n";
-        String truth = "%YAML:1.0\n---\n";
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 4\nnOctaveLayers: 2\n";
+//        String truth = "%YAML:1.0\n---\n";
         assertEquals(truth, readFile(filename));
     }
 

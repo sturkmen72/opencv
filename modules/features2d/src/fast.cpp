@@ -541,9 +541,13 @@ public:
 
     void read( const FileNode& fn) CV_OVERRIDE
     {
-      fn["threshold"] >> threshold;
-      fn["nonmaxSuppression"] >> nonmaxSuppression;
-      fn["type"] >> type;
+      // if node is empty, keep previous value
+      if (!fn["threshold"].empty())
+        fn["threshold"] >> threshold;
+      if (!fn["nonmaxSuppression"].empty())
+        fn["nonmaxSuppression"] >> nonmaxSuppression;
+      if (!fn["type"].empty())
+        fn["type"] >> type;
     }
     void write( FileStorage& fs) const CV_OVERRIDE
     {
@@ -624,7 +628,7 @@ Ptr<FastFeatureDetector> FastFeatureDetector::create( int threshold, bool nonmax
 
 String FastFeatureDetector::getDefaultName() const
 {
-    return (Feature2D::getDefaultName() + ".FAST");
+    return (Feature2D::getDefaultName() + ".FastFeatureDetector");
 }
 
 }

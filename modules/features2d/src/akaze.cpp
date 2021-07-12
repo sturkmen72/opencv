@@ -219,13 +219,21 @@ namespace cv
 
         void read(const FileNode& fn) CV_OVERRIDE
         {
-            descriptor = static_cast<DescriptorType>((int)fn["descriptor"]);
-            descriptor_channels = (int)fn["descriptor_channels"];
-            descriptor_size = (int)fn["descriptor_size"];
-            threshold = (float)fn["threshold"];
-            octaves = (int)fn["octaves"];
-            sublevels = (int)fn["sublevels"];
-            diffusivity = static_cast<KAZE::DiffusivityType>((int)fn["diffusivity"]);
+            // if node is empty, keep previous value
+            if (!fn["descriptor"].empty())
+                descriptor = static_cast<DescriptorType>((int)fn["descriptor"]);
+            if (!fn["descriptor_channels"].empty())
+                descriptor_channels = (int)fn["descriptor_channels"];
+            if (!fn["descriptor_size"].empty())
+                descriptor_size = (int)fn["descriptor_size"];
+            if (!fn["threshold"].empty())
+                threshold = (float)fn["threshold"];
+            if (!fn["octaves"].empty())
+                octaves = (int)fn["octaves"];
+            if (!fn["sublevels"].empty())
+                sublevels = (int)fn["sublevels"];
+            if (!fn["diffusivity"].empty())
+                diffusivity = static_cast<KAZE::DiffusivityType>((int)fn["diffusivity"]);
         }
 
         DescriptorType descriptor;

@@ -102,8 +102,8 @@ public class ORBDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.ORB</name>\n<WTA_K>2</WTA_K>\n<edgeThreshold>31</edgeThreshold>\n<firstLevel>0</firstLevel>\n<nFeatures>500</nFeatures>\n<nLevels>8</nLevels>\n<patchSize>31</patchSize>\n<scaleFactor>1.2000000476837158e+00</scaleFactor>\n<scoreType>0</scoreType>\n</opencv_storage>\n";
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
+        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.ORB</name>\n<nfeatures>500</nfeatures>\n<scaleFactor>1.2000000476837158e+00</scaleFactor>\n<nlevels>8</nlevels>\n<edgeThreshold>31</edgeThreshold>\n<firstLevel>0</firstLevel>\n<wta_k>2</wta_k>\n<scoreType>0</scoreType>\n<patchSize>31</patchSize>\n<fastThreshold>20</fastThreshold>\n</opencv_storage>\n";
+//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
         String actual = readFile(filename);
         actual = actual.replaceAll("e\\+000", "e+00"); // NOTE: workaround for different platforms double representation
         assertEquals(truth, actual);
@@ -114,8 +114,8 @@ public class ORBDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-//        String truth = "%YAML:1.0\n---\nname: \"Feature2D.ORB\"\nWTA_K: 2\nedgeThreshold: 31\nfirstLevel: 0\nnFeatures: 500\nnLevels: 8\npatchSize: 31\nscaleFactor: 1.2000000476837158e+00\nscoreType: 0\n";
-        String truth = "%YAML:1.0\n---\n";
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.ORB\"\nnfeatures: 500\nscaleFactor: 1.2000000476837158e+00\nnlevels: 8\nedgeThreshold: 31\nfirstLevel: 0\nwta_k: 2\nscoreType: 0\npatchSize: 31\nfastThreshold: 20\n";
+//        String truth = "%YAML:1.0\n---\n";
         String actual = readFile(filename);
         actual = actual.replaceAll("e\\+000", "e+00"); // NOTE: workaround for different platforms double representation
         assertEquals(truth, actual);

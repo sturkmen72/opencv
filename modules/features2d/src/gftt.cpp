@@ -57,12 +57,19 @@ public:
 
     void read( const FileNode& fn) CV_OVERRIDE
     {
-      fn["nfeatures"] >> nfeatures;
-      fn["qualityLevel"] >> qualityLevel;
-      fn["minDistance"] >> minDistance;
-      fn["blockSize"] >> blockSize;
-      fn["gradSize"] >> gradSize;
-      fn["useHarrisDetector"] >> useHarrisDetector;
+      // if node is empty, keep previous value
+      if (!fn["nfeatures"].empty())
+        fn["nfeatures"] >> nfeatures;
+      if (!fn["qualityLevel"].empty())
+        fn["qualityLevel"] >> qualityLevel;
+      if (!fn["minDistance"].empty())
+        fn["minDistance"] >> minDistance;
+      if (!fn["blockSize"].empty())
+        fn["blockSize"] >> blockSize;
+      if (!fn["gradSize"].empty())
+        fn["gradSize"] >> gradSize;
+      if (!fn["useHarrisDetector"].empty())
+        fn["useHarrisDetector"] >> useHarrisDetector;
     }
     void write( FileStorage& fs) const CV_OVERRIDE
     {
@@ -169,7 +176,7 @@ Ptr<GFTTDetector> GFTTDetector::create( int _nfeatures, double _qualityLevel,
 
 String GFTTDetector::getDefaultName() const
 {
-    return (Feature2D::getDefaultName() + ".GFTT");
+    return (Feature2D::getDefaultName() + ".GFTTDetector");
 }
 
 }

@@ -89,16 +89,27 @@ public:
 
     void read( const FileNode& fn) CV_OVERRIDE
     {
-      fn["delta"] >> params.delta;
-      fn["maxArea"] >> params.maxArea;
-      fn["minArea"] >> params.minArea;
-      fn["maxVariation"] >> params.maxVariation;
-      fn["minDiversity"] >> params.minDiversity;
-      fn["pass2Only"] >> params.pass2Only;
-      fn["maxEvolution"] >> params.maxEvolution;
-      fn["areaThreshold"] >> params.areaThreshold;
-      fn["minMargin"] >> params.minMargin;
-      fn["edgeBlurSize"] >> params.edgeBlurSize;
+      // if node is empty, keep previous value
+      if (!fn["delta"].empty())
+        fn["delta"] >> params.delta;
+      if (!fn["maxArea"].empty())
+        fn["maxArea"] >> params.maxArea;
+      if (!fn["minArea"].empty())
+        fn["minArea"] >> params.minArea;
+      if (!fn["maxVariation"].empty())
+        fn["maxVariation"] >> params.maxVariation;
+      if (!fn["minDiversity"].empty())
+        fn["minDiversity"] >> params.minDiversity;
+      if (!fn["pass2Only"].empty())
+        fn["pass2Only"] >> params.pass2Only;
+      if (!fn["maxEvolution"].empty())
+        fn["maxEvolution"] >> params.maxEvolution;
+      if (!fn["areaThreshold"].empty())
+        fn["areaThreshold"] >> params.areaThreshold;
+      if (!fn["minMargin"].empty())
+        fn["minMargin"] >> params.minMargin;
+      if (!fn["edgeBlurSize"].empty())
+        fn["edgeBlurSize"] >> params.edgeBlurSize;
     }
     void write( FileStorage& fs) const CV_OVERRIDE
     {

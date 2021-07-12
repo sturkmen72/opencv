@@ -101,7 +101,7 @@ public class STARFeatureDetectorTest extends OpenCVTestCase {
         detector.detect(img, keypoints1);
 
         String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\n---\nmaxSize: 45\nresponseThreshold: 150\nlineThresholdProjected: 10\nlineThresholdBinarized: 8\nsuppressNonmaxSize: 5\n");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.STAR\"\nmaxSize: 45\nresponseThreshold: 150\nlineThresholdProjected: 10\nlineThresholdBinarized: 8\nsuppressNonmaxSize: 5\n");
         detector.read(filename);
 
         MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
@@ -115,8 +115,8 @@ public class STARFeatureDetectorTest extends OpenCVTestCase {
 
         detector.write(filename);
 
-//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.STAR</name>\n<lineThresholdBinarized>8</lineThresholdBinarized>\n<lineThresholdProjected>10</lineThresholdProjected>\n<maxSize>45</maxSize>\n<responseThreshold>30</responseThreshold>\n<suppressNonmaxSize>5</suppressNonmaxSize>\n</opencv_storage>\n";
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
+        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.STAR</name>\n<maxSize>45</maxSize>\n<responseThreshold>30</responseThreshold>\n<lineThresholdProjected>10</lineThresholdProjected>\n<lineThresholdBinarized>8</lineThresholdBinarized>\n<suppressNonmaxSize>5</suppressNonmaxSize>\n</opencv_storage>\n";
+//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
         assertEquals(truth, readFile(filename));
     }
 
@@ -125,8 +125,8 @@ public class STARFeatureDetectorTest extends OpenCVTestCase {
 
         detector.write(filename);
 
-//        String truth = "%YAML:1.0\n---\nname: \"Feature2D.STAR\"\nlineThresholdBinarized: 8\nlineThresholdProjected: 10\nmaxSize: 45\nresponseThreshold: 30\nsuppressNonmaxSize: 5\n";
-        String truth = "%YAML:1.0\n---\n";
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.STAR\"\nmaxSize: 45\nresponseThreshold: 30\nlineThresholdProjected: 10\nlineThresholdBinarized: 8\nsuppressNonmaxSize: 5\n";
+//        String truth = "%YAML:1.0\n---\n";
         assertEquals(truth, readFile(filename));
     }
 

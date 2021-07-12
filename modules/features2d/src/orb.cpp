@@ -717,14 +717,23 @@ protected:
 
 void ORB_Impl::read( const FileNode& fn)
 {
-  fn["nfeatures"] >> nfeatures;
-  fn["scaleFactor"] >> scaleFactor;
-  fn["nlevels"] >> nlevels;
-  fn["edgeThreshold"] >> edgeThreshold;
-  fn["firstLevel"] >> firstLevel;
-  fn["wta_k"] >> wta_k;
-  fn["scoreType"] >> scoreType;
-  fn["patchSize"] >> patchSize;
+  // if node is empty, keep previous value
+  if (!fn["nfeatures"].empty())
+    fn["nfeatures"] >> nfeatures;
+  if (!fn["scaleFactor"].empty())
+    fn["scaleFactor"] >> scaleFactor;
+  if (!fn["nlevels"].empty())
+    fn["nlevels"] >> nlevels;
+  if (!fn["edgeThreshold"].empty())
+    fn["edgeThreshold"] >> edgeThreshold;
+  if (!fn["firstLevel"].empty())
+    fn["firstLevel"] >> firstLevel;
+  if (!fn["wta_k"].empty())
+    fn["wta_k"] >> wta_k;
+  if (!fn["scoreType"].empty())
+    fn["scoreType"] >> scoreType;
+  if (!fn["patchSize"].empty())
+    fn["patchSize"] >> patchSize;
 }
 void ORB_Impl::write( FileStorage& fs) const
 {

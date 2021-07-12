@@ -364,8 +364,11 @@ BRISK_Impl::BRISK_Impl(int thresh,
 
 void BRISK_Impl::read( const FileNode& fn)
 {
-  fn["threshold"] >> threshold;
-  fn["octaves"] >> octaves;
+  // if node is empty, keep previous value
+  if (!fn["threshold"].empty())
+    fn["threshold"] >> threshold;
+  if (!fn["octaves"].empty())
+    fn["octaves"] >> octaves;
 }
 void BRISK_Impl::write( FileStorage& fs) const
 {

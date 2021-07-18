@@ -92,16 +92,14 @@ public:
       // if node is empty, keep previous value
       if (!fn["delta"].empty())
         fn["delta"] >> params.delta;
-      if (!fn["maxArea"].empty())
-        fn["maxArea"] >> params.maxArea;
       if (!fn["minArea"].empty())
         fn["minArea"] >> params.minArea;
+      if (!fn["maxArea"].empty())
+        fn["maxArea"] >> params.maxArea;
       if (!fn["maxVariation"].empty())
         fn["maxVariation"] >> params.maxVariation;
       if (!fn["minDiversity"].empty())
         fn["minDiversity"] >> params.minDiversity;
-      if (!fn["pass2Only"].empty())
-        fn["pass2Only"] >> params.pass2Only;
       if (!fn["maxEvolution"].empty())
         fn["maxEvolution"] >> params.maxEvolution;
       if (!fn["areaThreshold"].empty())
@@ -110,6 +108,8 @@ public:
         fn["minMargin"] >> params.minMargin;
       if (!fn["edgeBlurSize"].empty())
         fn["edgeBlurSize"] >> params.edgeBlurSize;
+      if (!fn["pass2Only"].empty())
+        fn["pass2Only"] >> params.pass2Only;
     }
     void write( FileStorage& fs) const CV_OVERRIDE
     {
@@ -117,15 +117,15 @@ public:
       {
         fs << "name" << getDefaultName();
         fs << "delta" << params.delta;
-        fs << "maxArea" << params.maxArea;
         fs << "minArea" << params.minArea;
+        fs << "maxArea" << params.maxArea;
         fs << "maxVariation" << params.maxVariation;
         fs << "minDiversity" << params.minDiversity;
-        fs << "pass2Only" << params.pass2Only;
         fs << "maxEvolution" << params.maxEvolution;
         fs << "areaThreshold" << params.areaThreshold;
         fs << "minMargin" << params.minMargin;
         fs << "edgeBlurSize" << params.edgeBlurSize;
+        fs << "pass2Only" << params.pass2Only;
       }
     }
 
@@ -137,6 +137,24 @@ public:
 
     void setMaxArea(int maxArea) CV_OVERRIDE { params.maxArea = maxArea; }
     int getMaxArea() const CV_OVERRIDE { return params.maxArea; }
+
+    void setMaxVariation(double maxVariation) CV_OVERRIDE { params.maxVariation = maxVariation; }
+    double getMaxVariation() const CV_OVERRIDE { return params.maxVariation; }
+
+    void setMinDiversity(double minDiversity) CV_OVERRIDE { params.minDiversity = minDiversity; }
+    double getMinDiversity() const CV_OVERRIDE { return params.minDiversity; }
+
+    void setMaxEvolution(int maxEvolution) CV_OVERRIDE { params.maxEvolution = maxEvolution; }
+    int getMaxEvolution() const CV_OVERRIDE { return params.maxEvolution; }
+
+    void setAreaThreshold(double areaThreshold) CV_OVERRIDE { params.areaThreshold = areaThreshold; }
+    double getAreaThreshold() const CV_OVERRIDE { return params.areaThreshold; }
+
+    void setMinMargin(double min_margin) CV_OVERRIDE { params.minMargin = min_margin; }
+    double getMinMargin() const CV_OVERRIDE { return params.minMargin; }
+
+    void setEdgeBlurSize(int edge_blur_size) CV_OVERRIDE { params.edgeBlurSize = edge_blur_size; }
+    int getEdgeBlurSize() const CV_OVERRIDE { return params.edgeBlurSize; }
 
     void setPass2Only(bool f) CV_OVERRIDE { params.pass2Only = f; }
     bool getPass2Only() const CV_OVERRIDE { return params.pass2Only; }

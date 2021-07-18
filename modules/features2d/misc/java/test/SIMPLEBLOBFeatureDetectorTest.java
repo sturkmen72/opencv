@@ -11,12 +11,12 @@ import org.opencv.core.KeyPoint;
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.features2d.Feature2D;
 import org.opencv.features2d.SimpleBlobDetector;
+import org.opencv.features2d.SimpleBlobDetector_Params;
 
 public class SIMPLEBLOBFeatureDetectorTest extends OpenCVTestCase {
 
-    Feature2D detector;
+    SimpleBlobDetector detector;
     int matSize;
     KeyPoint[] truth;
 
@@ -47,8 +47,8 @@ public class SIMPLEBLOBFeatureDetectorTest extends OpenCVTestCase {
         detector = SimpleBlobDetector.create();
         matSize = 200;
         truth = new KeyPoint[] {
-                new KeyPoint( 140, 100, 41.036568f, -1, 0, 0, -1),
-                new KeyPoint( 60, 100, 48.538486f, -1, 0, 0, -1),
+                new KeyPoint(140, 100, 41.036568f, -1, 0, 0, -1),
+                new KeyPoint(60, 100, 48.538486f, -1, 0, 0, -1),
                 new KeyPoint(100, 60, 36.769554f, -1, 0, 0, -1),
                 new KeyPoint(100, 140, 28.635643f, -1, 0, 0, -1),
                 new KeyPoint(100, 100, 20.880613f, -1, 0, 0, -1)
@@ -98,8 +98,29 @@ public class SIMPLEBLOBFeatureDetectorTest extends OpenCVTestCase {
         detector.detect(img, keypoints1);
 
         String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\nthresholdStep: 10\nminThreshold: 50\nmaxThreshold: 220\nminRepeatability: 2\nfilterByArea: true\nminArea: 800\nmaxArea: 5000\n");
+        writeFile(filename, "%YAML:1.0\nthresholdStep: 10.0\nminThreshold: 50\nmaxThreshold: 220\nminRepeatability: 2\nminDistBetweenBlobs: 10.\nfilterByColor: 1\nblobColor: 0\nfilterByArea: 1\nminArea: 800\nmaxArea: 6000\nfilterByCircularity: 0\nminCircularity: 0.7\nmaxCircularity: 10.\nfilterByInertia: 1\nminInertiaRatio: 0.2\nmaxInertiaRatio: 11.\nfilterByConvexity: true\nminConvexity: 0.9\nmaxConvexity: 12.\n");
         detector.read(filename);
+
+        SimpleBlobDetector_Params params = detector.getParams();
+        assertEquals((float) 10.0, params.get_thresholdStep());
+        assertEquals((float) 50, params.get_minThreshold());
+        assertEquals((float) 220, params.get_maxThreshold());
+        assertEquals(2, params.get_minRepeatability());
+        assertEquals((float) 10.0, params.get_minDistBetweenBlobs());
+        assertEquals(true, params.get_filterByColor());
+        assertEquals(0, params.get_blobColor());
+        assertEquals(true, params.get_filterByArea());
+        assertEquals((float) 800, params.get_minArea());
+        assertEquals((float) 6000, params.get_maxArea());
+        assertEquals(false, params.get_filterByCircularity());
+        assertEquals((float) 0.7, params.get_minCircularity());
+        assertEquals((float) 10.0, params.get_maxCircularity());
+        assertEquals(true, params.get_filterByInertia());
+        assertEquals((float) 0.2, params.get_minInertiaRatio());
+        assertEquals((float) 11.0, params.get_maxInertiaRatio());
+        assertEquals(true, params.get_filterByConvexity());
+        assertEquals((float) 0.9, params.get_minConvexity());
+        assertEquals((float) 12.0, params.get_maxConvexity());
 
         MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
         detector.detect(img, keypoints2);

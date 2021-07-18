@@ -9,11 +9,11 @@ import org.opencv.core.KeyPoint;
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.features2d.Feature2D;
+import org.opencv.xfeatures2d.SURF;
 
 public class SURFDescriptorExtractorTest extends OpenCVTestCase {
 
-    Feature2D extractor;
+    SURF extractor;
     int matSize;
 
     private Mat getTestImg() {
@@ -29,7 +29,7 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
         super.setUp();
 
         Class[] cParams = {double.class, int.class, int.class, boolean.class, boolean.class};
-        Object[] oValues = {100, 4, 2, true, false};
+        Object[] oValues = {100, 2, 4, true, false};
         extractor = createClassInstance(XFEATURES2D+"SURF", DEFAULT_FACTORY, cParams, oValues);
 
         matSize = 100;
@@ -88,17 +88,31 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
     }
 
     public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 4\nnOctaveLayers: 2\n");
+        String filename = OpenCVTestRunner.getTempFileName("xml");
+        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>2</nOctaves>\n<nOctaveLayers>4</nOctaveLayers>\n</opencv_storage>\n");
 
         extractor.read(filename);
 
         assertEquals(128, extractor.descriptorSize());
-        //assertEquals(100., extractor.getHessianThreshold());
-        //assertEquals(1, extractor.getExtended());
-        //assertEquals(0, extractor.getUpright());
-        //assertEquals(4, extractor.getNOctaves());
-        //assertEquals(2, extractor.getNOctaveLayers());
+        assertEquals(100., extractor.getHessianThreshold());
+        assertEquals(true, extractor.getExtended());
+        assertEquals(false, extractor.getUpright());
+        assertEquals(2, extractor.getNOctaves());
+        assertEquals(4, extractor.getNOctaveLayers());
+    }
+
+    public void testReadYml() {
+        String filename = OpenCVTestRunner.getTempFileName("yml");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 2\nnOctaveLayers: 4\n");
+
+        extractor.read(filename);
+
+        assertEquals(128, extractor.descriptorSize());
+        assertEquals(100., extractor.getHessianThreshold());
+        assertEquals(true, extractor.getExtended());
+        assertEquals(false, extractor.getUpright());
+        assertEquals(2, extractor.getNOctaves());
+        assertEquals(4, extractor.getNOctaveLayers());
     }
 
     public void testWrite() {
@@ -106,9 +120,10 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>4</nOctaves>\n<nOctaveLayers>2</nOctaveLayers>\n</opencv_storage>\n";
- //       String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
-        assertEquals(truth, readFile(filename));
+        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>2</nOctaves>\n<nOctaveLayers>4</nOctaveLayers>\n</opencv_storage>\n";
+        String actual = readFile(filename);
+        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
+        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {
@@ -116,9 +131,10 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-        String truth = "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 4\nnOctaveLayers: 2\n";
-//        String truth = "%YAML:1.0\n---\n";
-        assertEquals(truth, readFile(filename));
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 2\nnOctaveLayers: 4\n";
+        String actual = readFile(filename);
+        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
+        assertEquals(truth, actual);
     }
 
 }

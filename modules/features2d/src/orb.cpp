@@ -734,6 +734,8 @@ void ORB_Impl::read( const FileNode& fn)
     fn["scoreType"] >> scoreType;
   if (!fn["patchSize"].empty())
     fn["patchSize"] >> patchSize;
+  if (!fn["fastThreshold"].empty())
+    fn["fastThreshold"] >> fastThreshold;
 }
 void ORB_Impl::write( FileStorage& fs) const
 {

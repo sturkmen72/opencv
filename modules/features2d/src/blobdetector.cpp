@@ -63,6 +63,9 @@ public:
   virtual void read( const FileNode& fn ) CV_OVERRIDE;
   virtual void write( FileStorage& fs ) const CV_OVERRIDE;
 
+  void setParams( SimpleBlobDetector::Params _params ) CV_OVERRIDE { params =_params; }
+  SimpleBlobDetector::Params getParams() CV_OVERRIDE { return params; }
+
 protected:
   struct CV_EXPORTS Center
   {
@@ -108,6 +111,15 @@ SimpleBlobDetector::Params::Params()
     //minConvexity = 0.8;
     minConvexity = 0.95f;
     maxConvexity = std::numeric_limits<float>::max();
+}
+
+int SimpleBlobDetector::Params::get_blobColor() const {return (int)blobColor;}
+void SimpleBlobDetector::Params::set_blobColor(int _blobColor)
+{
+  if(_blobColor>255 || _blobColor<0)
+    CV_Error(Error::StsBadArg, "BlobColor should be: 0<=blobColor<=255 ");
+  else
+    blobColor = (uchar)_blobColor;
 }
 
 void SimpleBlobDetector::Params::read(const cv::FileNode& fn )

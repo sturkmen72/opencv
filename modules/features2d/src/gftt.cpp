@@ -70,6 +70,8 @@ public:
         fn["gradSize"] >> gradSize;
       if (!fn["useHarrisDetector"].empty())
         fn["useHarrisDetector"] >> useHarrisDetector;
+      if (!fn["k"].empty())
+        fn["k"] >> k;
     }
     void write( FileStorage& fs) const CV_OVERRIDE
     {
@@ -82,6 +84,7 @@ public:
         fs << "blockSize" << blockSize;
         fs << "gradSize" << gradSize;
         fs << "useHarrisDetector" << useHarrisDetector;
+        fs << "k" << k;
       }
     }
 
@@ -97,8 +100,8 @@ public:
     void setBlockSize(int blockSize_) CV_OVERRIDE { blockSize = blockSize_; }
     int getBlockSize() const CV_OVERRIDE { return blockSize; }
 
-    //void setGradientSize(int gradientSize_) { gradSize = gradientSize_; }
-    //int getGradientSize() { return gradSize; }
+    void setGradientSize(int gradientSize_) CV_OVERRIDE { gradSize = gradientSize_; }
+    int getGradientSize() CV_OVERRIDE { return gradSize; }
 
     void setHarrisDetector(bool val) CV_OVERRIDE { useHarrisDetector = val; }
     bool getHarrisDetector() const CV_OVERRIDE { return useHarrisDetector; }

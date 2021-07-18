@@ -15,11 +15,11 @@ import org.opencv.core.KeyPoint;
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.features2d.Feature2D;
+import org.opencv.xfeatures2d.SURF;
 
 public class SURFFeatureDetectorTest extends OpenCVTestCase {
 
-    Feature2D detector;
+    SURF detector;
     int matSize;
     KeyPoint[] truth;
 
@@ -53,7 +53,7 @@ public class SURFFeatureDetectorTest extends OpenCVTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        detector = createClassInstance(XFEATURES2D+"SURF", DEFAULT_FACTORY, null, null);
+        detector = createClassInstance(XFEATURES2D + "SURF", DEFAULT_FACTORY, null, null);
         matSize = 100;
         truth = new KeyPoint[] {
                 new KeyPoint(55.775578f, 55.775578f, 16, 80.245735f, 8617.8633f, 0, -1),
@@ -145,8 +145,39 @@ public class SURFFeatureDetectorTest extends OpenCVTestCase {
         detector.detect(cross, keypoints1);
 
         String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 8000.\nextented: 1\nupright: 0\nOctaves: 3\nOctaveLayers: 4\n");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 8000.\nextended: 1\nupright: 0\nnOctaves: 3\nnOctaveLayers: 4\n");
         detector.read(filename);
+
+        assertEquals(128, detector.descriptorSize());
+        assertEquals(8000., detector.getHessianThreshold());
+        assertEquals(true, detector.getExtended());
+        assertEquals(false, detector.getUpright());
+        assertEquals(3, detector.getNOctaves());
+        assertEquals(4, detector.getNOctaveLayers());
+
+        MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
+        detector.detect(cross, keypoints2);
+
+        assertTrue(keypoints2.total() <= keypoints1.total());
+    }
+
+    public void testReadYml() {
+        Mat cross = getTestImg();
+
+        MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
+        detector.detect(cross, keypoints1);
+
+        String filename = OpenCVTestRunner.getTempFileName("xml");
+        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>8000.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>3</nOctaves>\n<nOctaveLayers>4</nOctaveLayers>\n</opencv_storage>\n");
+
+        detector.read(filename);
+
+        assertEquals(128, detector.descriptorSize());
+        assertEquals(8000., detector.getHessianThreshold());
+        assertEquals(true, detector.getExtended());
+        assertEquals(false, detector.getUpright());
+        assertEquals(3, detector.getNOctaves());
+        assertEquals(4, detector.getNOctaveLayers());
 
         MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
         detector.detect(cross, keypoints2);
@@ -160,8 +191,9 @@ public class SURFFeatureDetectorTest extends OpenCVTestCase {
         detector.write(filename);
 
         String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>0</extended>\n<upright>0</upright>\n<nOctaves>4</nOctaves>\n<nOctaveLayers>3</nOctaveLayers>\n</opencv_storage>\n";
-//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
-        assertEquals(truth, readFile(filename));
+        String actual = readFile(filename);
+        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
+        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {
@@ -170,8 +202,9 @@ public class SURFFeatureDetectorTest extends OpenCVTestCase {
         detector.write(filename);
 
         String truth = "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 0\nupright: 0\nnOctaves: 4\nnOctaveLayers: 3\n";
-//        String truth = "%YAML:1.0\n---\n";
-        assertEquals(truth, readFile(filename));
+        String actual = readFile(filename);
+        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
+        assertEquals(truth, actual);
     }
 
 }

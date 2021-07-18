@@ -75,8 +75,8 @@ namespace cv
         void setUpright(bool upright_) CV_OVERRIDE { upright = upright_; }
         bool getUpright() const CV_OVERRIDE { return upright; }
 
-        void setThreshold(double threshold_) CV_OVERRIDE { threshold = (float)threshold_; }
-        double getThreshold() const CV_OVERRIDE { return threshold; }
+        void setThreshold(float threshold_) CV_OVERRIDE { threshold = threshold_; }
+        float getThreshold() const CV_OVERRIDE { return threshold; }
 
         void setNOctaves(int octaves_) CV_OVERRIDE { octaves = octaves_; }
         int getNOctaves() const CV_OVERRIDE { return octaves; }

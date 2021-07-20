@@ -46,7 +46,7 @@ public class FREAKDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(false, extractor.getOrientationNormalized());
         assertEquals(false, extractor.getScaleNormalized());
-        assertEquals((float) 23.0, extractor.getPatternScale());
+        assertEquals(23.0, extractor.getPatternScale());
         assertEquals(5, extractor.getNOctaves());
     }
 
@@ -58,7 +58,7 @@ public class FREAKDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(false, extractor.getOrientationNormalized());
         assertEquals(false, extractor.getScaleNormalized());
-        assertEquals((float) 23.0, extractor.getPatternScale());
+        assertEquals(23.0, extractor.getPatternScale());
         assertEquals(5, extractor.getNOctaves());
     }
 

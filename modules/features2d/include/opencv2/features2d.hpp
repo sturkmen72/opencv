@@ -390,8 +390,9 @@ public:
     */
     CV_WRAP virtual void setOctaves(int octaves) { CV_UNUSED(octaves); return; }
     CV_WRAP virtual int getOctaves() const { return -1; }
-    /** @brief Set detection octaves.
-    @param octaves detection octaves. Use 0 to do single scale.
+    /** @brief Set detection patternScale.
+    @param patternScale apply this scale to the pattern used for sampling the neighbourhood of a
+    keypoint.
     */
     CV_WRAP virtual void setPatternScale(float patternScale) { CV_UNUSED(patternScale); return; }
     CV_WRAP virtual float getPatternScale() const { return -1; }

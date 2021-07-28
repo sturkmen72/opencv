@@ -313,20 +313,20 @@ public:
 
     CV_WRAP virtual String getDefaultName() const CV_OVERRIDE;
 
-    CV_WRAP virtual void setNFeatures(int maxFeatures) = 0;
-    CV_WRAP virtual int getNFeatures() const = 0;
+    CV_WRAP virtual void setNFeatures(int maxFeatures) { CV_UNUSED(maxFeatures); return; }
+    CV_WRAP virtual int getNFeatures() const { return -1; }
 
-    CV_WRAP virtual void setNOctaveLayers(int nOctaveLayers) = 0;
-    CV_WRAP virtual int getNOctaveLayers() const = 0;
+    CV_WRAP virtual void setNOctaveLayers(int nOctaveLayers) { CV_UNUSED(nOctaveLayers); return; }
+    CV_WRAP virtual int getNOctaveLayers() const { return -1; }
 
-    CV_WRAP virtual void setContrastThreshold(double contrastThreshold) = 0;
-    CV_WRAP virtual double getContrastThreshold() const = 0;
+    CV_WRAP virtual void setContrastThreshold(double contrastThreshold) { CV_UNUSED(contrastThreshold); return; }
+    CV_WRAP virtual double getContrastThreshold() const { return -1; }
 
-    CV_WRAP virtual void setEdgeThreshold(double edgeThreshold) = 0;
-    CV_WRAP virtual double getEdgeThreshold() const = 0;
+    CV_WRAP virtual void setEdgeThreshold(double edgeThreshold) { CV_UNUSED(edgeThreshold); return; }
+    CV_WRAP virtual double getEdgeThreshold() const { return -1; }
 
-    CV_WRAP virtual void setSigma(double sigma) = 0;
-    CV_WRAP virtual double getSigma() const = 0;
+    CV_WRAP virtual void setSigma(double sigma) { CV_UNUSED(sigma); return; }
+    CV_WRAP virtual double getSigma() const { return -1; }
 };
 
 typedef SIFT SiftFeatureDetector;
@@ -528,23 +528,23 @@ public:
     CV_WRAP virtual void setMaxArea(int maxArea) = 0;
     CV_WRAP virtual int getMaxArea() const = 0;
 
-    CV_WRAP virtual void setMaxVariation(double maxVariation) = 0;
-    CV_WRAP virtual double getMaxVariation() const = 0;
+    CV_WRAP virtual void setMaxVariation(double maxVariation) { CV_UNUSED(maxVariation); return; }
+    CV_WRAP virtual double getMaxVariation() const { return -1; }
 
-    CV_WRAP virtual void setMinDiversity(double minDiversity) = 0;
-    CV_WRAP virtual double getMinDiversity() const = 0;
+    CV_WRAP virtual void setMinDiversity(double minDiversity) { CV_UNUSED(minDiversity); return; }
+    CV_WRAP virtual double getMinDiversity() const { return -1; }
 
-    CV_WRAP virtual void setMaxEvolution(int maxEvolution) = 0;
-    CV_WRAP virtual int getMaxEvolution() const = 0;
+    CV_WRAP virtual void setMaxEvolution(int maxEvolution) { CV_UNUSED(maxEvolution); return; }
+    CV_WRAP virtual int getMaxEvolution() const { return -1; }
 
-    CV_WRAP virtual void setAreaThreshold(double areaThreshold) = 0;
-    CV_WRAP virtual double getAreaThreshold() const = 0;
+    CV_WRAP virtual void setAreaThreshold(double areaThreshold) { CV_UNUSED(areaThreshold); return; }
+    CV_WRAP virtual double getAreaThreshold() const { return -1; }
 
-    CV_WRAP virtual void setMinMargin(double min_margin) = 0;
-    CV_WRAP virtual double getMinMargin() const = 0;
+    CV_WRAP virtual void setMinMargin(double min_margin) { CV_UNUSED(min_margin); return; }
+    CV_WRAP virtual double getMinMargin() const { return -1; }
 
-    CV_WRAP virtual void setEdgeBlurSize(int edge_blur_size) = 0;
-    CV_WRAP virtual int getEdgeBlurSize() const = 0;
+    CV_WRAP virtual void setEdgeBlurSize(int edge_blur_size) { CV_UNUSED(edge_blur_size); return; }
+    CV_WRAP virtual int getEdgeBlurSize() const { return -1; }
 
     CV_WRAP virtual void setPass2Only(bool f) = 0;
     CV_WRAP virtual bool getPass2Only() const = 0;
@@ -693,8 +693,8 @@ public:
     CV_WRAP virtual void setBlockSize(int blockSize) = 0;
     CV_WRAP virtual int getBlockSize() const = 0;
 
-    CV_WRAP virtual void setGradientSize(int gradientSize_) = 0;
-    CV_WRAP virtual int getGradientSize() = 0;
+    CV_WRAP virtual void setGradientSize(int gradientSize_) { CV_UNUSED(gradientSize_); return; }
+    CV_WRAP virtual int getGradientSize() { return -1; }
 
     CV_WRAP virtual void setHarrisDetector(bool val) = 0;
     CV_WRAP virtual bool getHarrisDetector() const = 0;
@@ -771,8 +771,8 @@ public:
   CV_WRAP static Ptr<SimpleBlobDetector>
     create(const SimpleBlobDetector::Params &parameters = SimpleBlobDetector::Params());
 
-  CV_WRAP virtual void setParams( SimpleBlobDetector::Params params ) = 0;
-  CV_WRAP virtual SimpleBlobDetector::Params getParams() = 0;
+  CV_WRAP virtual void setParams( SimpleBlobDetector::Params params ) { CV_UNUSED(params); return; }
+  CV_WRAP virtual SimpleBlobDetector::Params getParams() { return SimpleBlobDetector::Params(); }
 
   CV_WRAP virtual String getDefaultName() const CV_OVERRIDE;
 };

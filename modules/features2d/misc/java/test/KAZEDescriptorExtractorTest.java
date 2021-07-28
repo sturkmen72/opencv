@@ -46,7 +46,7 @@ public class KAZEDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(true, extractor.getExtended());
         assertEquals(true, extractor.getUpright());
-        assertEquals((float) 0.002, extractor.getThreshold());
+        assertEquals((double)((float)0.002), extractor.getThreshold());
         assertEquals(3, extractor.getNOctaves());
         assertEquals(5, extractor.getNOctaveLayers());
         assertEquals(2, extractor.getDiffusivity());
@@ -60,7 +60,7 @@ public class KAZEDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(true, extractor.getExtended());
         assertEquals(true, extractor.getUpright());
-        assertEquals((float) 0.002, extractor.getThreshold());
+        assertEquals((double)((float) 0.002), extractor.getThreshold());
         assertEquals(3, extractor.getNOctaves());
         assertEquals(5, extractor.getNOctaveLayers());
         assertEquals(2, extractor.getDiffusivity());

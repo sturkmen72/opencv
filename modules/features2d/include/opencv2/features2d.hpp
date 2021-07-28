@@ -1,4 +1,4 @@
-/*M///////////////////////////////////////////////////////////////////////////////////////
+/*M///////////////////////////////////////////////////////////////////////////////////////ZE
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
 //
@@ -820,8 +820,8 @@ public:
     CV_WRAP virtual void setUpright(bool upright) = 0;
     CV_WRAP virtual bool getUpright() const = 0;
 
-    CV_WRAP virtual void setThreshold(float threshold) = 0;
-    CV_WRAP virtual float getThreshold() const = 0;
+    CV_WRAP virtual void setThreshold(double threshold) = 0;
+    CV_WRAP virtual double getThreshold() const = 0;
 
     CV_WRAP virtual void setNOctaves(int octaves) = 0;
     CV_WRAP virtual int getNOctaves() const = 0;
@@ -888,8 +888,8 @@ public:
     CV_WRAP virtual void setDescriptorChannels(int dch) = 0;
     CV_WRAP virtual int getDescriptorChannels() const = 0;
 
-    CV_WRAP virtual void setThreshold(float threshold) = 0;
-    CV_WRAP virtual float getThreshold() const = 0;
+    CV_WRAP virtual void setThreshold(double threshold) = 0;
+    CV_WRAP virtual double getThreshold() const = 0;
 
     CV_WRAP virtual void setNOctaves(int octaves) = 0;
     CV_WRAP virtual int getNOctaves() const = 0;

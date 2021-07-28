@@ -47,7 +47,7 @@ public class AKAZEDescriptorExtractorTest extends OpenCVTestCase {
         assertEquals(4, extractor.getDescriptorType());
         assertEquals(2, extractor.getDescriptorChannels());
         assertEquals(32, extractor.getDescriptorSize());
-        assertEquals((float) 0.002, extractor.getThreshold());
+        assertEquals((double)((float)0.002), extractor.getThreshold());
         assertEquals(3, extractor.getNOctaves());
         assertEquals(5, extractor.getNOctaveLayers());
         assertEquals(2, extractor.getDiffusivity());
@@ -62,7 +62,7 @@ public class AKAZEDescriptorExtractorTest extends OpenCVTestCase {
         assertEquals(4, extractor.getDescriptorType());
         assertEquals(2, extractor.getDescriptorChannels());
         assertEquals(32, extractor.getDescriptorSize());
-        assertEquals((float) 0.002, extractor.getThreshold());
+        assertEquals((double)((float)0.002), extractor.getThreshold());
         assertEquals(3, extractor.getNOctaves());
         assertEquals(5, extractor.getNOctaveLayers());
         assertEquals(2, extractor.getDiffusivity());

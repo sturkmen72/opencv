@@ -38,24 +38,6 @@ public class MSERFeatureDetectorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.MSER</name>\n<delta>6</delta>\n<minArea>62</minArea>\n<maxArea>14402</maxArea>\n<maxVariation>.26</maxVariation>\n<minDiversity>.3</minDiversity>\n<maxEvolution>201</maxEvolution>\n<areaThreshold>1.02</areaThreshold>\n<minMargin>3.0000000000000000e-03</minMargin>\n<edgeBlurSize>3</edgeBlurSize>\n<pass2Only>1</pass2Only>\n</opencv_storage>\n");
-        detector.read(filename);
-
-        assertEquals(6, detector.getDelta());
-        assertEquals(62, detector.getMinArea());
-        assertEquals(14402, detector.getMaxArea());
-        assertEquals(.26, detector.getMaxVariation());
-        assertEquals(.3, detector.getMinDiversity());
-        assertEquals(201, detector.getMaxEvolution());
-        assertEquals(1.02, detector.getAreaThreshold());
-        assertEquals(0.003, detector.getMinMargin());
-        assertEquals(3, detector.getEdgeBlurSize());
-        assertEquals(true, detector.getPass2Only());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
 
@@ -72,17 +54,6 @@ public class MSERFeatureDetectorTest extends OpenCVTestCase {
         assertEquals(0.003, detector.getMinMargin());
         assertEquals(3, detector.getEdgeBlurSize());
         assertEquals(true, detector.getPass2Only());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        detector.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.MSER</name>\n<delta>5</delta>\n<minArea>60</minArea>\n<maxArea>14400</maxArea>\n<maxVariation>2.5000000000000000e-01</maxVariation>\n<minDiversity>2.0000000000000001e-01</minDiversity>\n<maxEvolution>200</maxEvolution>\n<areaThreshold>1.0100000000000000e+00</areaThreshold>\n<minMargin>3.0000000000000001e-03</minMargin>\n<edgeBlurSize>5</edgeBlurSize>\n<pass2Only>0</pass2Only>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

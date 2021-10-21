@@ -91,7 +91,7 @@ public class SIMPLEBLOBFeatureDetectorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
+    public void testReadYml() {
         Mat img = getTestImg();
 
         MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
@@ -102,25 +102,25 @@ public class SIMPLEBLOBFeatureDetectorTest extends OpenCVTestCase {
         detector.read(filename);
 
         SimpleBlobDetector_Params params = detector.getParams();
-        assertEquals((float) 10.0, params.get_thresholdStep());
-        assertEquals((float) 50, params.get_minThreshold());
-        assertEquals((float) 220, params.get_maxThreshold());
+        assertEquals(10.0f, params.get_thresholdStep());
+        assertEquals(50f, params.get_minThreshold());
+        assertEquals(220f, params.get_maxThreshold());
         assertEquals(2, params.get_minRepeatability());
-        assertEquals((float) 10.0, params.get_minDistBetweenBlobs());
+        assertEquals(10.0f, params.get_minDistBetweenBlobs());
         assertEquals(true, params.get_filterByColor());
         assertEquals(0, params.get_blobColor());
         assertEquals(true, params.get_filterByArea());
-        assertEquals((float) 800, params.get_minArea());
-        assertEquals((float) 6000, params.get_maxArea());
+        assertEquals(800f, params.get_minArea());
+        assertEquals(6000f, params.get_maxArea());
         assertEquals(false, params.get_filterByCircularity());
-        assertEquals((float) 0.7, params.get_minCircularity());
-        assertEquals((float) 10.0, params.get_maxCircularity());
+        assertEquals(0.7f, params.get_minCircularity());
+        assertEquals(10.0f, params.get_maxCircularity());
         assertEquals(true, params.get_filterByInertia());
-        assertEquals((float) 0.2, params.get_minInertiaRatio());
-        assertEquals((float) 11.0, params.get_maxInertiaRatio());
+        assertEquals(0.2f, params.get_minInertiaRatio());
+        assertEquals(11.0f, params.get_maxInertiaRatio());
         assertEquals(true, params.get_filterByConvexity());
-        assertEquals((float) 0.9, params.get_minConvexity());
-        assertEquals((float) 12.0, params.get_maxConvexity());
+        assertEquals(0.9f, params.get_minConvexity());
+        assertEquals(12.0f, params.get_maxConvexity());
 
         MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
         detector.detect(img, keypoints2);

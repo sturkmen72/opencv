@@ -128,17 +128,6 @@ public class FASTFeatureDetectorTest extends OpenCVTestCase {
         assertTrue(keypoints2.total() <= keypoints1.total());
     }
 
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        detector.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.FastFeatureDetector</name>\n<threshold>10</threshold>\n<nonmaxSuppression>1</nonmaxSuppression>\n<type>2</type>\n</opencv_storage>\n";
-        String data = readFile(filename);
-
-        assertEquals(truth, data);
-    }
-
     public void testWriteYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
 

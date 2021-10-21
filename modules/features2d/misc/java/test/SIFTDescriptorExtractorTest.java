@@ -79,22 +79,6 @@ public class SIFTDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented"); // SIFT does not override empty() method
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SIFT</name>\n<nfeatures>100</nfeatures>\n<nOctaveLayers>4</nOctaveLayers>\n<contrastThreshold>5.0000000000000001e-02</contrastThreshold>\n<edgeThreshold>11.</edgeThreshold>\n<sigma>1.7000000000000002e+00</sigma>\n<descriptorType>5</descriptorType>\n</opencv_storage>\n");
-
-        extractor.read(filename);
-
-        assertEquals(128, extractor.descriptorSize());
-
-        assertEquals(100, extractor.getNFeatures());
-        assertEquals(4, extractor.getNOctaveLayers());
-        assertEquals(0.05, extractor.getContrastThreshold());
-        assertEquals(11., extractor.getEdgeThreshold());
-        assertEquals(1.7000000000000002, extractor.getSigma());
-        assertEquals(5, extractor.descriptorType());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
         writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SIFT\"\nnfeatures: 100\nnOctaveLayers: 4\ncontrastThreshold: 5.0000000000000001e-02\nedgeThreshold: 11\nsigma: 1.7\ndescriptorType: 5\n");
@@ -109,17 +93,6 @@ public class SIFTDescriptorExtractorTest extends OpenCVTestCase {
         assertEquals(11., extractor.getEdgeThreshold());
         assertEquals(1.7, extractor.getSigma());
         assertEquals(5, extractor.descriptorType());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SIFT</name>\n<nfeatures>0</nfeatures>\n<nOctaveLayers>3</nOctaveLayers>\n<contrastThreshold>4.0000000000000001e-02</contrastThreshold>\n<edgeThreshold>10.</edgeThreshold>\n<sigma>1.6000000000000001e+00</sigma>\n<descriptorType>5</descriptorType>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

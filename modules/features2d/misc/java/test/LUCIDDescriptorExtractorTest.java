@@ -38,16 +38,6 @@ public class LUCIDDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.LUCID</name>\n<lucid_kernel>2</lucid_kernel>\n<blur_kernel>3</blur_kernel>\n</opencv_storage>\n");
-
-        extractor.read(filename);
-
-        assertEquals(2, extractor.getLucidKernel());
-        assertEquals(3, extractor.getBlurKernel());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
         writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.LUCID\"\nlucid_kernel: 2\nblur_kernel: 3\n");
@@ -56,17 +46,6 @@ public class LUCIDDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(2, extractor.getLucidKernel());
         assertEquals(3, extractor.getBlurKernel());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.LUCID</name>\n<lucid_kernel>1</lucid_kernel>\n<blur_kernel>2</blur_kernel>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

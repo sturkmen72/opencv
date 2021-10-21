@@ -87,20 +87,6 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>2</nOctaves>\n<nOctaveLayers>4</nOctaveLayers>\n</opencv_storage>\n");
-
-        extractor.read(filename);
-
-        assertEquals(128, extractor.descriptorSize());
-        assertEquals(100., extractor.getHessianThreshold());
-        assertEquals(true, extractor.getExtended());
-        assertEquals(false, extractor.getUpright());
-        assertEquals(2, extractor.getNOctaves());
-        assertEquals(4, extractor.getNOctaveLayers());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
         writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 100.\nextended: 1\nupright: 0\nnOctaves: 2\nnOctaveLayers: 4\n");
@@ -113,17 +99,6 @@ public class SURFDescriptorExtractorTest extends OpenCVTestCase {
         assertEquals(false, extractor.getUpright());
         assertEquals(2, extractor.getNOctaves());
         assertEquals(4, extractor.getNOctaveLayers());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>1</extended>\n<upright>0</upright>\n<nOctaves>2</nOctaves>\n<nOctaveLayers>4</nOctaveLayers>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

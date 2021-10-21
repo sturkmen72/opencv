@@ -72,16 +72,6 @@ public class BRIEFDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented"); // BRIEF does not override empty() method
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.BRIEF</name>\n<descriptorSize>64</descriptorSize>\n<use_orientation>1</use_orientation>\n</opencv_storage>\n");
-
-        extractor.read(filename);
-
-        assertEquals(64, extractor.getDescriptorSize());
-        assertEquals(true, extractor.getUseOrientation());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
         writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.BRIEF\"\n\ndescriptorSize: 64\nuse_orientation: 1\n");
@@ -90,17 +80,6 @@ public class BRIEFDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(64, extractor.getDescriptorSize());
         assertEquals(true, extractor.getUseOrientation());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.BRIEF</name>\n<descriptorSize>32</descriptorSize>\n<use_orientation>0</use_orientation>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

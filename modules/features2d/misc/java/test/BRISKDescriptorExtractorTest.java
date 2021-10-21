@@ -38,18 +38,6 @@ public class BRISKDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename,
-                "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.BRISK</name>\n<threshold>31</threshold>\n<octaves>4</octaves>\n<patternScale>1.1</patternScale>\n</opencv_storage>\n");
-
-        extractor.read(filename);
-
-        assertEquals(31, extractor.getThreshold());
-        assertEquals(4, extractor.getOctaves());
-        assertEquals((float) 1.1, extractor.getPatternScale());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
         writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.BRISK\"\nthreshold: 31\noctaves: 4\npatternScale: 1.1\n");
@@ -58,18 +46,7 @@ public class BRISKDescriptorExtractorTest extends OpenCVTestCase {
 
         assertEquals(31, extractor.getThreshold());
         assertEquals(4, extractor.getOctaves());
-        assertEquals((float) 1.1, extractor.getPatternScale());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.BRISK</name>\n<threshold>30</threshold>\n<octaves>3</octaves>\n<patternScale>1.</patternScale>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
+        assertEquals(1.1f, extractor.getPatternScale());
     }
 
     public void testWriteYml() {

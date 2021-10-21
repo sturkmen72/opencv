@@ -94,28 +94,6 @@ public class STARFeatureDetectorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        Mat img = getTestImg();
-
-        MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
-        detector.detect(img, keypoints1);
-
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.STAR</name>\n<maxSize>45</maxSize>\n<responseThreshold>150</responseThreshold>\n<lineThresholdProjected>10</lineThresholdProjected>\n<lineThresholdBinarized>8</lineThresholdBinarized>\n<suppressNonmaxSize>5</suppressNonmaxSize>\n</opencv_storage>\n");
-        detector.read(filename);
-
-        assertEquals(45, detector.getMaxSize());
-        assertEquals(150, detector.getResponseThreshold());
-        assertEquals(10, detector.getLineThresholdProjected());
-        assertEquals(8, detector.getLineThresholdBinarized());
-        assertEquals(5, detector.getSuppressNonmaxSize());
-
-        MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
-        detector.detect(img, keypoints2);
-
-        assertTrue(keypoints2.total() <= keypoints1.total());
-    }
-
     public void testReadYml() {
         Mat img = getTestImg();
 
@@ -136,15 +114,6 @@ public class STARFeatureDetectorTest extends OpenCVTestCase {
         detector.detect(img, keypoints2);
 
         assertTrue(keypoints2.total() <= keypoints1.total());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        detector.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.STAR</name>\n<maxSize>45</maxSize>\n<responseThreshold>30</responseThreshold>\n<lineThresholdProjected>10</lineThresholdProjected>\n<lineThresholdBinarized>8</lineThresholdBinarized>\n<suppressNonmaxSize>5</suppressNonmaxSize>\n</opencv_storage>\n";
-        assertEquals(truth, readFile(filename));
     }
 
     public void testWriteYml() {

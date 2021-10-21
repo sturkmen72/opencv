@@ -138,29 +138,6 @@ public class SURFFeatureDetectorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        Mat cross = getTestImg();
-
-        MatOfKeyPoint keypoints1 = new MatOfKeyPoint();
-        detector.detect(cross, keypoints1);
-
-        String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.SURF\"\nhessianThreshold: 8000.\nextended: 1\nupright: 0\nnOctaves: 3\nnOctaveLayers: 4\n");
-        detector.read(filename);
-
-        assertEquals(128, detector.descriptorSize());
-        assertEquals(8000., detector.getHessianThreshold());
-        assertEquals(true, detector.getExtended());
-        assertEquals(false, detector.getUpright());
-        assertEquals(3, detector.getNOctaves());
-        assertEquals(4, detector.getNOctaveLayers());
-
-        MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
-        detector.detect(cross, keypoints2);
-
-        assertTrue(keypoints2.total() <= keypoints1.total());
-    }
-
     public void testReadYml() {
         Mat cross = getTestImg();
 
@@ -183,17 +160,6 @@ public class SURFFeatureDetectorTest extends OpenCVTestCase {
         detector.detect(cross, keypoints2);
 
         assertTrue(keypoints2.total() <= keypoints1.total());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        detector.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.SURF</name>\n<hessianThreshold>100.</hessianThreshold>\n<extended>0</extended>\n<upright>0</upright>\n<nOctaves>4</nOctaves>\n<nOctaveLayers>3</nOctaveLayers>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

@@ -38,21 +38,6 @@ public class GFTTFeatureDetectorTest extends OpenCVTestCase {
         fail("Not yet implemented");
     }
 
-    public void testRead() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.GFTTDetector</name>\n<nfeatures>500</nfeatures>\n<qualityLevel>2.0000000000000000e-02</qualityLevel>\n<minDistance>2.</minDistance>\n<blockSize>4</blockSize>\n<gradSize>5</gradSize>\n<useHarrisDetector>1</useHarrisDetector>\n<k>5.0000000000000000e-02</k>\n</opencv_storage>\n");
-        detector.read(filename);
-
-        assertEquals(500, detector.getMaxFeatures());
-        assertEquals(0.02, detector.getQualityLevel());
-        assertEquals(2.0, detector.getMinDistance());
-        assertEquals(4, detector.getBlockSize());
-        assertEquals(5, detector.getGradientSize());
-        assertEquals(true, detector.getHarrisDetector());
-        assertEquals(0.05, detector.getK());
-    }
-
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
 
@@ -66,17 +51,6 @@ public class GFTTFeatureDetectorTest extends OpenCVTestCase {
         assertEquals(5, detector.getGradientSize());
         assertEquals(true, detector.getHarrisDetector());
         assertEquals(0.05, detector.getK());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        detector.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.GFTTDetector</name>\n<nfeatures>1000</nfeatures>\n<qualityLevel>1.0000000000000000e-02</qualityLevel>\n<minDistance>1.</minDistance>\n<blockSize>3</blockSize>\n<gradSize>3</gradSize>\n<useHarrisDetector>0</useHarrisDetector>\n<k>4.0000000000000001e-02</k>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

@@ -75,37 +75,6 @@ public class ORBDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented"); // ORB does not override empty() method
     }
 
-    public void testRead() {
-        KeyPoint point = new KeyPoint(55.775577545166016f, 44.224422454833984f, 16, 9.754629f, 8617.863f, 1, -1);
-        MatOfKeyPoint keypoints = new MatOfKeyPoint(point);
-        Mat img = getTestImg();
-        Mat descriptors = new Mat();
-
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-        writeFile(filename, "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.ORB</name>\n<nfeatures>500</nfeatures>\n<scaleFactor>1.1</scaleFactor>\n<nlevels>3</nlevels>\n<edgeThreshold>31</edgeThreshold>\n<firstLevel>0</firstLevel>\n<wta_k>2</wta_k>\n<scoreType>0</scoreType>\n<patchSize>31</patchSize>\n<fastThreshold>20</fastThreshold>\n</opencv_storage>\n");
-        extractor.read(filename);
-
-        assertEquals(500, extractor.getMaxFeatures());
-        assertEquals(1.1, extractor.getScaleFactor());
-        assertEquals(3, extractor.getNLevels());
-        assertEquals(31, extractor.getEdgeThreshold());
-        assertEquals(0, extractor.getFirstLevel());
-        assertEquals(2, extractor.getWTA_K());
-        assertEquals(0, extractor.getScoreType());
-        assertEquals(31, extractor.getPatchSize());
-        assertEquals(20, extractor.getFastThreshold());
-
-        extractor.compute(img, keypoints, descriptors);
-
-        Mat truth = new Mat(1, 32, CvType.CV_8UC1) {
-            {
-                put(0, 0,
-                        6, 10, 22, 5, 2, 130, 56, 0, 44, 164, 66, 165, 140, 6, 1, 72, 38, 61, 163, 210, 0, 208, 1, 104, 4, 32, 74, 131, 0, 37, 37, 67);
-            }
-        };
-        assertDescriptorsClose(truth, descriptors, 1);
-    }
-
     public void testReadYml() {
         KeyPoint point = new KeyPoint(55.775577545166016f, 44.224422454833984f, 16, 9.754629f, 8617.863f, 1, -1);
         MatOfKeyPoint keypoints = new MatOfKeyPoint(point);
@@ -135,18 +104,6 @@ public class ORBDescriptorExtractorTest extends OpenCVTestCase {
             }
         };
         assertDescriptorsClose(truth, descriptors, 1);
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<name>Feature2D.ORB</name>\n<nfeatures>500</nfeatures>\n<scaleFactor>1.2000000476837158e+00</scaleFactor>\n<nlevels>8</nlevels>\n<edgeThreshold>31</edgeThreshold>\n<firstLevel>0</firstLevel>\n<wta_k>2</wta_k>\n<scoreType>0</scoreType>\n<patchSize>31</patchSize>\n<fastThreshold>20</fastThreshold>\n</opencv_storage>\n";
-//        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n</opencv_storage>\n";
-        String actual = readFile(filename);
-        actual = actual.replaceAll("e\\+000", "e+00"); // NOTE: workaround for different platforms double representation
-        assertEquals(truth, actual);
     }
 
     public void testWriteYml() {

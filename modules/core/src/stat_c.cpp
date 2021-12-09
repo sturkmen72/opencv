@@ -22,14 +22,6 @@ CV_IMPL CvScalar cvSum( const CvArr* srcarr )
     return cvScalar(sum);
 }
 
-CV_IMPL int cvCountNonZero( const CvArr* imgarr )
-{
-    cv::Mat img = cv::cvarrToMat(imgarr, false, true, 1);
-    if( img.channels() > 1 )
-        cv::extractImageCOI(imgarr, img);
-    return countNonZero(img);
-}
-
 
 CV_IMPL  CvScalar
 cvAvg( const void* imgarr, const void* maskarr )

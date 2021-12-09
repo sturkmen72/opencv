@@ -529,7 +529,7 @@ void RNG::fill( InputOutputArray _mat, int disttype,
         }
         CV_Assert( func != 0 );
     }
-    else if( disttype == CV_RAND_NORMAL )
+    else if( disttype == RNG::NORMAL )
     {
         _parambuf.allocate(MAX(n1, cn) + MAX(n2, cn));
         double* parambuf = _parambuf.data();
@@ -631,7 +631,7 @@ void RNG::fill( InputOutputArray _mat, int disttype,
         {
             int len = std::min(total - j, blockSize);
 
-            if( disttype == CV_RAND_UNI )
+            if( disttype == RNG::UNIFORM )
                 func( ptr, len*cn, &state, param, tmpbuf, smallFlag );
             else
             {

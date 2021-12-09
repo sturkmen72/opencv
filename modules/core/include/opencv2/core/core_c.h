@@ -1059,11 +1059,6 @@ CVAPI(void) cvCmpS( const CvArr* src, double value, CvArr* dst, int cmp_op );
 /** Does powering: dst(idx) = src(idx)^power */
 CVAPI(void)  cvPow( const CvArr* src, CvArr* dst, double power );
 
-/** Does exponention: dst(idx) = exp(src(idx)).
-   Overflow is not handled yet. Underflow is handled.
-   Maximal relative error is ~7e-6 for single-precision input */
-CVAPI(void)  cvExp( const CvArr* src, CvArr* dst );
-
 
 #define  CV_CHECK_RANGE    1
 #define  CV_CHECK_QUIET    2
@@ -1074,14 +1069,6 @@ CVAPI(void)  cvExp( const CvArr* src, CvArr* dst );
 CVAPI(int)  cvCheckArr( const CvArr* arr, int flags CV_DEFAULT(0),
                         double min_val CV_DEFAULT(0), double max_val CV_DEFAULT(0));
 #define cvCheckArray cvCheckArr
-
-#define CV_RAND_UNI      0
-#define CV_RAND_NORMAL   1
-
-#define CV_SORT_EVERY_ROW 0
-#define CV_SORT_EVERY_COLUMN 1
-#define CV_SORT_ASCENDING 0
-#define CV_SORT_DESCENDING 16
 
 /** Finds all real and complex roots of a polynomial equation */
 CVAPI(void) cvSolvePoly(const CvMat* coeffs, CvMat *roots2,
@@ -1237,18 +1224,7 @@ CVAPI(void)  cvCalcCovarMatrix( const CvArr** vects, int count,
 #define CV_PCA_DATA_AS_ROW 0
 #define CV_PCA_DATA_AS_COL 1
 #define CV_PCA_USE_AVG 2
-CVAPI(void)  cvCalcPCA( const CvArr* data, CvArr* mean,
-                        CvArr* eigenvals, CvArr* eigenvects, int flags );
 
-CVAPI(void)  cvProjectPCA( const CvArr* data, const CvArr* mean,
-                           const CvArr* eigenvects, CvArr* result );
-
-CVAPI(void)  cvBackProjectPCA( const CvArr* proj, const CvArr* mean,
-                               const CvArr* eigenvects, CvArr* result );
-
-/** Calculates Mahalanobis(weighted) distance */
-CVAPI(double)  cvMahalanobis( const CvArr* vec1, const CvArr* vec2, const CvArr* mat );
-#define cvMahalonobis  cvMahalanobis
 
 /****************************************************************************************\
 *                                    Array Statistics                                    *
@@ -1256,9 +1232,6 @@ CVAPI(double)  cvMahalanobis( const CvArr* vec1, const CvArr* vec2, const CvArr*
 
 /** Finds sum of array elements */
 CVAPI(CvScalar)  cvSum( const CvArr* arr );
-
-/** Calculates number of non-zero pixels */
-CVAPI(int)  cvCountNonZero( const CvArr* arr );
 
 /** Calculates mean value of array elements */
 CVAPI(CvScalar)  cvAvg( const CvArr* arr, const CvArr* mask CV_DEFAULT(NULL) );
@@ -1300,34 +1273,6 @@ CVAPI(double)  cvNorm( const CvArr* arr1, const CvArr* arr2 CV_DEFAULT(NULL),
                        int norm_type CV_DEFAULT(CV_L2),
                        const CvArr* mask CV_DEFAULT(NULL) );
 
-/** @see ref core_c_NormFlags "flags" */
-CVAPI(void)  cvNormalize( const CvArr* src, CvArr* dst,
-                          double a CV_DEFAULT(1.), double b CV_DEFAULT(0.),
-                          int norm_type CV_DEFAULT(CV_L2),
-                          const CvArr* mask CV_DEFAULT(NULL) );
-
-/** @anchor core_c_ReduceFlags
-  @name Flags for cvReduce
-  @{
-*/
-#define CV_REDUCE_SUM 0
-#define CV_REDUCE_AVG 1
-#define CV_REDUCE_MAX 2
-#define CV_REDUCE_MIN 3
-/** @} */
-
-/** @see @ref core_c_ReduceFlags "flags" */
-CVAPI(void)  cvReduce( const CvArr* src, CvArr* dst, int dim CV_DEFAULT(-1),
-                       int op CV_DEFAULT(CV_REDUCE_SUM) );
-
-/****************************************************************************************\
-*                      Discrete Linear Transforms and Related Functions                  *
-\****************************************************************************************/
-
-/** @anchor core_c_DftFlags
-  @name Flags for cvDFT, cvDCT and cvMulSpectrums
-  @{
-  */
 #define CV_DXT_FORWARD  0
 #define CV_DXT_INVERSE  1
 #define CV_DXT_SCALE    2 /**< divide result by size of array */
@@ -1335,31 +1280,6 @@ CVAPI(void)  cvReduce( const CvArr* src, CvArr* dst, int dim CV_DEFAULT(-1),
 #define CV_DXT_INVERSE_SCALE CV_DXT_INV_SCALE
 #define CV_DXT_ROWS     4 /**< transform each row individually */
 #define CV_DXT_MUL_CONJ 8 /**< conjugate the second argument of cvMulSpectrums */
-/** @} */
-
-/** Discrete Fourier Transform:
-    complex->complex,
-    real->ccs (forward),
-    ccs->real (inverse)
-@see core_c_DftFlags "flags"
-*/
-CVAPI(void)  cvDFT( const CvArr* src, CvArr* dst, int flags,
-                    int nonzero_rows CV_DEFAULT(0) );
-#define cvFFT cvDFT
-
-/** Multiply results of DFTs: DFT(X)*DFT(Y) or DFT(X)*conj(DFT(Y))
-@see core_c_DftFlags "flags"
-*/
-CVAPI(void)  cvMulSpectrums( const CvArr* src1, const CvArr* src2,
-                             CvArr* dst, int flags );
-
-/** Finds optimal DFT vector size >= size0 */
-CVAPI(int)  cvGetOptimalDFTSize( int size0 );
-
-/** Discrete Cosine Transform
-@see core_c_DftFlags "flags"
-*/
-CVAPI(void)  cvDCT( const CvArr* src, CvArr* dst, int flags );
 
 /****************************************************************************************\
 *                              Dynamic data structures                                   *

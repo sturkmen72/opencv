@@ -1508,7 +1508,7 @@ TEST(Core_sortIdx, regression_8941)
     );
 
     cv::Mat result;
-    cv::sortIdx(src.col(0), result, CV_SORT_EVERY_COLUMN | CV_SORT_ASCENDING);
+    cv::sortIdx(src.col(0), result, SORT_EVERY_COLUMN | SORT_ASCENDING);
 #if 0
     std::cout << src.col(0) << std::endl;
     std::cout << result << std::endl;

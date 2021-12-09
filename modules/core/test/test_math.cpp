@@ -901,8 +901,7 @@ double Core_TransformTest::get_success_error_level( int test_case_idx, int i, in
 
 void Core_TransformTest::run_func()
 {
-    CvMat _m = cvMat(test_mat[INPUT][1]), _shift = cvMat(test_mat[INPUT][2]);
-    cvTransform( test_array[INPUT][0], test_array[OUTPUT][0], &_m, _shift.data.ptr ? &_shift : 0);
+    transform( cvarrToMat(test_array[INPUT][0]), cvarrToMat(test_array[OUTPUT][0]), test_mat[INPUT][2]);
 }
 
 
@@ -1183,7 +1182,7 @@ int Core_MahalanobisTest::prepare_test_case( int test_case_idx )
 void Core_MahalanobisTest::run_func()
 {
     test_mat[OUTPUT][0].at<Scalar>(0,0) =
-    cvRealScalar(cvMahalanobis(test_array[INPUT][0], test_array[INPUT][1], test_array[INPUT][2]));
+    cvRealScalar(Mahalanobis(cvarrToMat(test_array[INPUT][0]), cvarrToMat(test_array[INPUT][1]), cvarrToMat(test_array[INPUT][2])));
 }
 
 void Core_MahalanobisTest::prepare_to_validation( int )
@@ -3023,7 +3022,7 @@ TEST(CovariationMatrixVectorOfMatWithMean, accuracy)
     cv::randu(src,cv::Scalar(-128), cv::Scalar(128));
     cv::Mat goldMean;
 
-    cv::reduce(src,goldMean,0 ,CV_REDUCE_AVG, CV_32F);
+    cv::reduce(src,goldMean,0 ,REDUCE_AVG, CV_32F);
 
     cv::calcCovarMatrix(src,gold,goldMean,singleMatFlags,CV_32F);
 

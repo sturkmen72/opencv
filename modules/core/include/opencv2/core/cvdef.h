@@ -356,11 +356,6 @@ enum CpuFeatures {
 #define CV_STRONG_ALIGNMENT 0
 #endif
 
-/* fundamental constants */
-#define CV_PI   3.1415926535897932384626433832795
-#define CV_2PI  6.283185307179586476925286766559
-#define CV_LOG2 0.69314718055994530941723212145818
-
 #if defined __ARM_FP16_FORMAT_IEEE \
     && !defined __CUDACC__
 #  define CV_FP16_TYPE 1

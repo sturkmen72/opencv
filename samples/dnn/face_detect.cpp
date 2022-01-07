@@ -87,6 +87,9 @@ int main(int argc, char** argv)
             return 2;
         }
 
+        image1Width = int(image1.cols * scale);
+        image1Height = int(image1.rows * scale); 
+        resize(image1, image1, Size(image1Width, image1Height));
         tm.start();
 
         //! [inference]

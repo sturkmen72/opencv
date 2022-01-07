@@ -56,11 +56,15 @@ if __name__ == '__main__':
     # If input is an image
     if args.image1 is not None:
         img1 = cv.imread(cv.samples.findFile(args.image1))
+        img1Width = int(img1.shape[1]*args.scale)
+        img1Height = int(img1.shape[0]*args.scale)
 
+        img1 = cv.resize(img1, (img1Width, img1Height))
         tm.start()
+
         ## [inference]
         # Set input size before inference
-        detector.setInputSize((img1.shape[1], img1.shape[0]))
+        detector.setInputSize((img1Width, img1Height))
 
         faces1 = detector.detect(img1)
         ## [inference]

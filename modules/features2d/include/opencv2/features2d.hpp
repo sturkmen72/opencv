@@ -701,6 +701,10 @@ public:
       void write( FileStorage& fs ) const;
   };
 
+    /** @brief The constructor.
+
+    @param parameters 
+     */
   CV_WRAP static Ptr<SimpleBlobDetector>
     create(const SimpleBlobDetector::Params &parameters = SimpleBlobDetector::Params());
   CV_WRAP virtual String getDefaultName() const CV_OVERRIDE;

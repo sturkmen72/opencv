@@ -270,6 +270,7 @@ bool TiffDecoder::readHeader()
         uint32 wdth = 0, hght = 0;
         uint16 photometric = 0;
 
+        m_page_count = TIFFNumberOfDirectories(tif);
         CV_TIFF_CHECK_CALL(TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &wdth));
         CV_TIFF_CHECK_CALL(TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &hght));
         CV_TIFF_CHECK_CALL(TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric));

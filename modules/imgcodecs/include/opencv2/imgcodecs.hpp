@@ -150,7 +150,42 @@ enum ImwritePAMFlags {
        IMWRITE_PAM_FORMAT_RGB_ALPHA       = 5
      };
 
+//! imread Return Codes.
+enum ImreadResults {
+    IMREAD_SUCCESS           = 0,
+    IMREAD_FILE_NOT_OPENED   = 1,
+    IMREAD_UNKNOWN_FILE_TYPE = 2,
+    IMREAD_READ_HEADER_ERROR = 3,
+    IMREAD_READ_DATA_ERROR   = 4
+};
 //! @} imgcodecs_flags
+
+/** @brief Reads the image file header and gets image properties.
+
+The class reads the image file header and gets image properties without loading image data.
+@param filename Name of file to be loaded.
+@param flags Flag that can take values of cv::ImreadModes
+*/
+class CV_EXPORTS_W imquery
+{
+public:
+    CV_WRAP imquery(const String& filename, int flags = IMREAD_ANYCOLOR);
+    virtual ~imquery() {};
+
+    CV_WRAP String filename() const { return m_filename; };
+    CV_WRAP int result_code() const { return m_result_code; };
+    CV_WRAP int page_count() const { return (int)m_pagesInfo.size() > 0 ? m_pagesInfo[0] : 0; };
+    CV_WRAP int type(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 1] : -1; };
+    CV_WRAP int width(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 2] : -1; };
+    CV_WRAP int height(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 3] : -1; };
+    CV_WRAP bool scalable(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 4] > 0 : false; };
+
+private:
+    String m_filename;
+    //in m_pagesInfo for each page four int value (representing type, width, height, scalable) stored.
+    std::vector<int> m_pagesInfo;
+    int m_result_code;
+};
 
 /** @brief Loads an image from a file.
 
@@ -204,6 +239,14 @@ Currently, the following file formats are supported:
 @param flags Flag that can take values of cv::ImreadModes
 */
 CV_EXPORTS_W Mat imread( const String& filename, int flags = IMREAD_COLOR );
+
+/** @overload
+@param filename Name of file to be loaded.
+@param image OutputArray where the image data will be loaded.
+@param flags Flag that can take values of cv::ImreadModes
+@param index page index to be loaded for multipage image files.
+*/
+CV_EXPORTS_W int imread(const String& filename, OutputArray image, int flags = IMREAD_COLOR, int index = 0);
 
 /** @brief Loads a multi-page image from a file.
 

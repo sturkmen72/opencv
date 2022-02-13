@@ -162,13 +162,16 @@ enum ImreadResults {
 
 /** @brief Reads the image file header and gets image properties.
 
-The class reads the image file header and gets image properties without loading image data.
-@param filename Name of file to be loaded.
-@param flags Flag that can take values of cv::ImreadModes
+The class reads header of the image file and gets image properties without loading image data.
 */
 class CV_EXPORTS_W imquery
 {
 public:
+    /** @brief Default Constructor.
+
+    @param filename Name of the file to be loaded.
+    @param flags Flag that can take values of cv::ImreadModes
+    */
     CV_WRAP imquery(const String& filename, int flags = IMREAD_ANYCOLOR);
     virtual ~imquery() {};
 
@@ -182,7 +185,7 @@ public:
 
 private:
     String m_filename;
-    //in m_pagesInfo for each page four int value (representing type, width, height, scalable) stored.
+    //page_count stored in m_pagesInfo[0] and for each page four int value (representing type, width, height, scalable) stored.
     std::vector<int> m_pagesInfo;
     int m_result_code;
 };

@@ -2,20 +2,20 @@ package org.opencv.test.features2d;
 
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
-import org.opencv.xfeatures2d.HarrisLaplaceFeatureDetector;
+import org.opencv.xfeatures2d.LATCH;
 
-public class HARRISFeatureDetectorTest extends OpenCVTestCase {
+public class LATCHDescriptorExtractorTest extends OpenCVTestCase {
 
-    HarrisLaplaceFeatureDetector detector;
+    LATCH extractor;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        detector = HarrisLaplaceFeatureDetector.create(); // default constructor have (6, 0.01, 0.01, 5000, 4)
+        extractor = LATCH.create(); // default (32,true,3,2.0)
     }
 
     public void testCreate() {
-        assertNotNull(detector);
+        assertNotNull(extractor);
     }
 
     public void testDetectListOfMatListOfListOfKeyPoint() {
@@ -40,23 +40,22 @@ public class HARRISFeatureDetectorTest extends OpenCVTestCase {
 
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.LATCH\"\ndescriptorSize: 64\nrotationInvariance: 0\nhalf_ssd_size: 5\nsigma: 3.\n");
 
-        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.HARRIS-LAPLACE\"\nnumOctaves: 5\ncorn_thresh: 0.02\nDOG_thresh: 0.03\nmaxCorners: 4000\nnum_layers: 2\n");
-        detector.read(filename);
+        extractor.read(filename);
 
-        assertEquals(5, detector.getNumOctaves());
-        assertEquals(0.02f, detector.getCornThresh());
-        assertEquals(0.03f, detector.getDOGThresh());
-        assertEquals(4000, detector.getMaxCorners());
-        assertEquals(2, detector.getNumLayers());
+        assertEquals(64, extractor.getBytes());
+        assertEquals(false, extractor.getRotationInvariance());
+        assertEquals(5, extractor.getHalfSSDsize());
+        assertEquals(3.0, extractor.getSigma());
     }
 
     public void testWriteYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
 
-        detector.write(filename);
+        extractor.write(filename);
 
-        String truth = "%YAML:1.0\n---\nname: \"Feature2D.HARRIS-LAPLACE\"\nnumOctaves: 6\ncorn_thresh: 9.9999997764825821e-03\nDOG_thresh: 9.9999997764825821e-03\nmaxCorners: 5000\nnum_layers: 4\n";
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.LATCH\"\ndescriptorSize: 32\nrotationInvariance: 1\nhalf_ssd_size: 3\nsigma: 2.\n";
         String actual = readFile(filename);
         actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
         assertEquals(truth, actual);

@@ -9,11 +9,11 @@ import org.opencv.core.KeyPoint;
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.features2d.Feature2D;
+import org.opencv.xfeatures2d.BriefDescriptorExtractor;
 
 public class BRIEFDescriptorExtractorTest extends OpenCVTestCase {
 
-    Feature2D extractor;
+    BriefDescriptorExtractor extractor;
     int matSize;
 
     private Mat getTestImg() {
@@ -27,7 +27,7 @@ public class BRIEFDescriptorExtractorTest extends OpenCVTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        extractor = createClassInstance(XFEATURES2D+"BriefDescriptorExtractor", DEFAULT_FACTORY, null, null);
+        extractor = createClassInstance(XFEATURES2D + "BriefDescriptorExtractor", DEFAULT_FACTORY, null, null);
         matSize = 100;
     }
 
@@ -72,22 +72,14 @@ public class BRIEFDescriptorExtractorTest extends OpenCVTestCase {
         fail("Not yet implemented"); // BRIEF does not override empty() method
     }
 
-    public void testRead() {
+    public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
-        writeFile(filename, "%YAML:1.0\n---\ndescriptorSize: 64\n");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.BRIEF\"\n\ndescriptorSize: 64\nuse_orientation: 1\n");
 
         extractor.read(filename);
 
-        assertEquals(64, extractor.descriptorSize());
-    }
-
-    public void testWrite() {
-        String filename = OpenCVTestRunner.getTempFileName("xml");
-
-        extractor.write(filename);
-
-        String truth = "<?xml version=\"1.0\"?>\n<opencv_storage>\n<descriptorSize>32</descriptorSize>\n</opencv_storage>\n";
-        assertEquals(truth, readFile(filename));
+        assertEquals(64, extractor.getDescriptorSize());
+        assertEquals(true, extractor.getUseOrientation());
     }
 
     public void testWriteYml() {
@@ -95,8 +87,10 @@ public class BRIEFDescriptorExtractorTest extends OpenCVTestCase {
 
         extractor.write(filename);
 
-        String truth = "%YAML:1.0\n---\ndescriptorSize: 32\n";
-        assertEquals(truth, readFile(filename));
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.BRIEF\"\ndescriptorSize: 32\nuse_orientation: 0\n";
+        String actual = readFile(filename);
+        actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
+        assertEquals(truth, actual);
     }
 
 }

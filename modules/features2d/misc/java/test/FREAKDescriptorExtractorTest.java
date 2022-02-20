@@ -2,20 +2,20 @@ package org.opencv.test.features2d;
 
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
-import org.opencv.xfeatures2d.HarrisLaplaceFeatureDetector;
+import org.opencv.xfeatures2d.FREAK;
 
-public class HARRISFeatureDetectorTest extends OpenCVTestCase {
+public class FREAKDescriptorExtractorTest extends OpenCVTestCase {
 
-    HarrisLaplaceFeatureDetector detector;
+    FREAK extractor;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        detector = HarrisLaplaceFeatureDetector.create(); // default constructor have (6, 0.01, 0.01, 5000, 4)
+        extractor = FREAK.create(); // default (true,true,22,4)
     }
 
     public void testCreate() {
-        assertNotNull(detector);
+        assertNotNull(extractor);
     }
 
     public void testDetectListOfMatListOfListOfKeyPoint() {
@@ -40,23 +40,22 @@ public class HARRISFeatureDetectorTest extends OpenCVTestCase {
 
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
+        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.FREAK\"\norientationNormalized: 0\nscaleNormalized: 0\npatternScale: 23.\nnOctaves: 5\n");
 
-        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.HARRIS-LAPLACE\"\nnumOctaves: 5\ncorn_thresh: 0.02\nDOG_thresh: 0.03\nmaxCorners: 4000\nnum_layers: 2\n");
-        detector.read(filename);
+        extractor.read(filename);
 
-        assertEquals(5, detector.getNumOctaves());
-        assertEquals(0.02f, detector.getCornThresh());
-        assertEquals(0.03f, detector.getDOGThresh());
-        assertEquals(4000, detector.getMaxCorners());
-        assertEquals(2, detector.getNumLayers());
+        assertEquals(false, extractor.getOrientationNormalized());
+        assertEquals(false, extractor.getScaleNormalized());
+        assertEquals(23.0, extractor.getPatternScale());
+        assertEquals(5, extractor.getNOctaves());
     }
 
     public void testWriteYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
 
-        detector.write(filename);
+        extractor.write(filename);
 
-        String truth = "%YAML:1.0\n---\nname: \"Feature2D.HARRIS-LAPLACE\"\nnumOctaves: 6\ncorn_thresh: 9.9999997764825821e-03\nDOG_thresh: 9.9999997764825821e-03\nmaxCorners: 5000\nnum_layers: 4\n";
+        String truth = "%YAML:1.0\n---\nname: \"Feature2D.FREAK\"\norientationNormalized: 1\nscaleNormalized: 1\npatternScale: 22.\nnOctaves: 4\n";
         String actual = readFile(filename);
         actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
         assertEquals(truth, actual);

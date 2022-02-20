@@ -2,20 +2,20 @@ package org.opencv.test.features2d;
 
 import org.opencv.test.OpenCVTestCase;
 import org.opencv.test.OpenCVTestRunner;
-import org.opencv.xfeatures2d.HarrisLaplaceFeatureDetector;
+import org.opencv.features2d.KAZE;
 
-public class HARRISFeatureDetectorTest extends OpenCVTestCase {
+public class KAZEDescriptorExtractorTest extends OpenCVTestCase {
 
-    HarrisLaplaceFeatureDetector detector;
+    KAZE extractor;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        detector = HarrisLaplaceFeatureDetector.create(); // default constructor have (6, 0.01, 0.01, 5000, 4)
+        extractor = KAZE.create(); // default (false,false,0.001f,4,4,1)
     }
 
     public void testCreate() {
-        assertNotNull(detector);
+        assertNotNull(extractor);
     }
 
     public void testDetectListOfMatListOfListOfKeyPoint() {
@@ -40,23 +40,24 @@ public class HARRISFeatureDetectorTest extends OpenCVTestCase {
 
     public void testReadYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
+        writeFile(filename, "%YAML:1.0\n---\nformat: 3\nname: \"Feature2D.KAZE\"\nextended: 1\nupright: 1\nthreshold: 0.002\noctaves: 3\nsublevels: 5\ndiffusivity: 2\n");
 
-        writeFile(filename, "%YAML:1.0\n---\nname: \"Feature2D.HARRIS-LAPLACE\"\nnumOctaves: 5\ncorn_thresh: 0.02\nDOG_thresh: 0.03\nmaxCorners: 4000\nnum_layers: 2\n");
-        detector.read(filename);
+        extractor.read(filename);
 
-        assertEquals(5, detector.getNumOctaves());
-        assertEquals(0.02f, detector.getCornThresh());
-        assertEquals(0.03f, detector.getDOGThresh());
-        assertEquals(4000, detector.getMaxCorners());
-        assertEquals(2, detector.getNumLayers());
+        assertEquals(true, extractor.getExtended());
+        assertEquals(true, extractor.getUpright());
+        assertEquals((float)0.002f, extractor.getThreshold());
+        assertEquals(3, extractor.getNOctaves());
+        assertEquals(5, extractor.getNOctaveLayers());
+        assertEquals(2, extractor.getDiffusivity());
     }
 
     public void testWriteYml() {
         String filename = OpenCVTestRunner.getTempFileName("yml");
 
-        detector.write(filename);
+        extractor.write(filename);
 
-        String truth = "%YAML:1.0\n---\nname: \"Feature2D.HARRIS-LAPLACE\"\nnumOctaves: 6\ncorn_thresh: 9.9999997764825821e-03\nDOG_thresh: 9.9999997764825821e-03\nmaxCorners: 5000\nnum_layers: 4\n";
+        String truth = "%YAML:1.0\n---\nformat: 3\nname: \"Feature2D.KAZE\"\nextended: 0\nupright: 0\nthreshold: 1.0000000474974513e-03\noctaves: 4\nsublevels: 4\ndiffusivity: 1\n";
         String actual = readFile(filename);
         actual = actual.replaceAll("e([+-])0(\\d\\d)", "e$1$2"); // NOTE: workaround for different platforms double representation
         assertEquals(truth, actual);

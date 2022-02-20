@@ -13,7 +13,7 @@
 using namespace std;
 using namespace cv;
 
-const double akaze_thresh = 3e-4; // AKAZE detection threshold set to locate about 1000 keypoints
+const float akaze_thresh = (float)3e-4; // AKAZE detection threshold set to locate about 1000 keypoints
 const double ransac_thresh = 2.5f; // RANSAC inlier threshold
 const double nn_match_ratio = 0.8f; // Nearest-neighbour matching ratio
 const int bb_min_inliers = 100; // Minimal number of inliers to draw bounding box

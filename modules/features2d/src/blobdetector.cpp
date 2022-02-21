@@ -65,12 +65,6 @@ public:
   virtual void read( const FileNode& fn ) CV_OVERRIDE;
   virtual void write( FileStorage& fs ) const CV_OVERRIDE;
 
-  void setParams( SimpleBlobDetector::Params _params ) CV_OVERRIDE {
-    if (_params.valid())
-      params = _params;
-  }
-  SimpleBlobDetector::Params getParams() CV_OVERRIDE { return params; }
-
 protected:
   struct CV_EXPORTS Center
   {
@@ -118,46 +112,33 @@ SimpleBlobDetector::Params::Params()
     maxConvexity = std::numeric_limits<float>::max();
 }
 
-int SimpleBlobDetector::Params::get_blobColor() const {return (int)blobColor;}
-void SimpleBlobDetector::Params::set_blobColor(int _blobColor)
-{
-  if(_blobColor>255 || _blobColor<0)
-    CV_Error(Error::StsBadArg, "BlobColor should be: 0<=blobColor<=255 ");
-  else
-    blobColor = (uchar)_blobColor;
-}
-
 void SimpleBlobDetector::Params::read(const cv::FileNode& fn )
 {
-    Params rp;
-    rp.thresholdStep = fn["thresholdStep"];
-    rp.minThreshold = fn["minThreshold"];
-    rp.maxThreshold = fn["maxThreshold"];
+    thresholdStep = fn["thresholdStep"];
+    minThreshold = fn["minThreshold"];
+    maxThreshold = fn["maxThreshold"];
 
-    rp.minRepeatability = (size_t)(int)fn["minRepeatability"];
-    rp.minDistBetweenBlobs = fn["minDistBetweenBlobs"];
+    minRepeatability = (size_t)(int)fn["minRepeatability"];
+    minDistBetweenBlobs = fn["minDistBetweenBlobs"];
 
-    rp.filterByColor = (int)fn["filterByColor"] != 0 ? true : false;
-    rp.blobColor = (uchar)(int)fn["blobColor"];
+    filterByColor = (int)fn["filterByColor"] != 0 ? true : false;
+    blobColor = (uchar)(int)fn["blobColor"];
 
-    rp.filterByArea = (int)fn["filterByArea"] != 0 ? true : false;
-    rp.minArea = fn["minArea"];
-    rp.maxArea = fn["maxArea"];
+    filterByArea = (int)fn["filterByArea"] != 0 ? true : false;
+    minArea = fn["minArea"];
+    maxArea = fn["maxArea"];
 
-    rp.filterByCircularity = (int)fn["filterByCircularity"] != 0 ? true : false;
-    rp.minCircularity = fn["minCircularity"];
-    rp.maxCircularity = fn["maxCircularity"];
+    filterByCircularity = (int)fn["filterByCircularity"] != 0 ? true : false;
+    minCircularity = fn["minCircularity"];
+    maxCircularity = fn["maxCircularity"];
 
-    rp.filterByInertia = (int)fn["filterByInertia"] != 0 ? true : false;
-    rp.minInertiaRatio = fn["minInertiaRatio"];
-    rp.maxInertiaRatio = fn["maxInertiaRatio"];
+    filterByInertia = (int)fn["filterByInertia"] != 0 ? true : false;
+    minInertiaRatio = fn["minInertiaRatio"];
+    maxInertiaRatio = fn["maxInertiaRatio"];
 
-    rp.filterByConvexity = (int)fn["filterByConvexity"] != 0 ? true : false;
-    rp.minConvexity = fn["minConvexity"];
-    rp.maxConvexity = fn["maxConvexity"];
-
-    if( rp.valid() )
-      *this = rp;
+    filterByConvexity = (int)fn["filterByConvexity"] != 0 ? true : false;
+    minConvexity = fn["minConvexity"];
+    maxConvexity = fn["maxConvexity"];
 }
 
 void SimpleBlobDetector::Params::write(cv::FileStorage& fs) const

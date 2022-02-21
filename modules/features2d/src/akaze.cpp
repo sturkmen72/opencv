@@ -86,8 +86,8 @@ namespace cv
         void setDescriptorChannels(int dch) CV_OVERRIDE { descriptor_channels = dch; }
         int getDescriptorChannels() const CV_OVERRIDE { return descriptor_channels; }
 
-        void setThreshold(float threshold_) CV_OVERRIDE { threshold = threshold_; }
-        float getThreshold() const CV_OVERRIDE { return threshold; }
+        void setThreshold(double threshold_) CV_OVERRIDE { threshold = threshold_; }
+        double getThreshold() const CV_OVERRIDE { return threshold; }
 
         void setNOctaves(int octaves_) CV_OVERRIDE { octaves = octaves_; }
         int getNOctaves() const CV_OVERRIDE { return octaves; }

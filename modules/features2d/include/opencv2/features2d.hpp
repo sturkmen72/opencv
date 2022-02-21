@@ -749,9 +749,6 @@ public:
       CV_PROP_RW bool filterByColor;
       CV_PROP_RW uchar blobColor;
 
-      CV_WRAP int get_blobColor() const;
-      CV_WRAP void set_blobColor(int _blobColor);
-
       CV_PROP_RW bool filterByArea;
       CV_PROP_RW float minArea, maxArea;
 
@@ -766,38 +763,10 @@ public:
 
       void read( const FileNode& fn );
       void write( FileStorage& fs ) const;
-
-      bool valid() const
-      {
-          if (thresholdStep<=0)
-            CV_Error(Error::StsBadArg, "thresholdStep>0");
-          if (minThreshold>maxThreshold || minThreshold<=0)
-            CV_Error(Error::StsBadArg, "0<minThreshold<=maxThreshold");
-          if (minDistBetweenBlobs<=0)
-            CV_Error(Error::StsBadArg, "minDistBetweenBlobs>0");
-
-          if (minArea>maxArea || minArea<=0)
-            CV_Error(Error::StsBadArg, "0<minArea<=maxArea");
-
-          if (minCircularity>maxCircularity || minCircularity<=0)
-            CV_Error(Error::StsBadArg, "0<minCircularity<=maxCircularity");
-
-          if (minInertiaRatio>maxInertiaRatio || minInertiaRatio<=0)
-            CV_Error(Error::StsBadArg, "0<minInertiaRatio<=maxInertiaRatio");
-
-          if (minConvexity>maxConvexity || minConvexity<=0)
-            CV_Error(Error::StsBadArg, "0<minConvexity<=maxConvexity");
-
-          return true;
-      }
   };
 
   CV_WRAP static Ptr<SimpleBlobDetector>
     create(const SimpleBlobDetector::Params &parameters = SimpleBlobDetector::Params());
-
-  CV_WRAP virtual void setParams( SimpleBlobDetector::Params params ) = 0;
-  CV_WRAP virtual SimpleBlobDetector::Params getParams() = 0;
-
   CV_WRAP virtual String getDefaultName() const CV_OVERRIDE;
 };
 
@@ -844,8 +813,8 @@ public:
     CV_WRAP virtual void setUpright(bool upright) = 0;
     CV_WRAP virtual bool getUpright() const = 0;
 
-    CV_WRAP virtual void setThreshold(float threshold) = 0;
-    CV_WRAP virtual float getThreshold() const = 0;
+    CV_WRAP virtual void setThreshold(double threshold) = 0;
+    CV_WRAP virtual double getThreshold() const = 0;
 
     CV_WRAP virtual void setNOctaves(int octaves) = 0;
     CV_WRAP virtual int getNOctaves() const = 0;
@@ -912,8 +881,8 @@ public:
     CV_WRAP virtual void setDescriptorChannels(int dch) = 0;
     CV_WRAP virtual int getDescriptorChannels() const = 0;
 
-    CV_WRAP virtual void setThreshold(float threshold) = 0;
-    CV_WRAP virtual float getThreshold() const = 0;
+    CV_WRAP virtual void setThreshold(double threshold) = 0;
+    CV_WRAP virtual double getThreshold() const = 0;
 
     CV_WRAP virtual void setNOctaves(int octaves) = 0;
     CV_WRAP virtual int getNOctaves() const = 0;

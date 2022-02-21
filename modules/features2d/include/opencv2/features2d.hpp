@@ -381,14 +381,14 @@ public:
     /** @brief Set detection threshold.
     @param threshold AGAST detection threshold score.
     */
-    CV_WRAP virtual void setThreshold(int threshold) = 0;
-    CV_WRAP virtual int getThreshold() const = 0;
+    CV_WRAP virtual void setThreshold(int threshold) { CV_UNUSED(threshold); return; }
+    CV_WRAP virtual int getThreshold() const { return -1; }
 
     /** @brief Set detection octaves.
     @param octaves detection octaves. Use 0 to do single scale.
     */
-    CV_WRAP virtual void setOctaves(int octaves) = 0;
-    CV_WRAP virtual int getOctaves() const = 0;
+    CV_WRAP virtual void setOctaves(int octaves) { CV_UNUSED(octaves); return; }
+    CV_WRAP virtual int getOctaves() const { return -1; }
     /** @brief Set detection patternScale.
     @param patternScale apply this scale to the pattern used for sampling the neighbourhood of a
     keypoint.

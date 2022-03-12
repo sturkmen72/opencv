@@ -61,7 +61,7 @@ for (let i = 0; i < contours.size(); ++i) {
 for (let i = 0; i < contours.size(); ++i) {
     let colorHull = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
                                   Math.round(Math.random() * 255));
-    cv.drawContours(dst, hull, i, colorHull, 1, 8, hierarchy, 0);
+    cv.drawContours(dst, hull, i, colorHull, 1, LINE_8, hierarchy, 0);
 }
 cv.imshow('canvasOutput', dst);
 src.delete(); dst.delete(); hierarchy.delete(); contours.delete(); hull.delete();

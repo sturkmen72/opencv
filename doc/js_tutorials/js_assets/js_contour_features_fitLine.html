@@ -53,7 +53,7 @@ let cnt = contours.get(0);
 cv.fitLine(cnt, line, cv.DIST_L2, 0, 0.01, 0.01);
 let contoursColor = new cv.Scalar(255, 255, 255);
 let lineColor = new cv.Scalar(255, 0, 0);
-cv.drawContours(dst, contours, 0, contoursColor, 1, 8, hierarchy, 100);
+cv.drawContours(dst, contours, 0, contoursColor, 1, LINE_8, hierarchy, 100);
 let vx = line.data32F[0];
 let vy = line.data32F[1];
 let x = line.data32F[2];

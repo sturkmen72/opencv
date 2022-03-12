@@ -52,7 +52,7 @@ let cnt = contours.get(0);
 let rect = cv.boundingRect(cnt);
 let contoursColor = new cv.Scalar(255, 255, 255);
 let rectangleColor = new cv.Scalar(255, 0, 0);
-cv.drawContours(dst, contours, 0, contoursColor, 1, 8, hierarchy, 100);
+cv.drawContours(dst, contours, 0, contoursColor, 1, LINE_8, hierarchy, 100);
 let point1 = new cv.Point(rect.x, rect.y);
 let point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
 cv.rectangle(dst, point1, point2, rectangleColor, 2, cv.LINE_AA, 0);

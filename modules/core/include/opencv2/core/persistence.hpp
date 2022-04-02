@@ -664,6 +664,10 @@ public:
     FileNodeIterator& operator ++ ();
     //! moves iterator to the next node
     FileNodeIterator operator ++ (int);
+    //! moves iterator to the next node
+    FileNodeIterator& operator -- ();
+    //! moves iterator to the next node
+    FileNodeIterator operator -- (int);
     //! moves iterator forward by the specified offset (possibly negative)
     FileNodeIterator& operator += (int ofs);
 

@@ -2517,6 +2517,28 @@ FileNodeIterator FileNodeIterator::operator ++ (int)
     return it;
 }
 
+FileNodeIterator& FileNodeIterator::operator -- ()
+{
+    if (idx == nodeNElems || !fs)
+        return *this;
+    idx--;
+    FileNode n(fs, blockIdx, ofs);
+    ofs += n.rawSize();
+    if (ofs >= blockSize)
+    {
+        fs->normalizeNodeOfs(blockIdx, ofs);
+        blockSize = fs->fs_data_blksz[blockIdx];
+    }
+    return *this;
+}
+
+FileNodeIterator FileNodeIterator::operator -- (int)
+{
+    FileNodeIterator it = *this;
+    --(*this);
+    return it;
+}
+
 FileNodeIterator& FileNodeIterator::operator += (int _ofs)
 {
     CV_Assert( _ofs >= 0 );

@@ -876,18 +876,18 @@ CvBoostTree::calc_node_value( CvDTreeNode* node )
 }
 
 
-void CvBoostTree::read( CvFileStorage* fs, CvFileNode* fnode, CvBoost* _ensemble, CvDTreeTrainData* _data )
+void CvBoostTree::read( const cv::FileStorage& fs, const cv::FileNode& fnode, CvBoost* _ensemble, CvDTreeTrainData* _data )
 {
     CvDTree::read( fs, fnode, _data );
     ensemble = _ensemble;
 }
 
-void CvBoostTree::read( CvFileStorage*, CvFileNode* )
+void CvBoostTree::read( const cv::FileStorage&, const cv::FileNode& )
 {
     assert(0);
 }
 
-void CvBoostTree::read( CvFileStorage* _fs, CvFileNode* _node,
+void CvBoostTree::read( const cv::FileStorage& _fs, const cv::FileNode& _node,
                         CvDTreeTrainData* _data )
 {
     CvDTree::read( _fs, _node, _data );
@@ -1884,178 +1884,33 @@ float CvBoost::calc_error( CvMLData* _data, int type, std::vector<float> *resp )
     return err;
 }
 
-void CvBoost::write_params( CvFileStorage* fs ) const
+void CvBoost::write_params( const cv::FileStorage& fs ) const
 {
-    const char* boost_type_str =
-        params.boost_type == DISCRETE ? "DiscreteAdaboost" :
-        params.boost_type == REAL ? "RealAdaboost" :
-        params.boost_type == LOGIT ? "LogitBoost" :
-        params.boost_type == GENTLE ? "GentleAdaboost" : 0;
-
-    const char* split_crit_str =
-        params.split_criteria == DEFAULT ? "Default" :
-        params.split_criteria == GINI ? "Gini" :
-        params.boost_type == MISCLASS ? "Misclassification" :
-        params.boost_type == SQERR ? "SquaredErr" : 0;
-
-    if( boost_type_str )
-        cvWriteString( fs, "boosting_type", boost_type_str );
-    else
-        cvWriteInt( fs, "boosting_type", params.boost_type );
-
-    if( split_crit_str )
-        cvWriteString( fs, "splitting_criteria", split_crit_str );
-    else
-        cvWriteInt( fs, "splitting_criteria", params.split_criteria );
-
-    cvWriteInt( fs, "ntrees", weak->total );
-    cvWriteReal( fs, "weight_trimming_rate", params.weight_trim_rate );
-
-    data->write_params( fs );
+    CV_UNUSED(fs);
 }
 
 
-void CvBoost::read_params( CvFileStorage* fs, CvFileNode* fnode )
+void CvBoost::read_params( const cv::FileStorage& fs, const cv::FileNode& fnode )
 {
-    CV_FUNCNAME( "CvBoost::read_params" );
-
-    __BEGIN__;
-
-    CvFileNode* temp;
-
-    if( !fnode || !CV_NODE_IS_MAP(fnode->tag) )
-        return;
-
-    data = new CvDTreeTrainData();
-    CV_CALL( data->read_params(fs, fnode));
-    data->shared = true;
-
-    params.max_depth = data->params.max_depth;
-    params.min_sample_count = data->params.min_sample_count;
-    params.max_categories = data->params.max_categories;
-    params.priors = data->params.priors;
-    params.regression_accuracy = data->params.regression_accuracy;
-    params.use_surrogates = data->params.use_surrogates;
-
-    temp = cvGetFileNodeByName( fs, fnode, "boosting_type" );
-    if( !temp )
-        return;
-
-    if( temp && CV_NODE_IS_STRING(temp->tag) )
-    {
-        const char* boost_type_str = cvReadString( temp, "" );
-        params.boost_type = strcmp( boost_type_str, "DiscreteAdaboost" ) == 0 ? DISCRETE :
-                            strcmp( boost_type_str, "RealAdaboost" ) == 0 ? REAL :
-                            strcmp( boost_type_str, "LogitBoost" ) == 0 ? LOGIT :
-                            strcmp( boost_type_str, "GentleAdaboost" ) == 0 ? GENTLE : -1;
-    }
-    else
-        params.boost_type = cvReadInt( temp, -1 );
-
-    if( params.boost_type < DISCRETE || params.boost_type > GENTLE )
-        CV_ERROR( CV_StsBadArg, "Unknown boosting type" );
-
-    temp = cvGetFileNodeByName( fs, fnode, "splitting_criteria" );
-    if( temp && CV_NODE_IS_STRING(temp->tag) )
-    {
-        const char* split_crit_str = cvReadString( temp, "" );
-        params.split_criteria = strcmp( split_crit_str, "Default" ) == 0 ? DEFAULT :
-                                strcmp( split_crit_str, "Gini" ) == 0 ? GINI :
-                                strcmp( split_crit_str, "Misclassification" ) == 0 ? MISCLASS :
-                                strcmp( split_crit_str, "SquaredErr" ) == 0 ? SQERR : -1;
-    }
-    else
-        params.split_criteria = cvReadInt( temp, -1 );
-
-    if( params.split_criteria < DEFAULT || params.boost_type > SQERR )
-        CV_ERROR( CV_StsBadArg, "Unknown boosting type" );
-
-    params.weak_count = cvReadIntByName( fs, fnode, "ntrees" );
-    params.weight_trim_rate = cvReadRealByName( fs, fnode, "weight_trimming_rate", 0. );
-
-    __END__;
+    CV_UNUSED(fs);
+    CV_UNUSED(fnode);
 }
 
 
 
 void
-CvBoost::read( CvFileStorage* fs, CvFileNode* node )
+CvBoost::read( const cv::FileStorage& fs, const cv::FileNode& node )
 {
-    CV_FUNCNAME( "CvBoost::read" );
-
-    __BEGIN__;
-
-    CvSeqReader reader;
-    CvFileNode* trees_fnode;
-    CvMemStorage* storage;
-    int i, ntrees;
-
-    clear();
-    read_params( fs, node );
-
-    if( !data )
-        EXIT;
-
-    trees_fnode = cvGetFileNodeByName( fs, node, "trees" );
-    if( !trees_fnode || !CV_NODE_IS_SEQ(trees_fnode->tag) )
-        CV_ERROR( CV_StsParseError, "<trees> tag is missing" );
-
-    cvStartReadSeq( trees_fnode->data.seq, &reader );
-    ntrees = trees_fnode->data.seq->total;
-
-    if( ntrees != params.weak_count )
-        CV_ERROR( CV_StsUnmatchedSizes,
-        "The number of trees stored does not match <ntrees> tag value" );
-
-    CV_CALL( storage = cvCreateMemStorage() );
-    weak = cvCreateSeq( 0, sizeof(CvSeq), sizeof(CvBoostTree*), storage );
-
-    for( i = 0; i < ntrees; i++ )
-    {
-        CvBoostTree* tree = new CvBoostTree();
-        CV_CALL(tree->read( fs, (CvFileNode*)reader.ptr, this, data ));
-        CV_NEXT_SEQ_ELEM( reader.seq->elem_size, reader );
-        cvSeqPush( weak, &tree );
-    }
-    get_active_vars();
-
-    __END__;
+    CV_UNUSED(fs);
+    CV_UNUSED(node);
 }
 
 
 void
-CvBoost::write( CvFileStorage* fs, const char* name ) const
+CvBoost::write( const cv::FileStorage& fs, const char* name ) const
 {
-    CV_FUNCNAME( "CvBoost::write" );
-
-    __BEGIN__;
-
-    CvSeqReader reader;
-    int i;
-
-    cvStartWriteStruct( fs, name, CV_NODE_MAP, CV_TYPE_NAME_ML_BOOSTING );
-
-    if( !weak )
-        CV_ERROR( CV_StsBadArg, "The classifier has not been trained yet" );
-
-    write_params( fs );
-    cvStartWriteStruct( fs, "trees", CV_NODE_SEQ );
-
-    cvStartReadSeq( weak, &reader );
-
-    for( i = 0; i < weak->total; i++ )
-    {
-        CvBoostTree* tree;
-        CV_READ_SEQ_ELEM( tree, reader );
-        cvStartWriteStruct( fs, 0, CV_NODE_MAP );
-        tree->write( fs );
-        cvEndWriteStruct( fs );
-    }
-
-    cvEndWriteStruct( fs );
-    cvEndWriteStruct( fs );
-
-    __END__;
+    CV_UNUSED(fs);
+    CV_UNUSED(name);
 }
 
 

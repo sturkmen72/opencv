@@ -239,35 +239,6 @@
     }                                                               \
 }
 
-/****************************************************************************************\
-*                       Auxiliary functions declarations                                 *
-\****************************************************************************************/
-
-/* Generates a set of classes centers in quantity <num_of_clusters> that are generated as
-   uniform random vectors in parallelepiped, where <data> is concentrated. Vectors in
-   <data> should have horizontal orientation. If <centers> != NULL, the function doesn't
-   allocate any memory and stores generated centers in <centers>, returns <centers>.
-   If <centers> == NULL, the function allocates memory and creates the matrice. Centers
-   are supposed to be oriented horizontally. */
-CvMat* icvGenerateRandomClusterCenters( int seed,
-                                        const CvMat* data,
-                                        int num_of_clusters,
-                                        CvMat* centers CV_DEFAULT(0));
-
-/* Fills the <labels> using <probs> by choosing the maximal probability. Outliers are
-   fixed by <oulier_tresh> and have cluster label (-1). Function also controls that there
-   weren't "empty" clusters by filling empty clusters with the maximal probability vector.
-   If probs_sums != NULL, fills it with the sums of probabilities for each sample (it is
-   useful for normalizing probabilities' matrice of FCM) */
-void icvFindClusterLabels( const CvMat* probs, float outlier_thresh, float r,
-                           const CvMat* labels );
-
-typedef struct CvSparseVecElem32f
-{
-    int idx;
-    float val;
-}
-CvSparseVecElem32f;
 
 /* Prepare training data and related parameters */
 #define CV_TRAIN_STATMODEL_DEFRAGMENT_TRAIN_DATA    1
@@ -321,9 +292,9 @@ cvWritebackLabels( const CvMat* labels, CvMat* dst_labels,
 #define cvWritebackResponses cvWritebackLabels
 
 #define XML_FIELD_NAME "_name"
-CvFileNode* icvFileNodeGetChild(CvFileNode* father, const char* name);
-CvFileNode* icvFileNodeGetChildArrayElem(CvFileNode* father, const char* name,int index);
-CvFileNode* icvFileNodeGetNext(CvFileNode* n, const char* name);
+cv::FileNode& icvFileNodeGetChild(const cv::FileNode& father, const char* name);
+cv::FileNode& icvFileNodeGetChildArrayElem(const cv::FileNode& father, const char* name,int index);
+cv::FileNode& icvFileNodeGetNext(const cv::FileNode& n, const char* name);
 
 
 void cvCheckTrainData( const CvMat* train_data, int tflag,

@@ -46,12 +46,12 @@ void CvLBPEvaluator::generateFeatures()
 
 CvLBPEvaluator::Feature::Feature()
 {
-    rect = cvRect(0, 0, 0, 0);
+    rect = Rect(0, 0, 0, 0);
 }
 
 CvLBPEvaluator::Feature::Feature( int offset, int x, int y, int _blockWidth, int _blockHeight )
 {
-    Rect tr = rect = cvRect(x, y, _blockWidth, _blockHeight);
+    Rect tr = rect = Rect(x, y, _blockWidth, _blockHeight);
     CV_SUM_OFFSETS( p[0], p[1], p[4], p[5], tr, offset )
     tr.x += 2*rect.width;
     CV_SUM_OFFSETS( p[2], p[3], p[6], p[7], tr, offset )

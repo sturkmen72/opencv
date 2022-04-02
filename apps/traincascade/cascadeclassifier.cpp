@@ -10,12 +10,12 @@ static const char* stageTypes[] = { CC_BOOST };
 static const char* featureTypes[] = { CC_HAAR, CC_LBP, CC_HOG };
 
 CvCascadeParams::CvCascadeParams() : stageType( defaultStageType ),
-    featureType( defaultFeatureType ), winSize( cvSize(24, 24) )
+    featureType( defaultFeatureType ), winSize( Size(24, 24) )
 {
     name = CC_CASCADE_PARAMS;
 }
 CvCascadeParams::CvCascadeParams( int _stageType, int _featureType ) : stageType( _stageType ),
-    featureType( _featureType ), winSize( cvSize(24, 24) )
+    featureType( _featureType ), winSize( Size(24, 24) )
 {
     name = CC_CASCADE_PARAMS;
 }
@@ -370,7 +370,7 @@ void CvCascadeClassifier::writeStages( FileStorage &fs, const Mat& featureMap ) 
         it != stageClassifiers.end();++it, ++i )
     {
         sprintf( cmnt, "stage %d", i );
-        cvWriteComment( fs.fs, cmnt, 0 );
+        fs.writeComment( cmnt );
         fs << "{";
         (*it)->write( fs, featureMap );
         fs << "}";

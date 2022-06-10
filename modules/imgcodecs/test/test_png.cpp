@@ -5,7 +5,7 @@
 
 namespace opencv_test { namespace {
 
-#ifdef HAVE_PNG
+#if defined(HAVE_PNG) || defined(HAVE_SPNG)
 
 TEST(Imgcodecs_Png, write_big)
 {

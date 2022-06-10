@@ -30,6 +30,12 @@ if(HAVE_PNG)
   list(APPEND GRFMT_LIBS ${PNG_LIBRARIES})
 endif()
 
+if(HAVE_SPNG)
+  add_definitions(${SPNG_DEFINITIONS})
+  ocv_include_directories(${SPNG_INCLUDE_DIR})
+  list(APPEND GRFMT_LIBS ${SPNG_LIBRARIES})
+endif()
+
 if(HAVE_GDCM)
   ocv_include_directories(${GDCM_INCLUDE_DIRS})
   list(APPEND GRFMT_LIBS ${GDCM_LIBRARIES})

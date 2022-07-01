@@ -62,6 +62,7 @@
 #include <libpng/png.h>
 #else
 #include <png.h>
+#include <spng.h>
 #endif
 #include <zlib.h>
 
@@ -143,7 +144,8 @@ bool  PngDecoder::readHeader()
 {
     volatile bool result = false;
     close();
-
+    spng_ctx* ctx = spng_ctx_new(0);
+    if (ctx == NULL) return false;
     png_structp png_ptr = png_create_read_struct( PNG_LIBPNG_VER_STRING, 0, 0, 0 );
 
     if( png_ptr )
@@ -352,6 +354,61 @@ void PngEncoder::flushBuf(void*)
 {
 }
 
+int savePNG(FILE* file, const uint8_t pixels[],
+    const uint8_t bit_depth, const uint8_t num_colors,
+    const uint32_t width, const uint32_t height)
+{
+    int res = 0;
+    const size_t length = num_colors * width * height;
+
+    uint8_t fmt = SPNG_COLOR_TYPE_TRUECOLOR;
+    if (num_colors == 4)
+        fmt = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
+    if (num_colors == 1)
+        fmt = SPNG_COLOR_TYPE_GRAYSCALE;
+
+    /* Specify image dimensions, PNG format */
+    struct spng_ihdr ihdr = { 0 };
+    ihdr.width = width;
+    ihdr.height = height;
+    ihdr.bit_depth = bit_depth;
+    ihdr.color_type = fmt;
+
+    /* Creating an encoder context requires a flag */
+    spng_ctx* enc = spng_ctx_new(SPNG_CTX_ENCODER);
+
+    spng_set_option(enc, SPNG_IMG_COMPRESSION_STRATEGY, IMWRITE_PNG_STRATEGY_RLE);
+    spng_set_option(enc, SPNG_FILTER_CHOICE, SPNG_FILTER_CHOICE_SUB);
+    spng_set_option(enc, SPNG_IMG_COMPRESSION_LEVEL, Z_BEST_SPEED);
+
+    /* Encode to file directly */
+    res = spng_set_png_file(enc, file);
+    if (res)
+    {
+        printf("spng_set_png_file() error: %s\n", spng_strerror(res));
+        goto done;
+    }
+
+    /* Image will be encoded according to ihdr.color_type, .bit_depth */
+    res = spng_set_ihdr(enc, &ihdr);
+    if (res)
+    {
+        printf("spng_set_ihdr() error: %s\n", spng_strerror(res));
+        goto done;
+    }
+
+    /* SPNG_FMT_PNG is a special value that matches the format in ihdr,
+       SPNG_ENCODE_FINALIZE will finalize the PNG with the end-of-file marker */
+    res = spng_encode_image(enc, pixels, length, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+    if (res)
+        printf("spng_encode_image() error: %s\n", spng_strerror(res));
+
+done:
+    /* Free context memory */
+    spng_ctx_free(enc);
+    return res;
+}
+
 bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
 {
     png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, 0, 0, 0 );
@@ -364,6 +421,33 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
 
     if( depth != CV_8U && depth != CV_16U )
         return false;
+
+    if (!m_buf)
+    {
+        f = fopen(m_filename.c_str(), "wb");
+        if (f)
+        {
+            Mat rgba;
+            if (channels == 3)
+                cvtColor(img, rgba, COLOR_BGR2RGB);
+            else if(channels == 4)
+                cvtColor(img, rgba, COLOR_BGRA2RGBA);
+            else
+            {
+                if (img.isContinuous())
+                    rgba = img;
+                else
+                    img.copyTo(rgba);
+            }               
+
+            savePNG(f, rgba.data, (uint8_t)8, (uint8_t)channels, (uint32_t)width, (uint32_t)height);
+            fclose((FILE*)f);
+            return true;
+        }
+        return false;
+    }
+
+
 
     if( png_ptr )
     {

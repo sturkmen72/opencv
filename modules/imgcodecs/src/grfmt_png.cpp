@@ -422,8 +422,11 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
     if( depth != CV_8U && depth != CV_16U )
         return false;
 
-    if (!m_buf)
+    TickMeter tm;
+
+    if (!m_buf & !false)
     {
+        tm.start();
         f = fopen(m_filename.c_str(), "wb");
         if (f)
         {
@@ -438,16 +441,21 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
                     rgba = img;
                 else
                     img.copyTo(rgba);
-            }               
-
+            }
+            tm.stop();
+            printf("\ncvtColor : %f\n", tm.getTimeMilli());
+            tm.reset();
+            tm.start();
             savePNG(f, rgba.data, (uint8_t)8, (uint8_t)channels, (uint32_t)width, (uint32_t)height);
+            tm.stop();
+            printf("\nwrite spng : %f\n", tm.getTimeMilli());
             fclose((FILE*)f);
             return true;
         }
         return false;
     }
 
-
+    tm.start();
 
     if( png_ptr )
     {
@@ -528,7 +536,8 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
 
                     png_write_image( png_ptr, buffer.data() );
                     png_write_end( png_ptr, info_ptr );
-
+                    tm.stop();
+                    printf("\nwrite png : %f\n", tm.getTimeMilli());
                     result = true;
                 }
             }

@@ -9,16 +9,19 @@ namespace opencv_test { namespace {
 
 TEST(Imgcodecs_Png, write_big)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "readwrite/read.png";
-    const string dst_file = cv::tempfile(".png");
-    Mat img;
-    ASSERT_NO_THROW(img = imread(filename));
-    ASSERT_FALSE(img.empty());
-    EXPECT_EQ(13043, img.cols);
-    EXPECT_EQ(13917, img.rows);
-    ASSERT_NO_THROW(imwrite(dst_file, img));
-    EXPECT_EQ(0, remove(dst_file.c_str()));
+    for (int i = 0; i < 3; i++)
+    {
+        const string root = cvtest::TS::ptr()->get_data_path();
+        const string filename = root + "readwrite/read.png";
+        const string dst_file = cv::tempfile(".png");
+        Mat img;
+        ASSERT_NO_THROW(img = imread(filename));
+        ASSERT_FALSE(img.empty());
+        EXPECT_EQ(13043, img.cols);
+        EXPECT_EQ(13917, img.rows);
+        ASSERT_NO_THROW(imwrite(dst_file, img));
+        EXPECT_EQ(0, remove(dst_file.c_str()));
+    }
 }
 
 TEST(Imgcodecs_Png, encode)

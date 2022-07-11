@@ -5,7 +5,7 @@
 
 namespace opencv_test { namespace {
 
-#ifdef HAVE_PNG
+#if defined(HAVE_PNG) || defined(HAVE_SPNG)
 
 TEST(Imgcodecs_Png, write_big)
 {
@@ -48,6 +48,15 @@ TEST(Imgcodecs_Png, regression_ImreadVSCvtColor)
     absdiff(gray_by_codec, gray_by_cvt, diff);
     EXPECT_LT(cvtest::mean(diff)[0], 1.);
     EXPECT_PRED_FORMAT2(cvtest::MatComparator(10, 0), gray_by_codec, gray_by_cvt);
+    /*
+     *     imshow("lena", original_image);
+    waitKey();
+    Mat r = original_image(Rect(0,0,256,256));
+    imwrite("/home/berkeyvx/Desktop/r.png",r );
+    original_image = imread("/home/berkeyvx/Desktop/r.png");
+    imshow("r", original_image);
+    waitKey();
+     */
 }
 
 // Test OpenCV issue 3075 is solved

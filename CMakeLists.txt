@@ -1,4 +1,4 @@
-# ----------------------------------------------------------------------------
+  # ----------------------------------------------------------------------------
 #  Root CMake file for OpenCV
 #
 #    From the off-tree build directory, invoke:
@@ -223,6 +223,7 @@ OCV_OPTION(BUILD_OPENJPEG           "Build OpenJPEG from source"         (WIN32 
 OCV_OPTION(BUILD_JASPER             "Build libjasper from source"        (WIN32 OR ANDROID OR APPLE OR OPENCV_FORCE_3RDPARTY_BUILD) )
 OCV_OPTION(BUILD_JPEG               "Build libjpeg from source"          (WIN32 OR ANDROID OR APPLE OR OPENCV_FORCE_3RDPARTY_BUILD) )
 OCV_OPTION(BUILD_PNG                "Build libpng from source"           (WIN32 OR ANDROID OR APPLE OR OPENCV_FORCE_3RDPARTY_BUILD) )
+OCV_OPTION(BUILD_SPNG             "Build libspng from source"          (WIN32 OR ANDROID OR APPLE OR OPENCV_FORCE_3RDPARTY_BUILD) )
 OCV_OPTION(BUILD_OPENEXR            "Build openexr from source"          (OPENCV_FORCE_3RDPARTY_BUILD) )
 OCV_OPTION(BUILD_WEBP               "Build WebP from source"             (((WIN32 OR ANDROID OR APPLE) AND NOT WINRT) OR OPENCV_FORCE_3RDPARTY_BUILD) )
 OCV_OPTION(BUILD_TBB                "Download and build TBB from source" (ANDROID OR OPENCV_FORCE_3RDPARTY_BUILD) )
@@ -330,6 +331,9 @@ OCV_OPTION(WITH_OPENNI2 "Include OpenNI2 support" OFF
 OCV_OPTION(WITH_PNG "Include PNG support" ON
   VISIBLE_IF TRUE
   VERIFY HAVE_PNG)
+OCV_OPTION(WITH_SPNG "Include SPNG support" ON
+  VISIBLE_IF TRUE
+  VERIFY HAVE_SPNG)
 OCV_OPTION(WITH_GDCM "Include DICOM support" OFF
   VISIBLE_IF TRUE
   VERIFY HAVE_GDCM)

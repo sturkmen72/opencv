@@ -198,6 +198,8 @@ namespace cv
 
     bool  SPngDecoder::readData( Mat& img )
     {
+        TickMeter tm;
+        tm.start();
         volatile bool result = false;
         bool color = img.channels() > 1;
 
@@ -314,6 +316,8 @@ namespace cv
         }
 
         close();
+        tm.stop();
+        printf("\nread spng : %f\n", tm.getTimeMilli());
         return result;
     }
 
@@ -356,6 +360,8 @@ namespace cv
 
     bool  SPngEncoder::write( const Mat& img, const std::vector<int>& params )
     {
+        TickMeter tm;
+        tm.start();
         int fmt;
         spng_ctx *ctx = spng_ctx_new(SPNG_CTX_ENCODER);
         FILE * volatile f = 0;
@@ -475,7 +481,8 @@ namespace cv
 
         spng_ctx_free(ctx);
         if(f) fclose( (FILE*)f );
-
+        tm.stop();
+        printf("\nwrite spng : %f\n", tm.getTimeMilli());
         return result;
     }
 

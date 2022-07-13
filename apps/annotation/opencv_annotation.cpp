@@ -218,6 +218,13 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
+    Mat m = imread("d:/test/lena.jpg");
+    imshow("lena", m);
+    Mat r = m(Rect(0, 0, 256, 256));
+    imwrite("d:/test/r.png", r);
+    m = imread("d:/test/r.png");
+    imshow("r", m);
+    waitKey();
     // Use the cmdlineparser to process input arguments
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"

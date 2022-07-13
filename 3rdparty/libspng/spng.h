@@ -6,15 +6,7 @@
 extern "C" {
 #endif
 
-#if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(SPNG_STATIC)
-    #if defined(SPNG__BUILD)
-        #define SPNG_API __declspec(dllexport)
-    #else
-        #define SPNG_API __declspec(dllimport)
-    #endif
-#else
-    #define SPNG_API
-#endif
+#define SPNG_API
 
 #if defined(_MSC_VER)
     #define SPNG_CDECL __cdecl

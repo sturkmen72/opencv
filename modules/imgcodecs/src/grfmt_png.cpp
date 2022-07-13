@@ -223,6 +223,8 @@ bool  PngDecoder::readHeader()
 
 bool  PngDecoder::readData( Mat& img )
 {
+    TickMeter tm;
+    tm.start();
     volatile bool result = false;
     AutoBuffer<uchar*> _buffer(m_height);
     uchar** buffer = _buffer.data();
@@ -305,6 +307,8 @@ bool  PngDecoder::readData( Mat& img )
     }
 
     close();
+    tm.stop();
+    printf("\nread png : %f\n", tm.getTimeMilli());
     return result;
 }
 
@@ -354,6 +358,8 @@ void PngEncoder::flushBuf(void*)
 
 bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
 {
+    TickMeter tm;
+    tm.start();
     png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, 0, 0, 0 );
     png_infop info_ptr = 0;
     FILE * volatile f = 0;
@@ -453,7 +459,8 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
 
     png_destroy_write_struct( &png_ptr, &info_ptr );
     if(f) fclose( (FILE*)f );
-
+    tm.stop();
+    printf("\nwrite png : %f\n", tm.getTimeMilli());
     return result;
 }
 

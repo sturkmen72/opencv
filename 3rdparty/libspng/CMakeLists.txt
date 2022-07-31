@@ -3,11 +3,13 @@
 #
 # ----------------------------------------------------------------------------
 
-project(spng C)
+project(spng)
 
 set(CURR_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(project_name "spng")
 set_property(GLOBAL PROPERTY SPNG_INCLUDE_DIR ${CURR_INCLUDE_DIR})
-ocv_include_directories("${CMAKE_CURRENT_SOURCE_DIR}" ${ZLIB_INCLUDE_DIRS})
+set_property(GLOBAL PROPERTY SPNG_PROJECT_NAME ${project_name})
+ocv_include_directories(${CURR_INCLUDE_DIR})
 
 file(GLOB_RECURSE spng_headers RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "*.h")
 file(GLOB_RECURSE spng_sources RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "*.c")

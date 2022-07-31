@@ -121,6 +121,7 @@ class Builder:
                "-DWITH_QUIRC=ON",
                "-DWITH_SPNG=ON",
                "-DBUILD_ZLIB=ON",
+               "-DBUILD_SPNG=ON",
                "-DBUILD_opencv_apps=OFF",
                "-DBUILD_opencv_calib3d=ON",
                "-DBUILD_opencv_dnn=ON",

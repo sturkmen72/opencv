@@ -24,17 +24,16 @@ if(HAVE_WEBP)
   list(APPEND GRFMT_LIBS ${WEBP_LIBRARIES})
 endif()
 
+if(HAVE_SPNG)
+  add_definitions(${SPNG_DEFINITIONS})
+  ocv_include_directories(${SPNG_INCLUDE_DIR})
+  list(APPEND GRFMT_LIBS ${SPNG_LIBRARY})
+endif()
+
 if(HAVE_PNG)
   add_definitions(${PNG_DEFINITIONS})
   ocv_include_directories(${PNG_INCLUDE_DIR})
   list(APPEND GRFMT_LIBS ${PNG_LIBRARIES})
-endif()
-
-if(HAVE_SPNG)
-  get_property(SPNG_INCLUDE GLOBAL PROPERTY SPNG_INCLUDE_DIR)
-  ocv_include_directories(${SPNG_INCLUDE})
-  get_property(SPNG_NAME GLOBAL PROPERTY SPNG_PROJECT_NAME)
-  ocv_target_link_libraries(${the_module} ${SPNG_NAME})
 endif()
 
 if(HAVE_GDCM)

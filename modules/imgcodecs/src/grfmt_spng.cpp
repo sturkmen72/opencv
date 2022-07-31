@@ -288,9 +288,9 @@ namespace cv
                     } else if(color){ // RGB -> BGR
                         AutoBuffer<uchar*> _buffer(m_height);
                         uchar** buffer = _buffer.data();
-                        for(int y = 0; y < m_height; y++ )
+                        for(int y = 0; y < m_height; y++ ){
                             buffer[y] = img.data + y*img.step;
-
+                        }
                             if(img.channels() == 3 && m_bit_depth == 8){
                                 do {
                                     ret = spng_get_row_info(png_ptr, &row_info);

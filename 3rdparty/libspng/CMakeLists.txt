@@ -3,7 +3,7 @@
 #
 # ----------------------------------------------------------------------------
 
-project(SPNG_LIBRARY C)
+project(${SPNG_LIBRARY} C)
 
 set(CURR_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
 set_property(GLOBAL PROPERTY SPNG_INCLUDE_DIR ${CURR_INCLUDE_DIR})

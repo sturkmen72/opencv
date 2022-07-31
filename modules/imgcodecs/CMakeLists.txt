@@ -31,9 +31,9 @@ if(HAVE_PNG)
 endif()
 
 if(HAVE_SPNG)
-  add_definitions(${SPNG_DEFINITIONS})
-  ocv_include_directories(${SPNG_INCLUDE_DIR})
-  list(APPEND GRFMT_LIBS ${SPNG_LIBRARIES})
+  get_property(SPNG_INCLUDE GLOBAL PROPERTY SPNG_INCLUDE_DIR)
+  ocv_include_directories(${SPNG_INCLUDE})
+  ocv_target_link_libraries(${the_module} spng)
 endif()
 
 if(HAVE_GDCM)

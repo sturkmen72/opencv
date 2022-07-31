@@ -832,6 +832,11 @@ if(WITH_QUIRC)
   set(HAVE_QUIRC TRUE)
 endif()
 
+if(WITH_SPNG)
+  add_subdirectory(3rdparty/libspng)
+  set(HAVE_SPNG TRUE)
+endif()
+
 if(WITH_ONNX)
   include(cmake/FindONNX.cmake)
 endif()

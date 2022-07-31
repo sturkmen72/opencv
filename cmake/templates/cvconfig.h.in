@@ -104,7 +104,7 @@
 #cmakedefine HAVE_OPENGL
 
 /* PNG codec */
-//#cmakedefine HAVE_PNG
+#cmakedefine HAVE_PNG
 
 /* PNG codec */
 #cmakedefine HAVE_SPNG

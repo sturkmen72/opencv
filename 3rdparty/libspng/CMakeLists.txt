@@ -3,12 +3,14 @@
 #
 # ----------------------------------------------------------------------------
 
-project(${SPNG_LIBRARY} C)
+project(SPNG_LIBRARY C)
 
+set(CURR_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
+set_property(GLOBAL PROPERTY SPNG_INCLUDE_DIR ${CURR_INCLUDE_DIR})
 ocv_include_directories("${CMAKE_CURRENT_SOURCE_DIR}" ${ZLIB_INCLUDE_DIRS})
 
-file(GLOB lib_srcs *.c)
-file(GLOB lib_hdrs *.h)
+file(GLOB_RECURSE spng_headers RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "*.h")
+file(GLOB_RECURSE spng_source RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "*.c")
 
 # ----------------------------------------------------------------------------------
 #         Define the library target:
@@ -18,7 +20,7 @@ if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 endif(MSVC)
 
-add_library(${SPNG_LIBRARY} STATIC ${OPENCV_3RDPARTY_EXCLUDE_FROM_ALL} ${lib_srcs} ${lib_hdrs})
+add_library(${SPNG_LIBRARY} STATIC ${OPENCV_3RDPARTY_EXCLUDE_FROM_ALL} ${spng_headers} ${spng_source})
 ocv_warnings_disable(CMAKE_C_FLAGS -Wunused-variable)
 target_link_libraries(${SPNG_LIBRARY} ${ZLIB_LIBRARIES})
 

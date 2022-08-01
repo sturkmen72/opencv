@@ -112,6 +112,7 @@ namespace cv
          *   Type definition for callback passed to spng_set_png_stream() for decoders.
          *   A read callback function should copy length bytes to dest and return 0 or SPNG_IO_EOF/SPNG_IO_ERROR on error.
          */
+        CV_UNUSED(sp_ctx);
         SPngDecoder* decoder = (SPngDecoder*)(user);
         CV_Assert( decoder );
 
@@ -241,8 +242,8 @@ namespace cv
 
                 if(ret == SPNG_OK)
                 {
-                    struct spng_row_info row_info;
-                    if(!color && (fmt != SPNG_FMT_G8 && fmt != SPNG_FMT_GA8 && fmt != SPNG_FMT_GA16)) {
+                    struct spng_row_info row_info{};
+                    if(!color && (fmt == SPNG_FMT_RGB8 || fmt == SPNG_FMT_RGBA8 || fmt == SPNG_FMT_RGBA16 )) {
                         AutoBuffer<unsigned char> buffer;
                         buffer.allocate(image_width);
                         if(fmt == SPNG_FMT_RGB8) { // Convert RBG8 image to Gray
@@ -254,8 +255,8 @@ namespace cv
                                 icvCvt_BGR2Gray_8u_C3C1R(
                                         buffer.data(),
                                         0,
-                                        img.data + row_info.row_num * (image_width / 3),
-                                        0, Size(static_cast<int>(image_width) / 3, 1), 2);
+                                        img.data + row_info.row_num * img.step,
+                                        0, Size(m_width, 1), 2);
                             } while (ret == SPNG_OK);
                         }
                         else if(fmt == SPNG_FMT_RGBA8) { // Convert RBGA8 image to Gray
@@ -267,8 +268,8 @@ namespace cv
                                 icvCvt_BGRA2Gray_8u_C4C1R(
                                         buffer.data(),
                                         0,
-                                        img.data + row_info.row_num * (image_width/4) ,
-                                        0, Size(static_cast<int>(image_width)/4,1), 2);
+                                        img.data + row_info.row_num * img.step ,
+                                        0, Size(m_width,1), 2);
                             } while (ret == SPNG_OK);
                         }
                         else
@@ -280,8 +281,8 @@ namespace cv
                                 ret = spng_decode_row(png_ptr, buffer.data(), image_width);
                                 icvCvt_BGRA2Gray_16u_CnC1R(
                                         reinterpret_cast<const ushort *>(buffer.data()), 0,
-                                        reinterpret_cast<ushort *>(img.data + row_info.row_num * (image_width / 4)),
-                                        0 , Size(static_cast<int>(image_width) / 4, 1),
+                                        reinterpret_cast<ushort *>(img.data + row_info.row_num * img.step),
+                                        0 , Size(m_width, 1),
                                         3, 2);
                             } while (ret == SPNG_OK);
                         }
@@ -291,47 +292,47 @@ namespace cv
                         for(int y = 0; y < m_height; y++ ){
                             buffer[y] = img.data + y*img.step;
                         }
-                            if(img.channels() == 3 && m_bit_depth == 8){
-                                do {
-                                    ret = spng_get_row_info(png_ptr, &row_info);
-                                    if (ret) break;
+                        if(img.channels() == 3 && m_bit_depth == 8){
+                            do {
+                                ret = spng_get_row_info(png_ptr, &row_info);
+                                if (ret) break;
 
-                                    ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                    icvCvt_RGB2BGR_8u_C3R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(image_width/3,1));
-                                } while (ret == SPNG_OK);
-                            }
-                            else if(img.channels() == 4 && m_bit_depth == 16) {
-                                do {
-                                    ret = spng_get_row_info(png_ptr, &row_info);
-                                    if (ret) break;
-
-                                    ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                    icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
-                                                             reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
-                                                             Size(image_width/4, 1));
-                                } while (ret == SPNG_OK);
-                            }
-                            else if(img.channels() == 4 && m_bit_depth == 8){
-                                do {
-                                    ret = spng_get_row_info(png_ptr, &row_info);
-                                    if (ret) break;
-
-                                    ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                    icvCvt_RGBA2BGRA_8u_C4R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(image_width/4,1));
-                                } while (ret == SPNG_OK);
-                            }
-                            else {
-                                do {
-                                    ret = spng_get_row_info(png_ptr, &row_info);
-                                    if (ret) break;
-
-                                    ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                    icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
-                                                           reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
-                                                           Size(image_width/3, 1));
-                                } while (ret == SPNG_OK);
-                            }
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                icvCvt_RGB2BGR_8u_C3R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(m_width,1));
+                            } while (ret == SPNG_OK);
                         }
+                        else if(img.channels() == 4 && m_bit_depth == 16) {
+                            do {
+                                ret = spng_get_row_info(png_ptr, &row_info);
+                                if (ret) break;
+
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                         reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
+                                                         Size(m_width, 1));
+                            } while (ret == SPNG_OK);
+                        }
+                        else if(img.channels() == 4 && m_bit_depth == 8){
+                            do {
+                                ret = spng_get_row_info(png_ptr, &row_info);
+                                if (ret) break;
+
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                icvCvt_RGBA2BGRA_8u_C4R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(m_width,1));
+                            } while (ret == SPNG_OK);
+                        }
+                        else {
+                            do {
+                                ret = spng_get_row_info(png_ptr, &row_info);
+                                if (ret) break;
+
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                       reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
+                                                       Size(m_width, 1));
+                            } while (ret == SPNG_OK);
+                        }
+                    }
                     else{
                         do
                         {
@@ -342,20 +343,18 @@ namespace cv
                         }
                         while(ret == SPNG_OK);
                     }
-                    }
+                }
 
-                    if(ret == SPNG_EOI) {
-                        struct spng_exif exif_s;
-                        ret = spng_get_exif(png_ptr, &exif_s);
-                        if(ret == SPNG_OK) {
-                            if (exif_s.data && exif_s.length > 0) {
-                                m_exif.parseExif((unsigned char *) exif_s.data, exif_s.length);
-                            }
+                if(ret == SPNG_EOI) {
+                    struct spng_exif exif_s{};
+                    ret = spng_get_exif(png_ptr, &exif_s);
+                    if(ret == SPNG_OK) {
+                        if (exif_s.data && exif_s.length > 0) {
+                            m_exif.parseExif((unsigned char *) exif_s.data, exif_s.length);
                         }
-                        result = true;
                     }
-
-
+                    result = true;
+                }
             }
         }
 
@@ -391,6 +390,7 @@ namespace cv
 
     int SPngEncoder::writeDataToBuf(void *ctx, void *user, void *dst_src, size_t length)
     {
+        CV_UNUSED(ctx);
         SPngEncoder* encoder = (SPngEncoder*)(user);
         CV_Assert( encoder && encoder->m_buf );
         size_t cursz = encoder->m_buf->size();

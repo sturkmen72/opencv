@@ -62,6 +62,18 @@
 
 #include "grfmt_spng.hpp"
 
+void spngCvt_BGR2Gray_8u_C3C1R( const uchar* bgr, int bgr_step,
+                                uchar* gray, int gray_step,
+                                cv::Size size, int _swap_rb );
+
+void spngCvt_BGRA2Gray_8u_C4C1R( const uchar* bgra, int rgba_step,
+                                uchar* gray, int gray_step,
+                                cv::Size size, int _swap_rb );
+
+void spngCvt_BGRA2Gray_16u_CnC1R( const ushort* bgr, int bgr_step,
+                                  ushort* gray, int gray_step,
+                                  cv::Size size, int ncn, int _swap_rb );
+
 namespace cv
 {
 
@@ -252,7 +264,7 @@ namespace cv
                                 if (ret) break;
 
                                 ret = spng_decode_row(png_ptr, buffer.data(), image_width);
-                                icvCvt_BGR2Gray_8u_C3C1R(
+                                spngCvt_BGR2Gray_8u_C3C1R(
                                         buffer.data(),
                                         0,
                                         img.data + row_info.row_num * img.step,
@@ -265,7 +277,7 @@ namespace cv
                                 if (ret) break;
 
                                 ret = spng_decode_row(png_ptr, buffer.data(), image_width);
-                                icvCvt_BGRA2Gray_8u_C4C1R(
+                                spngCvt_BGRA2Gray_8u_C4C1R(
                                         buffer.data(),
                                         0,
                                         img.data + row_info.row_num * img.step ,
@@ -279,7 +291,7 @@ namespace cv
                                 if (ret) break;
 
                                 ret = spng_decode_row(png_ptr, buffer.data(), image_width);
-                                icvCvt_BGRA2Gray_16u_CnC1R(
+                                spngCvt_BGRA2Gray_16u_CnC1R(
                                         reinterpret_cast<const ushort *>(buffer.data()), 0,
                                         reinterpret_cast<ushort *>(img.data + row_info.row_num * img.step),
                                         0 , Size(m_width, 1),
@@ -542,6 +554,57 @@ namespace cv
         return result;
     }
 
+}
+
+void spngCvt_BGR2Gray_8u_C3C1R( const uchar* bgr, int bgr_step,
+                               uchar* gray, int gray_step,
+                               cv::Size size, int _swap_rb )
+{
+    int i;
+    for( ; size.height--; gray += gray_step )
+    {
+        for( i = 0; i < size.width; i++, bgr += 3 )
+        {
+            int t = 0.2990 * bgr[0] + 0.5870 * bgr[1] + 0.1140 * bgr[2];
+            gray[i] = (uchar)t;
+        }
+
+        bgr += bgr_step - size.width*3;
+    }
+}
+
+void spngCvt_BGRA2Gray_8u_C4C1R( const uchar* bgra, int rgba_step,
+                                uchar* gray, int gray_step,
+                                cv::Size size, int _swap_rb )
+{
+    int i;
+    for( ; size.height--; gray += gray_step )
+    {
+        for( i = 0; i < size.width; i++, bgra += 4 )
+        {
+            int t = 0.2990 * bgra[0] + 0.5870 * bgra[1] + 0.1140 * bgra[2];
+            gray[i] = (uchar)t;
+        }
+
+        bgra += rgba_step - size.width*4;
+    }
+}
+
+void spngCvt_BGRA2Gray_16u_CnC1R( const ushort* bgr, int bgr_step,
+                                 ushort* gray, int gray_step,
+                                 cv::Size size, int ncn, int _swap_rb )
+{
+    int i;
+    for( ; size.height--; gray += gray_step )
+    {
+        for( i = 0; i < size.width; i++, bgr += ncn )
+        {
+            int t = 0.2990 * bgr[0] + 0.5870 * bgr[1] + 0.1140 * bgr[2];
+            gray[i] = (ushort)t;
+        }
+
+        bgr += bgr_step - size.width*ncn;
+    }
 }
 
 #endif

@@ -497,10 +497,11 @@ namespace cv
                 }
                 spng_set_option(ctx, SPNG_IMG_COMPRESSION_STRATEGY, compression_strategy);
 
+
                 int ret;
+                spng_encode_chunks(ctx);
+                ret = spng_encode_image(ctx, nullptr, 0, SPNG_FMT_PNG, SPNG_ENCODE_PROGRESSIVE);
                 if(channels > 1) {
-                    spng_encode_chunks(ctx);
-                    ret = spng_encode_image(ctx, nullptr, 0, SPNG_FMT_PNG, SPNG_ENCODE_PROGRESSIVE);
                     int error;
                     if (ret == SPNG_OK) {
                         if(depth == CV_16U) {
@@ -548,14 +549,16 @@ namespace cv
                     }
                 }
                 else{
-                    AutoBuffer<uchar*> buff;
-                    buff.allocate(height);
-                    for(int y = 0; y < height; y++ )
-                        buff[y] = img.data + y*img.step;
+                    int error;
+                    for (int y = 0; y < height; y++) {
+                        error = spng_encode_row(ctx, img.data + y*img.step, width * channels);
+                        if (error) break;
+                    }
 
-
-                    std::size_t image_size = width*height*channels*(depth == CV_16U ? 2 : 1);
-                    ret = spng_encode_image(ctx, *buff.data(), image_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+                    if (error == SPNG_EOI) { // success
+                        spng_encode_chunks(ctx);
+                        ret = SPNG_OK;
+                    }
                 }
                 if(ret == SPNG_OK)
                     result = true;

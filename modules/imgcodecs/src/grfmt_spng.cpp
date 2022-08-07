@@ -551,7 +551,7 @@ namespace cv
                 else{
                     int error;
                     for (int y = 0; y < height; y++) {
-                        error = spng_encode_row(ctx, img.data + y*img.step, width * channels);
+                        error = spng_encode_row(ctx, img.data + y*img.step, width * channels * (depth == CV_16U ? 2 : 1));
                         if (error) break;
                     }
 

@@ -208,6 +208,7 @@ namespace cv
     {
         volatile bool result = false;
         bool color = img.channels() > 1;
+        int channel = img.channels();
 
         struct spng_ctx *png_ptr = (struct spng_ctx *)m_ctx;
 
@@ -242,6 +243,17 @@ namespace cv
                 else if( m_color_type == SPNG_COLOR_TYPE_GRAYSCALE &&
                          m_bit_depth <= 8 )
                     fmt = SPNG_FMT_G8;
+                else if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA)
+                {
+                    if(color)
+                    {
+                        fmt = SPNG_FMT_RGB8;
+                    }
+                    else
+                    {
+                        fmt = SPNG_FMT_G8;
+                    }
+                }
             }
 
             size_t image_width, image_size = 0;

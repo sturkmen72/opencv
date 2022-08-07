@@ -304,13 +304,15 @@ namespace cv
                         for(int y = 0; y < m_height; y++ ){
                             buffer[y] = img.data + y*img.step;
                         }
-                        if(img.channels() == 3 && m_bit_depth == 8){
+                        if(img.channels() == 3 && m_bit_depth == 16){
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
 
                                 ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                icvCvt_RGB2BGR_8u_C3R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(m_width,1));
+                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                       reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
+                                                       Size(m_width, 1));
                             } while (ret == SPNG_OK);
                         }
                         else if(img.channels() == 4 && m_bit_depth == 16) {
@@ -324,7 +326,7 @@ namespace cv
                                                          Size(m_width, 1));
                             } while (ret == SPNG_OK);
                         }
-                        else if(img.channels() == 4 && m_bit_depth == 8){
+                        else if(img.channels() == 4){
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
@@ -339,9 +341,7 @@ namespace cv
                                 if (ret) break;
 
                                 ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
-                                                       reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
-                                                       Size(m_width, 1));
+                                icvCvt_RGB2BGR_8u_C3R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(m_width,1));
                             } while (ret == SPNG_OK);
                         }
                     }
@@ -541,7 +541,9 @@ namespace cv
                     for(int y = 0; y < height; y++ )
                         buff[y] = img.data + y*img.step;
 
-                    ret = spng_encode_image(ctx, *buff.data(), img.cols*img.rows*channels, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+
+                    std::size_t image_size = width*height*channels*(depth == CV_16U ? 2 : 1);
+                    ret = spng_encode_image(ctx, *buff.data(), image_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
                 }
                 if(ret == SPNG_OK)
                     result = true;

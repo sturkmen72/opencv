@@ -580,12 +580,12 @@ void spngCvt_BGR2Gray_8u_C3C1R( const uchar* bgr, int bgr_step,
     int i;
     for( ; size.height--; gray += gray_step )
     {
-        double cBGR0 = 0.1140;
-        double cBGR2 = 0.2990;
+        double cBGR0 = 0.1140441895;
+        double cBGR2 = 0.2989807129;
         if (_swap_rb) std::swap(cBGR0, cBGR2);
         for( i = 0; i < size.width; i++, bgr += 3 )
         {
-            int t = static_cast<int>(cBGR0 * bgr[0] + 0.5870 * bgr[1] + cBGR2 * bgr[2]);
+            int t = static_cast<int>(cBGR0 * bgr[0] + 0.5869750977 * bgr[1] + cBGR2 * bgr[2]);
             gray[i] = (uchar)t;
         }
 
@@ -600,12 +600,12 @@ void spngCvt_BGRA2Gray_8u_C4C1R( const uchar* bgra, int rgba_step,
     int i;
     for( ; size.height--; gray += gray_step )
     {
-        double cBGR0 = 0.1140;
-        double cBGR2 = 0.2990;
+        double cBGR0 = 0.1140441895;
+        double cBGR2 = 0.2989807129;
         if (_swap_rb) std::swap(cBGR0, cBGR2);
         for( i = 0; i < size.width; i++, bgra += 4 )
         {
-            int t = cBGR0 * bgra[0] + 0.5870 * bgra[1] + cBGR2 * bgra[2];
+            int t = cBGR0 * bgra[0] + 0.5869750977 * bgra[1] + cBGR2 * bgra[2];
             gray[i] = (uchar)t;
         }
 
@@ -620,12 +620,12 @@ void spngCvt_BGRA2Gray_16u_CnC1R( const ushort* bgr, int bgr_step,
     int i;
     for( ; size.height--; gray += gray_step )
     {
-        double cBGR0 = 0.1140;
-        double cBGR2 = 0.2990;
+        double cBGR0 = 0.1140441895;
+        double cBGR2 = 0.2989807129;
         if (_swap_rb) std::swap(cBGR0, cBGR2);
         for( i = 0; i < size.width; i++, bgr += ncn )
         {
-            int t = cBGR0 * bgr[0] + 0.5870 * bgr[1] + cBGR2 * bgr[2];
+            int t = cBGR0 * bgr[0] + 0.5869750977 * bgr[1] + cBGR2 * bgr[2];
             gray[i] = (ushort)t;
         }
 

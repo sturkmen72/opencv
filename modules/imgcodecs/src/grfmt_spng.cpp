@@ -208,7 +208,6 @@ namespace cv
     {
         volatile bool result = false;
         bool color = img.channels() > 1;
-        int channel = img.channels();
 
         struct spng_ctx *png_ptr = (struct spng_ctx *)m_ctx;
 

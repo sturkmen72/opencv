@@ -291,7 +291,7 @@ namespace cv
                                 spngCvt_BGR2Gray_8u_C3C1R(
                                         buffer.data(),
                                         0,
-                                        img.data + row_info.row_num * image_width,
+                                        img.data + row_info.row_num * img.step,
                                         0, Size(m_width, 1), 2);
                             } while (ret == SPNG_OK);
                         }
@@ -304,7 +304,7 @@ namespace cv
                                 spngCvt_BGRA2Gray_8u_C4C1R(
                                         buffer.data(),
                                         0,
-                                        img.data + row_info.row_num * image_width ,
+                                        img.data + row_info.row_num * img.step ,
                                         0, Size(m_width,1), 2);
                             } while (ret == SPNG_OK);
                         }
@@ -317,25 +317,33 @@ namespace cv
                                 ret = spng_decode_row(png_ptr, buffer.data(), image_width);
                                 spngCvt_BGRA2Gray_16u_CnC1R(
                                         reinterpret_cast<const ushort *>(buffer.data()), 0,
-                                        reinterpret_cast<ushort *>(img.data + row_info.row_num * image_width),
+                                        reinterpret_cast<ushort *>(img.data + row_info.row_num * img.step),
                                         0 , Size(m_width, 1),
                                         3, 2);
                             } while (ret == SPNG_OK);
                         }
-                    } else if(color){ // RGB -> BGR
+                    } else if(color){ // RGB -> BGR, convert row by row if png is non-interlaced, otherwise convert image as one
+                        int step = m_width;
+                        AutoBuffer<uchar*> _buffer(m_height);
+                        uchar** buffer = _buffer.data();
+                        for(int y = 0; y < m_height; y++ ){
+                            buffer[y] = img.data + y*img.step;
+                        }
                         if(img.channels() == 3 && m_bit_depth == 16){
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
 
-                                ret = spng_decode_row(png_ptr, img.data + row_info.row_num * image_width, image_width);
-                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(img.data + row_info.row_num * image_width), 0,
-                                                       reinterpret_cast<ushort *>(img.data + row_info.row_num * image_width), 0,
-                                                       Size(m_width, 1));
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                if(ihdr.interlace_method == 0) {
+                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                       reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
+                                                        Size(m_width, 1));
+                                }
                             } while (ret == SPNG_OK);
                             if(ihdr.interlace_method)
                             {
-                                // convert bgr -> rgb
+                                //icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(img.data), step, reinterpret_cast<ushort *>(img.data), step, Size(m_width, m_height));
                             }
                         }
                         else if(img.channels() == 4 && m_bit_depth == 16) {
@@ -343,27 +351,46 @@ namespace cv
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
 
-                                ret = spng_decode_row(png_ptr, img.data + row_info.row_num * image_width, image_width);
-                                icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(img.data + row_info.row_num * image_width), 0,
-                                                          reinterpret_cast<ushort *>(img.data + row_info.row_num * image_width), 0, Size(m_width, 1));
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                if(ihdr.interlace_method == 0) {
+                               icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                         reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
+                                                         Size(m_width, 1));
+                                }
                             } while (ret == SPNG_OK);
+                            if(ihdr.interlace_method)
+                            {
+                                //icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(img.data), step , reinterpret_cast<ushort *>(img.data), step , Size(m_width, m_height));
+                            }
                         }
                         else if(img.channels() == 4){
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
 
-                                ret = spng_decode_row(png_ptr, img.data + row_info.row_num * image_width, image_width);
-                                icvCvt_RGBA2BGRA_8u_C4R(img.data + row_info.row_num * image_width, 0, img.data + row_info.row_num * image_width, 0, Size(m_width,1));
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                if(ihdr.interlace_method == 0) {
+                                    icvCvt_RGBA2BGRA_8u_C4R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(m_width,1));
+                                }
                             } while (ret == SPNG_OK);
+                            if(ihdr.interlace_method)
+                            {
+                                //icvCvt_RGBA2BGRA_8u_C4R(img.data, step , img.data, step , Size(m_width, m_height));
+                            }
                         }
                         else {
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
-                                ret = spng_decode_row(png_ptr, img.data + row_info.row_num * image_width, image_width);
-                                icvCvt_RGB2BGR_8u_C3R(img.data + row_info.row_num * image_width, 0, img.data + row_info.row_num * image_width, 0, Size(m_width,1));
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                if(ihdr.interlace_method == 0) {
+                                    icvCvt_RGB2BGR_8u_C3R(buffer[row_info.row_num], 0, buffer[row_info.row_num], 0, Size(m_width,1));
+                                }
                             } while (ret == SPNG_OK);
+                            if(ihdr.interlace_method)
+                            {
+                                //icvCvt_RGB2BGR_8u_C3R(img.data, step , img.data, step , Size(m_width, m_height));
+                            }
                         }
                     }
                     else{
@@ -372,7 +399,7 @@ namespace cv
                             ret = spng_get_row_info(png_ptr, &row_info);
                             if(ret) break;
 
-                            ret = spng_decode_row(png_ptr, img.data + row_info.row_num * image_width, image_width);
+                            ret = spng_decode_row(png_ptr, img.data + row_info.row_num * img.step, image_width);
                         }
                         while(ret == SPNG_OK);
                     }

@@ -323,7 +323,7 @@ namespace cv
                             } while (ret == SPNG_OK);
                         }
                     } else if(color){ // RGB -> BGR, convert row by row if png is non-interlaced, otherwise convert image as one
-                        int step = m_width;
+                        int step = m_width*img.channels();
                         AutoBuffer<uchar*> _buffer(m_height);
                         uchar** buffer = _buffer.data();
                         for(int y = 0; y < m_height; y++ ){
@@ -343,7 +343,7 @@ namespace cv
                             } while (ret == SPNG_OK);
                             if(ihdr.interlace_method)
                             {
-                                //icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(img.data), step, reinterpret_cast<ushort *>(img.data), step, Size(m_width, m_height));
+                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(img.data), step, reinterpret_cast<ushort *>(img.data), step, Size(m_width, m_height));
                             }
                         }
                         else if(img.channels() == 4 && m_bit_depth == 16) {
@@ -353,14 +353,14 @@ namespace cv
 
                                 ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
                                 if(ihdr.interlace_method == 0) {
-                               icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
-                                                         reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
-                                                         Size(m_width, 1));
+                                    icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                        reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
+                                                        Size(m_width, 1));
                                 }
                             } while (ret == SPNG_OK);
                             if(ihdr.interlace_method)
                             {
-                                //icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(img.data), step , reinterpret_cast<ushort *>(img.data), step , Size(m_width, m_height));
+                                icvCvt_RGBA2BGRA_16u_C4R(reinterpret_cast<const ushort *>(img.data), step*2 , reinterpret_cast<ushort *>(img.data), step*2 , Size(m_width, m_height));
                             }
                         }
                         else if(img.channels() == 4){
@@ -375,7 +375,7 @@ namespace cv
                             } while (ret == SPNG_OK);
                             if(ihdr.interlace_method)
                             {
-                                //icvCvt_RGBA2BGRA_8u_C4R(img.data, step , img.data, step , Size(m_width, m_height));
+                                icvCvt_RGBA2BGRA_8u_C4R(img.data, step , img.data, step , Size(m_width, m_height));
                             }
                         }
                         else {
@@ -389,7 +389,7 @@ namespace cv
                             } while (ret == SPNG_OK);
                             if(ihdr.interlace_method)
                             {
-                                //icvCvt_RGB2BGR_8u_C3R(img.data, step , img.data, step , Size(m_width, m_height));
+                                icvCvt_RGB2BGR_8u_C3R(img.data, step , img.data, step , Size(m_width, m_height));
                             }
                         }
                     }

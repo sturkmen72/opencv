@@ -265,6 +265,10 @@ namespace cv
                     }
                 }
             }
+            else if(img.channels() == 1 && m_bit_depth == 16)
+            {
+                fmt = SPNG_FMT_GA16;
+            }
 
             size_t image_width, image_size = 0;
             int ret = spng_decoded_image_size(png_ptr, fmt, &image_size);
@@ -273,6 +277,10 @@ namespace cv
 
             if(ret == SPNG_OK) {
                 image_width = image_size / m_height;
+                if(img.channels() == 1 && m_bit_depth == 16)
+                {
+                    image_width = image_width / 3 * 2;
+                }
 
                 ret = spng_decode_image(png_ptr, nullptr, 0, fmt, SPNG_DECODE_PROGRESSIVE | decode_flags);
 
@@ -280,47 +288,85 @@ namespace cv
                 {
                     struct spng_row_info row_info{};
                     if(!color && (fmt == SPNG_FMT_RGB8 || fmt == SPNG_FMT_RGBA8 || fmt == SPNG_FMT_RGBA16 )) {
-                        AutoBuffer<unsigned char> buffer;
-                        buffer.allocate(image_width);
-                        if(fmt == SPNG_FMT_RGB8) { // Convert RBG8 image to Gray
-                            do {
-                                ret = spng_get_row_info(png_ptr, &row_info);
-                                if (ret) break;
+                        if(ihdr.interlace_method == 0) {
+                            AutoBuffer<unsigned char> buffer;
+                            buffer.allocate(image_width);
+                            if(fmt == SPNG_FMT_RGB8) { // Convert RBG8 image to Gray
+                                do {
+                                    ret = spng_get_row_info(png_ptr, &row_info);
+                                    if (ret) break;
 
-                                ret = spng_decode_row(png_ptr, buffer.data(), image_width);
+                                    ret = spng_decode_row(png_ptr, buffer.data(), image_width);
+                                    spngCvt_BGR2Gray_8u_C3C1R(
+                                            buffer.data(),
+                                            0,
+                                            img.data + row_info.row_num * img.step,
+                                            0, Size(m_width, 1), 2);
+                                } while (ret == SPNG_OK);
+                            }
+                            else if(fmt == SPNG_FMT_RGBA8) { // Convert RBGA8 image to Gray
+                                do {
+                                    ret = spng_get_row_info(png_ptr, &row_info);
+                                    if (ret) break;
+
+                                    ret = spng_decode_row(png_ptr, buffer.data(), image_width);
+                                    spngCvt_BGRA2Gray_8u_C4C1R(
+                                            buffer.data(),
+                                            0,
+                                            img.data + row_info.row_num * img.step ,
+                                            0, Size(m_width,1), 2);
+                                } while (ret == SPNG_OK);
+                            }
+                            else
+                            { // Convert RGBA16 to Gray
+                                do {
+                                    ret = spng_get_row_info(png_ptr, &row_info);
+                                    if (ret) break;
+
+                                    ret = spng_decode_row(png_ptr, buffer.data(), image_width);
+                                    spngCvt_BGRA2Gray_16u_CnC1R(
+                                            reinterpret_cast<const ushort *>(buffer.data()), 0,
+                                            reinterpret_cast<ushort *>(img.data + row_info.row_num * img.step),
+                                            0 , Size(m_width, 1),
+                                            3, 2);
+                                } while (ret == SPNG_OK);
+                            }
+                        } else{
+                            AutoBuffer<unsigned char> imageBuffer(image_size);
+                            spng_decode_image(png_ptr, imageBuffer.data(), image_size, fmt, 0);
+                            int step = m_width*img.channels();
+                            if(fmt == SPNG_FMT_RGB8)
+                            {
                                 spngCvt_BGR2Gray_8u_C3C1R(
-                                        buffer.data(),
-                                        0,
-                                        img.data + row_info.row_num * img.step,
-                                        0, Size(m_width, 1), 2);
-                            } while (ret == SPNG_OK);
-                        }
-                        else if(fmt == SPNG_FMT_RGBA8) { // Convert RBGA8 image to Gray
-                            do {
-                                ret = spng_get_row_info(png_ptr, &row_info);
-                                if (ret) break;
-
-                                ret = spng_decode_row(png_ptr, buffer.data(), image_width);
+                                            imageBuffer.data(),
+                                            step,
+                                            img.data ,
+                                            step, Size(m_width,m_height), 2);
+                            }
+                            else if(fmt == SPNG_FMT_RGBA8)
+                            {
                                 spngCvt_BGRA2Gray_8u_C4C1R(
-                                        buffer.data(),
-                                        0,
-                                        img.data + row_info.row_num * img.step ,
-                                        0, Size(m_width,1), 2);
-                            } while (ret == SPNG_OK);
-                        }
-                        else
-                        { // Convert RGBA16 to Gray
-                            do {
-                                ret = spng_get_row_info(png_ptr, &row_info);
-                                if (ret) break;
-
-                                ret = spng_decode_row(png_ptr, buffer.data(), image_width);
-                                spngCvt_BGRA2Gray_16u_CnC1R(
-                                        reinterpret_cast<const ushort *>(buffer.data()), 0,
-                                        reinterpret_cast<ushort *>(img.data + row_info.row_num * img.step),
-                                        0 , Size(m_width, 1),
-                                        3, 2);
-                            } while (ret == SPNG_OK);
+                                            imageBuffer.data(),
+                                            step,
+                                            img.data,
+                                            step, Size(m_width,m_height), 2);
+                            }
+                            else if(fmt == SPNG_FMT_RGBA16)
+                            {
+                                    spngCvt_BGRA2Gray_16u_CnC1R(
+                                            reinterpret_cast<const ushort *>(imageBuffer.data()), step,
+                                            reinterpret_cast<ushort *>(img.data),
+                                            step , Size(m_width, m_height),
+                                            4, 2);
+                            }
+                            else if(fmt == SPNG_FMT_PNG)
+                            {
+                                    spngCvt_BGRA2Gray_16u_CnC1R(
+                                            reinterpret_cast<const ushort *>(imageBuffer.data()), step,
+                                            reinterpret_cast<ushort *>(img.data),
+                                            step , Size(m_width, m_height),
+                                            3, 2);
+                            }
                         }
                     } else if(color){ // RGB -> BGR, convert row by row if png is non-interlaced, otherwise convert image as one
                         int step = m_width*img.channels();

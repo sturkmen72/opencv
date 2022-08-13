@@ -219,7 +219,12 @@ namespace cv
             int have_trns = spng_get_trns((struct spng_ctx*) m_ctx, &trns);
 
             int decode_flags = 0;
-            if(have_trns == SPNG_OK && img.channels() == 4)
+            if(have_trns == SPNG_OK)
+            {
+                decode_flags = SPNG_DECODE_TRNS;
+            }
+            
+            if(img.channels() == 4)
             {
                 if( m_color_type == SPNG_COLOR_TYPE_TRUECOLOR ||
                     m_color_type == SPNG_COLOR_TYPE_INDEXED ||
@@ -227,49 +232,53 @@ namespace cv
                     fmt = m_bit_depth == 16 ? SPNG_FMT_RGBA16 : SPNG_FMT_RGBA8;
                 else if( m_color_type == SPNG_COLOR_TYPE_GRAYSCALE )
                     fmt = m_bit_depth == 16 ? SPNG_FMT_GA16 : SPNG_FMT_GA8;
-                else
-                    fmt = SPNG_FMT_RGBA8;
-
-                decode_flags = SPNG_DECODE_TRNS;
-            }
-            else if(img.channels() == 4)
-            {
-                if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA)
-                {
-                    fmt = m_bit_depth == 16 ? SPNG_FMT_RGBA16 : SPNG_FMT_RGBA8;
-                }
-                if(m_color_type == SPNG_COLOR_TYPE_TRUECOLOR_ALPHA)
-                {
-                    fmt = m_bit_depth == 16 ? SPNG_FMT_RGBA16 : SPNG_FMT_RGBA8;
-                }
-            }
-            else if(img.channels() < 4 && m_bit_depth != 16)
-            {
-                if( m_color_type == SPNG_COLOR_TYPE_INDEXED ||
-                    m_color_type == SPNG_COLOR_TYPE_TRUECOLOR ||
-                    m_color_type == SPNG_COLOR_TYPE_TRUECOLOR_ALPHA ||
-                    (m_color_type == SPNG_COLOR_TYPE_GRAYSCALE && img.channels() == 3))
-                    fmt = SPNG_FMT_RGB8;
-                else if( m_color_type == SPNG_COLOR_TYPE_GRAYSCALE &&
-                         m_bit_depth <= 8 )
-                    fmt = SPNG_FMT_G8;
                 else if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA)
                 {
-                    if(color)
-                    {
+                    fmt = m_bit_depth == 16 ? SPNG_FMT_RGBA16 : SPNG_FMT_RGBA8;
+                }
+                else
+                    fmt = SPNG_FMT_RGBA8;
+            } // img.depth() == CV_8U
+            if(img.channels() == 3)
+            {
+                fmt = SPNG_FMT_RGB8;
+                if((m_color_type == SPNG_COLOR_TYPE_GRAYSCALE || m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA) &&
+                m_bit_depth == 16)
+                    fmt = SPNG_FMT_RGB8;
+                else if(m_bit_depth == 16)
+                    fmt = SPNG_FMT_PNG;
+
+            }
+            else if(img.channels() == 1)
+            {
+                if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE && m_bit_depth <= 8)
+                    fmt = SPNG_FMT_G8;
+                else if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE && m_bit_depth == 16)
+                {
+                    if(img.depth() == CV_8U) {
                         fmt = SPNG_FMT_RGB8;
-                    }
-                    else
-                    {
-                        fmt = SPNG_FMT_G8;
+                    } else {
+                        fmt = SPNG_FMT_PNG;
                     }
                 }
+                else if( m_color_type == SPNG_COLOR_TYPE_INDEXED ||
+                    m_color_type == SPNG_COLOR_TYPE_TRUECOLOR)
+                    fmt = SPNG_FMT_RGB8;
+                else if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA || fmt == SPNG_COLOR_TYPE_TRUECOLOR_ALPHA)
+                    fmt = m_bit_depth == 16 ? SPNG_FMT_RGBA16 : SPNG_FMT_RGBA8;
+                else
+                    fmt = SPNG_FMT_RGB8;
             }
+            /*
             else if(img.channels() == 1 && m_bit_depth == 16)
             {
                 fmt = SPNG_FMT_RGBA16;
-            }
 
+                if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE || m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA)
+                    fmt = SPNG_FMT_PNG;
+            }
+            */
+            printf("FMT:%d, channel:%d bit_Depth:%d ,imgdepth:%d\n", fmt, img.channels(), m_bit_depth, img.depth());
             size_t image_width, image_size = 0;
             int ret = spng_decoded_image_size(png_ptr, fmt, &image_size);
             struct spng_ihdr ihdr;
@@ -277,15 +286,7 @@ namespace cv
 
             if(ret == SPNG_OK) {
                 image_width = image_size / m_height;
-                /*
-                if(img.channels() == 1 && m_bit_depth == 16)
-                {
-                    if(fmt == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA)
-                        image_width = image_width / 3 * 2;
-                    else
-                        image_width /= 2;
-                }
-            */
+
                 ret = spng_decode_image(png_ptr, nullptr, 0, fmt, SPNG_DECODE_PROGRESSIVE | decode_flags);
 
                 if(ret == SPNG_OK)
@@ -366,8 +367,6 @@ namespace cv
                             {
                                 printf("spngCvt_BGRA2Gray_16u_CnC1R\n");
                                 int ncn = 4;
-                                if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE)
-                                    ncn = 3;
                                 spngCvt_BGRA2Gray_16u_CnC1R(
                                             reinterpret_cast<const ushort *>(imageBuffer.data()), step/3,
                                             reinterpret_cast<ushort *>(img.data),
@@ -382,24 +381,7 @@ namespace cv
                         for(int y = 0; y < m_height; y++ ){
                             buffer[y] = img.data + y*img.step;
                         }
-                        if(img.channels() == 3 && m_bit_depth == 16){
-                            do {
-                                ret = spng_get_row_info(png_ptr, &row_info);
-                                if (ret) break;
-
-                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
-                                if(ihdr.interlace_method == 0) {
-                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
-                                                       reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0,
-                                                        Size(m_width, 1));
-                                }
-                            } while (ret == SPNG_OK);
-                            if(ihdr.interlace_method)
-                            {
-                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(img.data), step, reinterpret_cast<ushort *>(img.data), step, Size(m_width, m_height));
-                            }
-                        }
-                        else if(img.channels() == 4 && m_bit_depth == 16) {
+                        if(img.channels() == 4 && m_bit_depth == 16) {
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
                                 if (ret) break;
@@ -431,6 +413,23 @@ namespace cv
                                 icvCvt_RGBA2BGRA_8u_C4R(img.data, step , img.data, step , Size(m_width, m_height));
                             }
                         }
+                        else if(fmt == SPNG_FMT_PNG)
+                        {
+                            do {
+                                ret = spng_get_row_info(png_ptr, &row_info);
+                                if (ret) break;
+                                ret = spng_decode_row(png_ptr, buffer[row_info.row_num], image_width);
+                                if(ihdr.interlace_method == 0) {
+                                    icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(buffer[row_info.row_num]), 0,
+                                                           reinterpret_cast<ushort *>(buffer[row_info.row_num]), 0, Size(m_width, 1));
+                                }
+                            } while (ret == SPNG_OK);
+                            if(ihdr.interlace_method)
+                            {
+                                icvCvt_RGB2BGR_16u_C3R(reinterpret_cast<const ushort *>(img.data), step ,
+                                                       reinterpret_cast<ushort *>(img.data), step , Size(m_width, m_height));
+                            }
+                        }
                         else {
                             do {
                                 ret = spng_get_row_info(png_ptr, &row_info);
@@ -453,7 +452,7 @@ namespace cv
                             ret = spng_get_row_info(png_ptr, &row_info);
                             if(ret) break;
 
-                            ret = spng_decode_row(png_ptr, img.data + row_info.row_num * img.step, image_width);
+                            ret = spng_decode_row(png_ptr, img.data + row_info.row_num * image_width, image_width);
                         }
                         while(ret == SPNG_OK);
                     }

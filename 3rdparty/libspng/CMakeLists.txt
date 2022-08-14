@@ -38,6 +38,8 @@ set_target_properties(${SPNG_LIBRARY}
         ARCHIVE_OUTPUT_DIRECTORY ${3P_LIBRARY_OUTPUT_PATH}
         )
 
+target_compile_definitions(${SPNG_LIBRARY} PUBLIC SPNG_STATIC)
+
 if(ENABLE_SOLUTION_FOLDERS)
     set_target_properties(${SPNG_LIBRARY} PROPERTIES FOLDER "3rdparty")
 endif()

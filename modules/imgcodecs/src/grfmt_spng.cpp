@@ -293,7 +293,6 @@ namespace cv
                     fmt = SPNG_FMT_RGB8;
             }
 
-            printf("FMT:%d, channel:%d bit_Depth:%d ,imgdepth:%d\n", fmt, img.channels(), m_bit_depth, img.depth());
             size_t image_width, image_size = 0;
             int ret = spng_decoded_image_size(png_ptr, fmt, &image_size);
             struct spng_ihdr ihdr;
@@ -318,7 +317,6 @@ namespace cv
                             buffer.allocate(image_width);
                             if (fmt == SPNG_FMT_RGB8)
                             { // Convert RBG8 image to Gray
-                                printf("non-interlaced spngCvt_BGR2Gray_8u_C3C1R\n");
                                 do
                                 {
                                     ret = spng_get_row_info(png_ptr, &row_info);
@@ -335,7 +333,6 @@ namespace cv
                             }
                             else if (fmt == SPNG_FMT_RGBA8)
                             { // Convert RBGA8 image to Gray
-                                printf("non-interlaced spngCvt_BGRA2Gray_8u_C4C1R\n");
                                 do
                                 {
                                     ret = spng_get_row_info(png_ptr, &row_info);
@@ -352,7 +349,6 @@ namespace cv
                             }
                             else if (fmt == SPNG_FMT_RGBA16)
                             { // Convert RGBA16 to Gray
-                                printf("non-interlaced spngCvt_BGRA2Gray_16u_CnC1R\n");
                                 int ncn = 4;
                                 do
                                 {
@@ -374,10 +370,8 @@ namespace cv
                             AutoBuffer<unsigned char> imageBuffer(image_size);
                             spng_decode_image(png_ptr, imageBuffer.data(), image_size, fmt, 0);
                             int step = m_width * img.channels();
-                            printf("interlaced\n");
                             if (fmt == SPNG_FMT_RGB8)
                             {
-                                printf("spngcvt_bgr2gray_8u_c3c1r\n");
                                 spngCvt_BGR2Gray_8u_C3C1R(
                                     imageBuffer.data(),
                                     step,
@@ -386,7 +380,6 @@ namespace cv
                             }
                             else if (fmt == SPNG_FMT_RGBA8)
                             {
-                                printf("spngCvt_BGRA2Gray_8u_C4C1R\n");
                                 spngCvt_BGRA2Gray_8u_C4C1R(
                                     imageBuffer.data(),
                                     step,
@@ -395,7 +388,6 @@ namespace cv
                             }
                             else if (fmt == SPNG_FMT_RGBA16)
                             {
-                                printf("spngCvt_BGRA2Gray_16u_CnC1R\n");
                                 int ncn = 4;
                                 spngCvt_BGRA2Gray_16u_CnC1R(
                                     reinterpret_cast<const ushort *>(imageBuffer.data()), step / 3,
@@ -495,7 +487,6 @@ namespace cv
                     }
                     else
                     {
-                        printf("default\n");
                         do
                         {
                             ret = spng_get_row_info(png_ptr, &row_info);
@@ -524,7 +515,6 @@ namespace cv
                 }
             }
         }
-        printf("\n");
 
         return result;
     }

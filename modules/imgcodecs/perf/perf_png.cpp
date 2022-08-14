@@ -1,4 +1,4 @@
-// This file is part of OpenCV project.
+    // This file is part of OpenCV project.
 // It is subject to the license terms in the LICENSE file found in the top-level directory
 // of this distribution and at http://opencv.org/license.html
 #include "perf_precomp.hpp"
@@ -11,7 +11,7 @@ namespace opencv_test
 
     PERF_TEST(PNG, decode)
     {
-        String imagePath = getDataPath("cv/shared/lena.png");
+        String imagePath = getDataPath("highgui/readwrite/istanbul.png");
 
         TEST_CYCLE() imread(imagePath);
 
@@ -20,7 +20,7 @@ namespace opencv_test
 
     PERF_TEST(PNG, encode)
     {
-        String imagePath = getDataPath("cv/shared/lena.png");
+        String imagePath = getDataPath("highgui/readwrite/istanbul.png");
         cv::Mat image = imread(imagePath);
         auto tempFile = cv::tempfile(".png");
 

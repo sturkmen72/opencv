@@ -186,6 +186,33 @@ const string exif_files[] =
 INSTANTIATE_TEST_CASE_P(ExifFiles, Imgcodecs_PNG_Exif,
     testing::ValuesIn(exif_files));
 
+
+TEST(Imgcodecs_Png, pngsuite_decode)
+{
+    const string root = cvtest::TS::ptr()->get_data_path();
+    const string fs_filename = root + "pngsuite/pngsuit_unchanged.xml";
+    const string folder = root + "pngsuite/*.png";
+    vector<String> filenames;
+    glob(folder, filenames);
+
+    FileStorage fs(fs_filename, FileStorage::READ);
+    for (size_t i = 0; i < filenames.size(); i++)
+    {
+        Mat src = imread(filenames[i], IMREAD_UNCHANGED);
+        size_t pos_s = String(filenames[i]).find_last_of("/\\");
+        String filename = String(filenames[i]).substr(pos_s + 1, String(filenames[i]).length() - pos_s - 5);
+        Mat gt;
+        fs[filename] >> gt;
+        if (!src.empty() && !gt.empty())
+        {     
+            EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), src, gt);
+
+        }
+
+    }
+}
+
+
 #endif // HAVE_PNG
 
 }} // namespace

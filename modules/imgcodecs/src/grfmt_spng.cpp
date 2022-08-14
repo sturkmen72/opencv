@@ -265,7 +265,15 @@ namespace cv
                     m_color_type == SPNG_COLOR_TYPE_TRUECOLOR)
                     fmt = SPNG_FMT_RGB8;
                 else if(m_color_type == SPNG_COLOR_TYPE_GRAYSCALE_ALPHA || fmt == SPNG_COLOR_TYPE_TRUECOLOR_ALPHA)
+                {
+                    if(img.depth() == CV_8U)
+                    {
+                        fmt = SPNG_FMT_RGB8;
+                    }
+                    else {
                     fmt = m_bit_depth == 16 ? SPNG_FMT_RGBA16 : SPNG_FMT_RGBA8;
+                    }
+                }
                 else
                     fmt = SPNG_FMT_RGB8;
             }

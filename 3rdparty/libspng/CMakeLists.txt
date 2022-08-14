@@ -12,6 +12,8 @@ ocv_include_directories(${CURR_INCLUDE_DIR}, ${ZLIB_INCLUDE_DIRS})
 file(GLOB_RECURSE spng_headers RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "*.h")
 file(GLOB_RECURSE spng_sources RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "*.c")
 
+message(STATUS "libspng will be used as PNG codec")
+
 # ----------------------------------------------------------------------------------
 #         Define the library target:
 # ----------------------------------------------------------------------------------

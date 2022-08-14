@@ -62,6 +62,13 @@
 
 #include "grfmt_spng.hpp"
 
+/*
+ * libspng does not support RGB -> Gray conversion. In order to decode colorful images as grayscale 
+ * we need conversion functions. In the previous png implementation(grfmt_png), the author was set 
+ * to particular values for rgb coefficients. OpenCV icvCvt_BGR2Gray function values does not match 
+ * with these values. (png_set_rgb_to_gray( png_ptr, 1, 0.299, 0.587 );) For this codec implementation, 
+ * slightly modified versions are implemented in the below of this page.
+*/
 void spngCvt_BGR2Gray_8u_C3C1R(const uchar *bgr, int bgr_step,
                                uchar *gray, int gray_step,
                                cv::Size size, int _swap_rb);
@@ -241,7 +248,7 @@ namespace cv
                 }
                 else
                     fmt = SPNG_FMT_RGBA8;
-            } // img.depth() == CV_8U
+            }
             if (img.channels() == 3)
             {
                 fmt = SPNG_FMT_RGB8;
@@ -306,9 +313,10 @@ namespace cv
 
                 if (ret == SPNG_OK)
                 {
-                    struct spng_row_info row_info
-                    {
-                    };
+                    struct spng_row_info row_info{};
+
+                    // If user wants to read image as grayscale(IMREAD_GRAYSCALE), but image format is not
+                    // decode image then convert to grayscale
                     if (!color && (fmt == SPNG_FMT_RGB8 || fmt == SPNG_FMT_RGBA8 || fmt == SPNG_FMT_RGBA16))
                     {
                         if (ihdr.interlace_method == 0)
@@ -316,7 +324,7 @@ namespace cv
                             AutoBuffer<unsigned char> buffer;
                             buffer.allocate(image_width);
                             if (fmt == SPNG_FMT_RGB8)
-                            { // Convert RBG8 image to Gray
+                            {
                                 do
                                 {
                                     ret = spng_get_row_info(png_ptr, &row_info);
@@ -332,7 +340,7 @@ namespace cv
                                 } while (ret == SPNG_OK);
                             }
                             else if (fmt == SPNG_FMT_RGBA8)
-                            { // Convert RBGA8 image to Gray
+                            {
                                 do
                                 {
                                     ret = spng_get_row_info(png_ptr, &row_info);
@@ -348,8 +356,7 @@ namespace cv
                                 } while (ret == SPNG_OK);
                             }
                             else if (fmt == SPNG_FMT_RGBA16)
-                            { // Convert RGBA16 to Gray
-                                int ncn = 4;
+                            {
                                 do
                                 {
                                     ret = spng_get_row_info(png_ptr, &row_info);
@@ -361,7 +368,7 @@ namespace cv
                                         reinterpret_cast<const ushort *>(buffer.data()), 0,
                                         reinterpret_cast<ushort *>(img.data + row_info.row_num * img.step),
                                         0, Size(m_width, 1),
-                                        ncn, 2);
+                                        4, 2);
                                 } while (ret == SPNG_OK);
                             }
                         }
@@ -388,12 +395,11 @@ namespace cv
                             }
                             else if (fmt == SPNG_FMT_RGBA16)
                             {
-                                int ncn = 4;
                                 spngCvt_BGRA2Gray_16u_CnC1R(
                                     reinterpret_cast<const ushort *>(imageBuffer.data()), step / 3,
                                     reinterpret_cast<ushort *>(img.data),
                                     step / 3, Size(m_width, m_height),
-                                    ncn, 2);
+                                    4, 2);
                             }
                         }
                     }

@@ -265,7 +265,7 @@ if(WITH_SPNG)
   set(HAVE_SPNG YES)
   set(HAVE_PNG NO)
   set(SPNG_VERSION "${SPNG_VERSION_MAJOR}.${SPNG_VERSION_MINOR}.${SPNG_VERSION_PATCH}")
-  message(STATUS "imgcodecs: PNG codec will use: ${SPNG_VERSION} ")
+  message(STATUS "imgcodecs: PNG codec will use SPNG, version: ${SPNG_VERSION} ")
 endif()
 
 

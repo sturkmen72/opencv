@@ -1331,7 +1331,7 @@ endif()
 
 if(WITH_PNG OR HAVE_PNG OR HAVE_SPNG)
   if(HAVE_SPNG)
-    status("    PNG:"  PNG_FOUND  THEN "${SPNG_LIBRARY} (ver ${SPNG_VERSION})" ELSE "build (ver ${SPNG_VERSION})")
+    status("    PNG: ${SPNG_LIBRARY} (ver ${SPNG_VERSION}) build (ver ${SPNG_VERSION})")
   else()
     status("    PNG:"  PNG_FOUND  THEN "${PNG_LIBRARY} (ver ${PNG_VERSION})" ELSE "build (ver ${PNG_VERSION})")
   endif()

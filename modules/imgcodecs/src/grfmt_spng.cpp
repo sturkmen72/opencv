@@ -63,10 +63,10 @@
 #include "grfmt_spng.hpp"
 
 /*
- * libspng does not support RGB -> Gray conversion. In order to decode colorful images as grayscale 
- * we need conversion functions. In the previous png implementation(grfmt_png), the author was set 
- * to particular values for rgb coefficients. OpenCV icvCvt_BGR2Gray function values does not match 
- * with these values. (png_set_rgb_to_gray( png_ptr, 1, 0.299, 0.587 );) For this codec implementation, 
+ * libspng does not support RGB -> Gray conversion. In order to decode colorful images as grayscale
+ * we need conversion functions. In the previous png implementation(grfmt_png), the author was set
+ * to particular values for rgb coefficients. OpenCV icvCvt_BGR2Gray function values does not match
+ * with these values. (png_set_rgb_to_gray( png_ptr, 1, 0.299, 0.587 );) For this codec implementation,
  * slightly modified versions are implemented in the below of this page.
 */
 void spngCvt_BGR2Gray_8u_C3C1R(const uchar *bgr, int bgr_step,

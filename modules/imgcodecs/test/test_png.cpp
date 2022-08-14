@@ -204,9 +204,8 @@ TEST(Imgcodecs_Png, pngsuite_decode)
         Mat gt;
         fs[filename] >> gt;
         if (!src.empty() && !gt.empty())
-        {     
+        {
             EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), src, gt);
-
         }
 
     }

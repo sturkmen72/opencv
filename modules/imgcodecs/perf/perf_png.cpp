@@ -35,6 +35,6 @@ namespace opencv_test
         TEST_CYCLE() imencode(".png", src, buf);
 
         SANITY_CHECK_NOTHING();
-    }   
+    }
 
 } // namespace

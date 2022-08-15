@@ -32,9 +32,9 @@ namespace opencv_test
         cv::Mat src = imread(filename);
 
         vector<uchar> buf;
-        TEST_CYCLE() imencode(".jpg", src, buf);
+        TEST_CYCLE() imencode(".png", src, buf);
 
         SANITY_CHECK_NOTHING();
-    }
+    }   
 
 } // namespace

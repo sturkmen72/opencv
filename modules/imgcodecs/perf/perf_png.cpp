@@ -11,22 +11,29 @@ namespace opencv_test
 
     PERF_TEST(PNG, decode)
     {
-        String imagePath = getDataPath("highgui/readwrite/istanbul.png");
+        String filename = getDataPath("highgui/readwrite/istanbul.png");
 
-        TEST_CYCLE() imread(imagePath);
+        FILE *f = fopen(filename.c_str(), "rb");
+        fseek(f, 0, SEEK_END);
+        long len = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        vector<uchar> file_buf((size_t)len);
+        EXPECT_EQ(len, (long)fread(&file_buf[0], 1, (size_t)len, f));
+        fclose(f); f = NULL;
+
+        TEST_CYCLE() imdecode(file_buf, IMREAD_UNCHANGED);
 
         SANITY_CHECK_NOTHING();
     }
 
     PERF_TEST(PNG, encode)
     {
-        String imagePath = getDataPath("highgui/readwrite/istanbul.png");
-        cv::Mat image = imread(imagePath);
-        auto tempFile = cv::tempfile(".png");
+        String filename = getDataPath("highgui/readwrite/istanbul.png");
+        cv::Mat src = imread(filename);
 
+        vector<uchar> buf;
+        TEST_CYCLE() imencode(".jpg", src, buf);
 
-        TEST_CYCLE() imwrite(tempFile, image);
-        remove(tempFile.c_str());
         SANITY_CHECK_NOTHING();
     }
 

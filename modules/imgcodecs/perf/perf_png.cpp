@@ -11,7 +11,7 @@ namespace opencv_test
 
     PERF_TEST(PNG, decode)
     {
-        String filename = getDataPath("perf/3024x4032.png");
+        String filename = getDataPath("perf/2560x1600.png");
 
         FILE *f = fopen(filename.c_str(), "rb");
         fseek(f, 0, SEEK_END);
@@ -28,7 +28,7 @@ namespace opencv_test
 
     PERF_TEST(PNG, encode)
     {
-        String filename = getDataPath("perf/3024x4032.png");
+        String filename = getDataPath("perf/2560x1600.png");
         cv::Mat src = imread(filename);
 
         vector<uchar> buf;

@@ -1,4 +1,4 @@
-  # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 #  Root CMake file for OpenCV
 #
 #    From the off-tree build directory, invoke:
@@ -327,7 +327,7 @@ OCV_OPTION(WITH_OPENNI2 "Include OpenNI2 support" OFF
 OCV_OPTION(WITH_PNG "Include PNG support" ON
   VISIBLE_IF TRUE
   VERIFY HAVE_PNG)
-OCV_OPTION(WITH_SPNG "Include SPNG support" ON
+OCV_OPTION(WITH_SPNG "Include SPNG support" OFF
   VISIBLE_IF TRUE
   VERIFY HAVE_SPNG)
 OCV_OPTION(WITH_GDCM "Include DICOM support" OFF
@@ -1329,8 +1329,8 @@ if(WITH_WEBP OR HAVE_WEBP)
   status("    WEBP:" WEBP_FOUND THEN "${WEBP_LIBRARY} (ver ${WEBP_VERSION})" ELSE "build (ver ${WEBP_VERSION})")
 endif()
 
-if(WITH_PNG OR HAVE_PNG OR WITH_SPNG OR HAVE_SPNG)
-  if(WITH_SPNG OR HAVE_SPNG)
+if(WITH_PNG OR HAVE_PNG OR WITH_SPNG)
+  if(WITH_SPNG)
     status("    PNG:" "build-${SPNG_LIBRARY} (ver ${SPNG_VERSION})")
   else()
     status("    PNG:"  PNG_FOUND  THEN "${PNG_LIBRARY} (ver ${PNG_VERSION})" ELSE "build (ver ${PNG_VERSION})")

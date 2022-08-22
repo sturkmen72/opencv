@@ -26,12 +26,6 @@ add_library(${SPNG_LIBRARY} STATIC ${OPENCV_3RDPARTY_EXCLUDE_FROM_ALL} ${spng_he
 ocv_warnings_disable(CMAKE_C_FLAGS -Wunused-variable)
 target_link_libraries(${SPNG_LIBRARY} ${ZLIB_LIBRARIES})
 
-#ocv_warnings_disable(CMAKE_C_FLAGS -Wundef -Wcast-align -Wimplicit-fallthrough -Wunused-parameter -Wsign-compare
-#    -Wmaybe-uninitialized
-#    -Wnull-pointer-subtraction                   # clang15
-#    -Wunused-but-set-variable                    # clang15
-#)
-
 set_target_properties(${SPNG_LIBRARY}
         PROPERTIES OUTPUT_NAME ${SPNG_LIBRARY}
         DEBUG_POSTFIX "${OPENCV_DEBUG_POSTFIX}"

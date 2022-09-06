@@ -484,7 +484,8 @@ void CV_CameraCalibrationTest::run( int start_from )
             for( i = 0; i < 3; i++ )
                 for( j = 0; j < 3; j++ )
                 {
-                    values_read = fscanf(file, "%lf", &goodRotMatrs[currImage].val[i*3+j]);
+                    // Yes, load with transpose
+                    values_read = fscanf(file, "%lf", &goodRotMatrs[currImage].val[j*3+i]);
                     CV_Assert(values_read == 1);
                 }
         }
@@ -568,12 +569,7 @@ void CV_CameraCalibrationTest::run( int start_from )
         /* ----- Compute reprojection error ----- */
         double dx,dy;
         double rx,ry;
-        double meanDx,meanDy;
-        double maxDx = 0.0;
-        double maxDy = 0.0;
 
-        meanDx = 0;
-        meanDy = 0;
         for( currImage = 0; currImage < numImages; currImage++ )
         {
             double imageMeanDx = 0;
@@ -585,20 +581,8 @@ void CV_CameraCalibrationTest::run( int start_from )
                 dx = rx - imagePoints[currImage][currPoint].x;
                 dy = ry - imagePoints[currImage][currPoint].y;
 
-                meanDx += dx;
-                meanDy += dy;
-
                 imageMeanDx += dx*dx;
                 imageMeanDy += dy*dy;
-
-                dx = fabs(dx);
-                dy = fabs(dy);
-
-                if( dx > maxDx )
-                    maxDx = dx;
-
-                if( dy > maxDy )
-                    maxDy = dy;
             }
             goodPerViewErrors[currImage] = sqrt( (imageMeanDx + imageMeanDy) /
                                            (etalonSize.width * etalonSize.height));
@@ -608,9 +592,6 @@ void CV_CameraCalibrationTest::run( int start_from )
             if(perViewErrors[currImage] == 0.0)
                 perViewErrors[currImage] = goodPerViewErrors[currImage];
         }
-
-        meanDx /= numImages * etalonSize.width * etalonSize.height;
-        meanDy /= numImages * etalonSize.width * etalonSize.height;
 
         /* ========= Compare parameters ========= */
         CV_Assert(cameraMatrix.type() == CV_64F && cameraMatrix.size() == Size(3, 3));
@@ -681,7 +662,7 @@ void CV_CameraCalibrationTest::run( int start_from )
 
         /* ----- Compare per view re-projection errors ----- */
         CV_Assert(perViewErrors.size() == (size_t)numImages);
-        code = compare(&perViewErrors[0], &goodPerViewErrors[0], numImages, 1.1, "per view errors vector");
+        code = compare(&perViewErrors[0], &goodPerViewErrors[0], numImages, 0.1, "per view errors vector");
         if( code < 0 )
             break;
 
@@ -812,7 +793,6 @@ void CV_CameraCalibrationTest_CPP::calibrate(Size imageSize,
     {
         Mat r9;
         Rodrigues( rvecs[i], r9 );
-        cv::transpose(r9, r9);
         r9.convertTo(rotationMatrices[i], CV_64F);
         tvecs[i].convertTo(translationVectors[i], CV_64F);
     }
@@ -2127,6 +2107,63 @@ TEST(Calib3d_StereoCalibrate, regression_11131)
     EXPECT_GT(R2.at<double>(0, 0), 0);
     EXPECT_GE(roi1.area(), 400*300) << roi1;
     EXPECT_GE(roi2.area(), 400*300) << roi2;
+}
+
+TEST(Calib_StereoCalibrate, regression_22421)
+{
+    cv::Mat K1, K2, dist1, dist2;
+    std::vector<Mat> image_points1, image_points2;
+    Mat desiredR, desiredT;
+
+    std::string fname = cvtest::TS::ptr()->get_data_path() + std::string("/cv/cameracalibration/regression22421.yaml.gz");
+    FileStorage fs(fname, FileStorage::Mode::READ);
+    ASSERT_TRUE(fs.isOpened());
+    fs["imagePoints1"] >> image_points1;
+    fs["imagePoints2"] >> image_points2;
+    fs["K1"] >> K1;
+    fs["K2"] >> K2;
+    fs["dist1"] >> dist1;
+    fs["dist2"] >> dist2;
+    fs["desiredR"] >> desiredR;
+    fs["desiredT"] >> desiredT;
+
+    std::vector<float> obj_points = {0, 0, 0,
+                                     0.5, 0, 0,
+                                     1, 0, 0,
+                                     1.5000001, 0, 0,
+                                     2, 0, 0,
+                                     0, 0.5, 0,
+                                     0.5, 0.5, 0,
+                                     1, 0.5, 0,
+                                     1.5000001, 0.5, 0,
+                                     2, 0.5, 0,
+                                     0, 1, 0,
+                                     0.5, 1, 0,
+                                     1, 1, 0,
+                                     1.5000001, 1, 0,
+                                     2, 1, 0,
+                                     0, 1.5000001, 0,
+                                     0.5, 1.5000001, 0,
+                                     1, 1.5000001, 0,
+                                     1.5000001, 1.5000001, 0,
+                                     2, 1.5000001, 0};
+
+    cv::Mat obj_points_mat(obj_points, true);
+    obj_points_mat = obj_points_mat.reshape(1, obj_points.size() / 3);
+    std::vector<cv::Mat> grid_points(image_points1.size(), obj_points_mat);
+
+    cv::Mat R, T;
+    double error = cv::stereoCalibrate(grid_points, image_points1, image_points2,
+                                       K1, dist1, K2, dist2, cv::Size(), R, T,
+                                       cv::noArray(), cv::noArray(), cv::noArray(), cv::CALIB_FIX_INTRINSIC);
+
+    EXPECT_LE(error, 0.071544);
+
+    double rerr = cv::norm(R, desiredR, NORM_INF);
+    double terr = cv::norm(T, desiredT, NORM_INF);
+
+    EXPECT_LE(rerr, 0.0000001);
+    EXPECT_LE(terr, 0.0000001);
 }
 
 TEST(Calib3d_Triangulate, accuracy)

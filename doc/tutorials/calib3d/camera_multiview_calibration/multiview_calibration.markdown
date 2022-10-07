@@ -12,7 +12,7 @@ Multi-view Camera Calibration Tutorial {#tutorial_multiview_camera_calibration}
 
 Introduction
 ----
-Multiview calibration is a very important task in computer vision. It is widely used in 3D reconstruction, structure from motion, autonomous driving etc. The calibration procedure is often the first step for any vision task that must be done to obtain intrinsics and extrinsics parameters of the cameras. The accuracy of camera calibration parameters directly influence all further results, hence, obtaining precise intrinsincs / extrinsics is crucial.
+Multiview calibration is a very important task in computer vision. It is widely used in 3D reconstruction, structure from motion, autonomous driving etc. The calibration procedure is often the first step for any vision task that must be done to obtain the intrinsics and extrinsics parameters of the cameras. The accuracy of camera calibration parameters directly influences all further results, hence, obtaining precise intrinsincs / extrinsics is crucial.
 
 The calibration algorithms require a set of images for each camera, where on the images a calibration pattern (e.g., checkerboard, aruco etc) is visible, and if known the distance between two neighbor points of the calibration pattern in 3D. Additionally, for extrinsics calibration, images must share the calibration pattern grid obtained from different views, i.e., overlap of cameras' field of view. Moreover, images that share the pattern grid have to be taken at the same moment of time, or in other words, cameras must be synchronized. Otherwise, the extrinsics calibration will fail.
 

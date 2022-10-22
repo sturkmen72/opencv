@@ -1119,7 +1119,7 @@ OCL_PERF_TEST_P(PSNRFixture, PSNR,
 
 ///////////// Reduce ////////////////////////
 
-CV_ENUM(ReduceMinMaxOp, CV_REDUCE_MIN, CV_REDUCE_MAX)
+CV_ENUM(ReduceMinMaxOp, REDUCE_MIN, REDUCE_MAX)
 
 typedef tuple<Size, std::pair<MatType, MatType>, int, ReduceMinMaxOp> ReduceMinMaxParams;
 typedef TestBaseWithParam<ReduceMinMaxParams> ReduceMinMaxFixture;
@@ -1150,7 +1150,7 @@ OCL_PERF_TEST_P(ReduceMinMaxFixture, Reduce,
     SANITY_CHECK(dst, eps);
 }
 
-CV_ENUM(ReduceAccOp, CV_REDUCE_SUM, CV_REDUCE_AVG)
+CV_ENUM(ReduceAccOp, REDUCE_SUM, REDUCE_AVG)
 
 typedef tuple<Size, std::pair<MatType, MatType>, int, ReduceAccOp> ReduceAccParams;
 typedef TestBaseWithParam<ReduceAccParams> ReduceAccFixture;

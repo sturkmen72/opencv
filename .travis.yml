@@ -25,6 +25,6 @@ before_script:
     ../opencv
 script:
   - make -j5
-  - ./bin/opencv_visualisation
+  - ./bin/opencv_annotation
 notifications:
   email: false

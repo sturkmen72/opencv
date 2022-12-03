@@ -1,0 +1,29 @@
+language: cpp
+compiler:
+  - gcc
+before_script:
+  - cd ../
+  - mkdir build-opencv
+  - cd build-opencv
+  - cmake
+    -DBUILD_opencv_flann=OFF
+    -DBUILD_opencv_features2d=OFF
+    -DBUILD_opencv_java=OFF
+    -DWITH_JASPER=OFF
+    -DWITH_WEBP=OFF
+    -DBUILD_ITT=OFF
+    -DWITH_OPENEXR=OFF
+    -DWITH_OPENJPEG=OFF
+    -DBUILD_PROTOBUF=OFF
+    -DWITH_TIFF=OFF
+    -DBUILD_opencv_gapi=OFF
+    -DBUILD_opencv_ml=OFF
+    -DBUILD_opencv_objdetect=OFF
+    -DBUILD_opencv_stitching=OFF
+    -DBUILD_TESTS=OFF
+    -DBUILD_PERF_TESTS=OFF
+    ../opencv
+script:
+  - make -j5
+notifications:
+  email: false

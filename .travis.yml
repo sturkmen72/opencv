@@ -2,7 +2,7 @@ language: cpp
 compiler:
   - gcc
 before_script:
-  - git reset --hard 1363496c1106606684d40447f5d1149b2c66a9f8
+  - git reset --hard 4223495e6cd67011f86b8ecd9be1fa105018f3b1
   - cd ../
   - mkdir build-opencv
   - cd build-opencv

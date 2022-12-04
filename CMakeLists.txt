@@ -1389,6 +1389,8 @@ if(WITH_IPP AND HAVE_IPP)
   else()
     status("    Intel IPP IW:"   NO)
   endif()
+else()
+  status("    Intel IPP:"   NO)
 endif()
 
 if(WITH_VA OR HAVE_VA)

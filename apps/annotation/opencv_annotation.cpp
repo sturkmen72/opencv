@@ -31,7 +31,8 @@ int main(int argc, char** argv)
     hconcat(inImage, inImage, SplicingImage);
     vconcat(SplicingImage, SplicingImage, SplicingImage);
     Mat mask2 = 255 * Mat::ones(inImage.rows, inImage.cols, inImage.depth());
-    seamlessClone(inImage, SplicingImage, mask2, centerPt, SplicingImage, NORMAL_CLONE);
+    Mat SplicingImage2;
+    seamlessClone(inImage, SplicingImage2, mask2, centerPt, SplicingImage2, NORMAL_CLONE);
     tm.stop();
     cout << tm << endl;
     imwrite("cloned2.png", SplicingImage);

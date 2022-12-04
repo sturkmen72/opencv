@@ -6,6 +6,7 @@ before_script:
   - mkdir build-opencv
   - cd build-opencv
   - cmake
+    -DWITH_IPP=OFF
     -DBUILD_opencv_flann=OFF
     -DBUILD_opencv_features2d=OFF
     -DBUILD_opencv_java=OFF

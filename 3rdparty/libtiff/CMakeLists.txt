@@ -272,13 +272,6 @@ set(LOGLUV_SUPPORT ${logluv})
 option(mdi "support for Microsoft Document Imaging" ON)
 set(MDI_SUPPORT ${mdi})
 
-# ZLIB
-set(ZLIB_SUPPORT 0)
-if(ZLIB_LIBRARY)
-  set(ZLIB_SUPPORT 1)
-endif()
-set(ZIP_SUPPORT ${ZLIB_SUPPORT})
-
 set(PIXARLOG_SUPPORT FALSE)
 
 # JPEG
@@ -341,9 +334,6 @@ set(TIFF_LIBRARY_DEPS)
 if(M_LIBRARY)
   list(APPEND TIFF_LIBRARY_DEPS ${M_LIBRARY})
 endif()
-if(ZLIB_LIBRARIES)
-  list(APPEND TIFF_LIBRARY_DEPS ${ZLIB_LIBRARIES})
-endif()
 if(JPEG_LIBRARIES)
   list(APPEND TIFF_LIBRARY_DEPS ${JPEG_LIBRARIES})
 endif()
@@ -375,7 +365,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/tiffvers.h.cmake.in"
                "${CMAKE_CURRENT_BINARY_DIR}/tiffvers.h"
                @ONLY)
 
-ocv_include_directories("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" ${ZLIB_INCLUDE_DIRS})
+ocv_include_directories("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(lib_srcs
     tif_aux.c

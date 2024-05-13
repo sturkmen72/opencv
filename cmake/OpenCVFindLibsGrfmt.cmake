@@ -30,7 +30,10 @@ else()
   ocv_clear_vars(ZLIB_LIBRARY ZLIB_LIBRARIES)
   set(ZLIB_LIBRARY zlib CACHE INTERNAL "")
   if(ZLIB_FOUND)
-    add_library(${ZLIB_LIBRARY} ALIAS ZLIB::ZLIB)
+    # Use ALIAS library after CMake >= 3.18
+    # add_library(${ZLIB_LIBRARY} ALIAS ZLIB::ZLIB)
+    add_library(${ZLIB_LIBRARY} INTERFACE)
+    target_link_libraries(${ZLIB_LIBRARY} INTERFACE ZLIB::ZLIB)
   else()
     add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/zlib")
 

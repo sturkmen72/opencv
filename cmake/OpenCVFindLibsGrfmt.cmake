@@ -41,6 +41,10 @@ else()
   endif()
 endif()
 
+if(NOT BUILD_SHARED_LIBS)
+  ocv_install_target(${ZLIB_LIBRARY} EXPORT OpenCVModules ARCHIVE DESTINATION ${OPENCV_3P_LIB_INSTALL_PATH} COMPONENT dev)
+endif()
+
 # --- libavif (optional) ---
 
 if(WITH_AVIF)

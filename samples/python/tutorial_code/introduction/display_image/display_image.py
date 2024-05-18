@@ -3,7 +3,11 @@ import cv2 as cv
 import sys
 ## [imports]
 ## [imread]
-img = cv.imread(cv.samples.findFile("starry_night.jpg"))
+tm = cv.TickMeter()
+tm.start()
+img = cv.imread(cv.samples.findFile("animated-webp-supported.webp"))
+tm.stop()
+print(tm.getTimeSec())
 ## [imread]
 ## [empty]
 if img is None:

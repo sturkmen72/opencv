@@ -2,8 +2,8 @@ project(${JPEG_LIBRARY} C)
 
 ocv_warnings_disable(CMAKE_C_FLAGS -Wunused-parameter -Wsign-compare -Wshorten-64-to-32 -Wimplicit-fallthrough)
 
-set(VERSION_MAJOR 3)
-set(VERSION_MINOR 0)
+set(VERSION_MAJOR 2)
+set(VERSION_MINOR 1)
 set(VERSION_REVISION 3)
 set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION})
 set(LIBJPEG_TURBO_VERSION_NUMBER 2001003)

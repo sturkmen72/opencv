@@ -61,6 +61,7 @@ public:
 
     bool readData( Mat& img ) CV_OVERRIDE;
     bool readHeader() CV_OVERRIDE;
+    bool  nextPage() CV_OVERRIDE;
 
     size_t signatureLength() const CV_OVERRIDE;
     bool checkSignature( const String& signature) const CV_OVERRIDE;
@@ -72,6 +73,23 @@ protected:
     size_t fs_size;
     Mat data;
     int channels;
+    bool m_has_animation;
+    struct Decoded_Frame {
+        uint8_t* rgba;         // Decoded and reconstructed full frame.
+        int duration;          // Frame duration in milliseconds.
+    } m_decoded_frame;
+
+    struct Animated_Image {
+        uint32_t canvas_width;
+        uint32_t canvas_height;
+        uint32_t bgcolor;
+        uint32_t loop_count;
+        Decoded_Frame* frames;
+        uint32_t num_frames;
+        void* raw_mem;
+        int* durations;
+    } m_animated_image;
+
 };
 
 class WebPEncoder CV_FINAL : public BaseImageEncoder

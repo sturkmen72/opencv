@@ -46,6 +46,7 @@
 
 #include <webp/decode.h>
 #include <webp/encode.h>
+#include <webp/demux.h>
 
 #include <stdio.h>
 #include <limits.h>
@@ -58,6 +59,110 @@
 
 namespace cv
 {
+
+    struct Decoded_Frame {
+        uint8_t* rgba;         // Decoded and reconstructed full frame.
+        int duration;          // Frame duration in milliseconds.
+    };
+
+    struct Animated_Image {
+        uint32_t canvas_width;
+        uint32_t canvas_height;
+        uint32_t bgcolor;
+        uint32_t loop_count;
+        Decoded_Frame* frames;
+        uint32_t num_frames;
+        void* raw_mem;
+        int* durations;
+    };
+
+
+    static int webp_anim_allocate_frames(Animated_Image* const image, uint32_t num_frames) {
+        uint32_t i;
+        static const int kNumChannels = 4;
+        const size_t rgba_size =
+            image->canvas_width * kNumChannels * image->canvas_height;
+        uint8_t* const mem = (uint8_t*)malloc(num_frames * rgba_size * sizeof(*mem));
+        Decoded_Frame* const frames =
+            (Decoded_Frame*)malloc(num_frames * sizeof(*frames));
+        int* durations = (int*)malloc(num_frames * sizeof(int));
+
+        if (mem == NULL || frames == NULL) {
+            free(mem);
+            free(frames);
+            return 0;
+        }
+        free(image->raw_mem);
+        image->num_frames = num_frames;
+        image->frames = frames;
+        for (i = 0; i < num_frames; ++i) {
+            frames[i].rgba = mem + i * rgba_size;
+            frames[i].duration = 0;
+        }
+        image->raw_mem = mem;
+        image->durations = durations;
+        return 1;
+    }
+
+    // Read animated WebP bitstream 'filename' into 'AnimatedImage' struct.
+    static int webp_anim_read_file(const WebPData* const webp_data, Animated_Image* const image) {
+        static const int kNumChannels = 4;
+        int ok = 0;
+        int dump_ok = 1;
+        uint32_t frame_index = 0;
+        int prev_frame_timestamp = 0;
+        WebPAnimDecoder* dec;
+        WebPAnimInfo anim_info;
+
+        memset(image, 0, sizeof(*image));
+
+        dec = WebPAnimDecoderNew(webp_data, NULL);
+        if (dec == NULL) {
+            fprintf(stderr, "Error parsing image");
+            goto End;
+        }
+
+        if (!WebPAnimDecoderGetInfo(dec, &anim_info)) {
+            fprintf(stderr, "Error getting global info about the animation\n");
+            goto End;
+        }
+
+        // Animation properties.
+        image->canvas_width = anim_info.canvas_width;
+        image->canvas_height = anim_info.canvas_height;
+        image->loop_count = anim_info.loop_count;
+        image->bgcolor = anim_info.bgcolor;
+
+        // Allocate frames.
+        if (!webp_anim_allocate_frames(image, anim_info.frame_count)) return 0;
+
+        // Decode frames.
+        while (WebPAnimDecoderHasMoreFrames(dec)) {
+            Decoded_Frame* curr_frame;
+            uint8_t* curr_rgba;
+            uint8_t* frame_rgba;
+            int timestamp;
+
+            if (!WebPAnimDecoderGetNext(dec, &frame_rgba, &timestamp)) {
+                fprintf(stderr, "Error decoding frame #%u\n", frame_index);
+                goto End;
+            }
+            assert(frame_index < anim_info.frame_count);
+            curr_frame = &image->frames[frame_index];
+            curr_rgba = curr_frame->rgba;
+            curr_frame->duration = timestamp - prev_frame_timestamp;
+            image->durations[frame_index] = curr_frame->duration;
+            memcpy(curr_rgba, frame_rgba,
+                image->canvas_width * kNumChannels * image->canvas_height);
+            ++frame_index;
+            prev_frame_timestamp = timestamp;
+        }
+        ok = 1;
+
+    End:
+        WebPAnimDecoderDelete(dec);
+        return ok;
+    }
 
 // 64Mb limit to avoid memory DDOS
 static size_t param_maxFileSize = utils::getConfigurationParameterSizeT("OPENCV_IMGCODECS_WEBP_MAX_FILE_SIZE", 64*1024*1024);
@@ -126,15 +231,17 @@ bool WebPDecoder::readHeader()
     WebPBitstreamFeatures features;
     if (VP8_STATUS_OK == WebPGetFeatures(header, sizeof(header), &features))
     {
-        CV_CheckEQ(features.has_animation, 0, "WebP backend does not support animated webp images");
-
+        m_has_animation = features.has_animation;
         m_width  = features.width;
         m_height = features.height;
+        m_animated_image.canvas_width = m_width;
+        m_animated_image.canvas_height = m_height;
 
         if (features.has_alpha)
         {
             m_type = CV_8UC4;
             channels = 4;
+            m_animated_image.bgcolor = 0;
         }
         else
         {
@@ -168,7 +275,7 @@ bool WebPDecoder::readData(Mat &img)
     {
         Mat read_img;
         CV_CheckType(img.type(), img.type() == CV_8UC1 || img.type() == CV_8UC3 || img.type() == CV_8UC4, "");
-        if (img.type() != m_type)
+        if (img.type() != m_type | img.cols != m_height | img.rows != m_height)
         {
             read_img.create(m_height, m_width, m_type);
         }
@@ -181,7 +288,32 @@ bool WebPDecoder::readData(Mat &img)
         size_t out_data_size = read_img.dataend - out_data;
 
         uchar *res_ptr = NULL;
-        if (channels == 3)
+
+        if (m_has_animation)
+        {
+            WebPData webp_data;
+            WebPDataInit(&webp_data);
+            webp_data.bytes = data.ptr();
+            WebPAnimDecoder* dec;
+            WebPAnimInfo anim_info;
+
+            //memset(image, 0, sizeof(*image));
+
+            /*
+            dec = WebPAnimDecoderNew(&webp_data, NULL);
+            if (dec == NULL) {
+                fprintf(stderr, "Error parsing image");
+                return false;
+            }
+
+            if (!WebPAnimDecoderGetInfo(dec, &anim_info)) {
+                fprintf(stderr, "Error getting global info about the animation\n");
+                return false;
+            }
+            */
+            res_ptr = out_data;
+        }
+        else if (channels == 3)
         {
             CV_CheckTypeEQ(read_img.type(), CV_8UC3, "");
             res_ptr = WebPDecodeBGRInto(data.ptr(), data.total(), out_data,
@@ -219,6 +351,12 @@ bool WebPDecoder::readData(Mat &img)
         }
     }
     return true;
+}
+
+bool WebPDecoder::nextPage()
+{
+    // Prepare the next page, if any.
+    return false;
 }
 
 WebPEncoder::WebPEncoder()

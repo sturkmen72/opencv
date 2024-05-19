@@ -19,5 +19,5 @@ k = cv.waitKey(0)
 ## [imshow]
 ## [imsave]
 if k == ord("s"):
-    cv.imwrite("starry_night.png", img)
+    cv.imwrite("aanimated-webp-supported.webp", img)
 ## [imsave]

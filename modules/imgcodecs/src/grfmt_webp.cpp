@@ -292,14 +292,14 @@ bool WebPDecoder::readData(Mat &img)
         if (m_has_animation)
         {
             WebPData webp_data;
-            WebPDataInit(&webp_data);
-            webp_data.bytes = data.ptr();
+            webp_data.bytes = (const uint8_t*)data.ptr();
+            webp_data.size = data.total();
             WebPAnimDecoder* dec;
             WebPAnimInfo anim_info;
+            WebPAnimDecoderOptions anim_config;
+            WebPAnimDecoderOptionsInit(&anim_config);
+            anim_config.color_mode = MODE_BGRA;
 
-            //memset(image, 0, sizeof(*image));
-
-            /*
             dec = WebPAnimDecoderNew(&webp_data, NULL);
             if (dec == NULL) {
                 fprintf(stderr, "Error parsing image");
@@ -310,8 +310,17 @@ bool WebPDecoder::readData(Mat &img)
                 fprintf(stderr, "Error getting global info about the animation\n");
                 return false;
             }
-            */
-            res_ptr = out_data;
+
+            uint8_t* buf;
+            int timestamp;
+
+            if (WebPAnimDecoderGetNext(dec, &buf, &timestamp))
+            {
+                Mat tmp(Size(m_height, m_width), CV_8UC4, buf);
+                cvtColor(tmp, img, COLOR_RGBA2BGRA);
+                return true;
+            }
+            
         }
         else if (channels == 3)
         {

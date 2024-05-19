@@ -47,7 +47,13 @@
 
 #ifdef HAVE_WEBP
 
+#include <webp/demux.h>
+#include <webp/mux.h>
 #include <fstream>
+
+#if WEBP_MUX_ABI_VERSION >= 0x0104 && WEBP_DEMUX_ABI_VERSION >= 0x0105
+#define HAVE_WEBPANIM
+#endif
 
 namespace cv
 {
@@ -61,6 +67,7 @@ public:
 
     bool readData( Mat& img ) CV_OVERRIDE;
     bool readHeader() CV_OVERRIDE;
+    bool  nextPage() CV_OVERRIDE;
 
     size_t signatureLength() const CV_OVERRIDE;
     bool checkSignature( const String& signature) const CV_OVERRIDE;
@@ -72,6 +79,11 @@ protected:
     size_t fs_size;
     Mat data;
     int channels;
+#ifdef HAVE_WEBPANIM
+    WebPAnimDecoder* anim_decoder;
+    bool m_has_animation;
+    int frame_count;
+#endif
 };
 
 class WebPEncoder CV_FINAL : public BaseImageEncoder

@@ -303,6 +303,21 @@ TEST(Imgcodecs_Image, write_umat)
     EXPECT_EQ(0, remove(dst_name.c_str()));
 }
 
+#ifdef HAVE_WEBP
+TEST(Imgcodecs_Image, webP_animation)
+{
+    const string root = cvtest::TS::ptr()->get_data_path();
+    const string filename = root + "readwrite/opencv_logo.webp";
+
+    Mat image = imread(filename);
+    ASSERT_FALSE(image.empty());
+
+    vector<Mat> webp_frames;
+    imreadmulti(filename, webp_frames);
+    ASSERT_FALSE(webp_frames[1].empty());
+}
+#endif
+
 #ifdef HAVE_TIFF
 TEST(Imgcodecs_Image, multipage_collection_size)
 {

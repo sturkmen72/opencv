@@ -109,6 +109,22 @@ TEST(Imgcodecs_WebP, encode_decode_with_alpha_webp)
     EXPECT_EQ(512, img_webp_bgr.rows);
 }
 
+#ifdef HAVE_WEBPANIM
+TEST(Imgcodecs_Image, webP_load_animation)
+{
+    const string root = cvtest::TS::ptr()->get_data_path();
+    const string filename = root + "readwrite/opencv_logo.webp";
+
+    Mat image = imread(filename, IMREAD_UNCHANGED);
+    ASSERT_FALSE(image.empty());
+
+    vector<Mat> webp_frames;
+    imreadmulti(filename, webp_frames, IMREAD_UNCHANGED);
+    ASSERT_FALSE(webp_frames[1].empty());
+    EXPECT_EQ(0, cv::norm(image, webp_frames[0], NORM_INF));
+    EXPECT_EQ(4, webp_frames[1].channels());
+}
+#endif // HAVE_WEBPANIM
 #endif // HAVE_WEBP
 
 }} // namespace

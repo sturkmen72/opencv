@@ -303,7 +303,7 @@ TEST(Imgcodecs_Image, write_umat)
     EXPECT_EQ(0, remove(dst_name.c_str()));
 }
 
-#ifdef HAVE_WEBP
+#ifdef HAVE_WEBPANIM
 TEST(Imgcodecs_Image, webP_animation)
 {
     const string root = cvtest::TS::ptr()->get_data_path();

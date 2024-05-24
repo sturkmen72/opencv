@@ -51,9 +51,9 @@
 #include <webp/mux.h>
 #include <fstream>
 
-#if WEBP_MUX_ABI_VERSION >= 0x0104 && WEBP_DEMUX_ABI_VERSION >= 0x0105
-#define HAVE_WEBPANIM
-#endif
+//#if WEBP_MUX_ABI_VERSION >= 0x0104 && WEBP_DEMUX_ABI_VERSION >= 0x0105
+//#define HAVE_WEBPANIM
+//#endif
 
 namespace cv
 {

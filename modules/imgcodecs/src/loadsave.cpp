@@ -696,6 +696,64 @@ size_t imcount(const String& filename, int flags)
     return imcount_(filename, flags);
 }
 
+static int
+imquery_(const String& filename, Mat& mat, int index = 0)
+{
+    /// Search for the relevant decoder to handle the imagery
+    ImageDecoder decoder = findDecoder(filename);
+    int result_code;
+    /// if no decoder was found, return result_code.
+    if (!decoder)
+    {
+        mat.at<int>(0, 0) = 0;
+        return IMQUERY_UNKNOWN_FILE_TYPE;
+    }
+
+    /// set the filename in the driver
+    decoder->setSource(filename);
+
+    try
+    {
+        // read the header to make sure it succeeds
+        if (!decoder->readHeader())
+            return IMQUERY_READ_HEADER_ERROR;
+    }
+    catch (const cv::Exception& e)
+    {
+        CV_LOG_ERROR(NULL, "imquery_('" << filename << "'): can't read header: " << e.what());
+        return IMQUERY_READ_HEADER_ERROR;
+    }
+    catch (...)
+    {
+        CV_LOG_ERROR(NULL, "imquery_('" << filename << "'): can't read header: unknown exception");
+        return IMQUERY_READ_HEADER_ERROR;
+    }
+
+    int pageCount = decoder->getPageCount();
+
+    if (index > pageCount)
+        return IMQUERY_READ_HEADER_ERROR+1;
+
+    mat.at<int>(0, 0) = pageCount;
+
+    for (int i = 0; i < pageCount; i++)
+    {
+        mat.push_back(decoder->type());
+        mat.push_back(decoder->width());
+        mat.push_back(decoder->height());
+        mat.push_back(0);
+        //decoder->nextPage();
+    }
+    return IMQUERY_SUCCESS;
+}
+
+imquery::imquery(const String& filename)
+{
+    m_filename = filename;
+    Mat info(1, 1, CV_32S);
+    m_result_code = imquery_(filename, info);
+    info.copyTo(m_pagesInfo);
+};
 
 static bool imwrite_( const String& filename, const std::vector<Mat>& img_vec,
                       const std::vector<int>& params_, bool flipv )

@@ -65,6 +65,8 @@ public:
     int width() const { return m_width; }
     int height() const { return m_height; }
     virtual int type() const { return m_type; }
+    int getResultCode() const { return m_result_code; }
+    int getPageCount() const { return m_page_count; }
 
     ExifEntry_t getExifTag(const ExifTagName tag) const;
     virtual bool setSource( const String& filename );
@@ -90,6 +92,8 @@ protected:
     Mat m_buf;
     bool m_buf_supported;
     ExifReader m_exif;
+    int  m_page_count;
+    int  m_result_code;
 };
 
 

@@ -214,7 +214,43 @@ enum ImwriteHDRCompressionFlags {
     IMWRITE_HDR_COMPRESSION_RLE = 1
 };
 
+//! imread Return Codes.
+enum ImqueryResults {
+    IMQUERY_SUCCESS = 0,
+    IMQUERY_FILE_NOT_OPENED = 1,
+    IMQUERY_UNKNOWN_FILE_TYPE = 2,
+    IMQUERY_READ_HEADER_ERROR = 3
+};
+
 //! @} imgcodecs_flags
+
+/** @brief Reads the image file header and gets image properties.
+The class reads header of the image file and gets image properties without loading image data.
+*/
+class CV_EXPORTS_W imquery
+{
+public:
+    /** @brief Default Constructor.
+    @param filename Name of the file to be loaded.
+    @param flags Flag that can take values of cv::ImreadModes
+    */
+    CV_WRAP imquery(const String& filename);
+    virtual ~imquery() {};
+
+    CV_WRAP String filename() const { return m_filename; };
+    CV_WRAP int result_code() const { return m_result_code; };
+    CV_WRAP int page_count() const { return (int)m_pagesInfo.size() > 0 ? m_pagesInfo[0] : 0; };
+    CV_WRAP int type(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 1] : -1; };
+    CV_WRAP int width(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 2] : -1; };
+    CV_WRAP int height(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 3] : -1; };
+    CV_WRAP bool scalable(int index = 0) const { return (int)m_pagesInfo.size() > index * 4 + 1 ? m_pagesInfo[index * 4 + 4] > 0 : false; };
+
+private:
+    String m_filename;
+    //page_count stored in m_pagesInfo[0] and for each page four int value (representing type, width, height, scalable) stored.
+    std::vector<int> m_pagesInfo;
+    int m_result_code;
+};
 
 /** @brief Loads an image from a file.
 

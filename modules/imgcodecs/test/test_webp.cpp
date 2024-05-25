@@ -109,7 +109,6 @@ TEST(Imgcodecs_WebP, encode_decode_with_alpha_webp)
     EXPECT_EQ(512, img_webp_bgr.rows);
 }
 
-#ifdef HAVE_WEBPANIM
 TEST(Imgcodecs_Image, webP_load_animation)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
@@ -124,7 +123,6 @@ TEST(Imgcodecs_Image, webP_load_animation)
     EXPECT_EQ(0, cv::norm(image, webp_frames[0], NORM_INF));
     EXPECT_EQ(4, webp_frames[1].channels());
 }
-#endif // HAVE_WEBPANIM
 #endif // HAVE_WEBP
 
 }} // namespace

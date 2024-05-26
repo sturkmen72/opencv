@@ -375,39 +375,6 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
     return size > 0;
 }
 
-static int SetLoopCount(int loop_count, WebPData* const webp_data) {
-    int ok = 1;
-    WebPMuxError err;
-    uint32_t features;
-    WebPMuxAnimParams new_params;
-    WebPMux* const mux = WebPMuxCreate(webp_data, 1);
-    if (mux == NULL) return 0;
-
-    err = WebPMuxGetFeatures(mux, &features);
-    ok = (err == WEBP_MUX_OK);
-    if (!ok || !(features & ANIMATION_FLAG)) goto End;
-
-    err = WebPMuxGetAnimationParams(mux, &new_params);
-    ok = (err == WEBP_MUX_OK);
-    if (ok) {
-        new_params.loop_count = loop_count;
-        err = WebPMuxSetAnimationParams(mux, &new_params);
-        ok = (err == WEBP_MUX_OK);
-    }
-    if (ok) {
-        WebPDataClear(webp_data);
-        err = WebPMuxAssemble(mux, webp_data);
-        ok = (err == WEBP_MUX_OK);
-    }
-
-End:
-    WebPMuxDelete(mux);
-    if (!ok) {
-        fprintf(stderr, "Error during loop-count setting\n");
-    }
-    return ok;
-}
-
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
     //"WebP codec supports 8U images only"

@@ -112,16 +112,30 @@ TEST(Imgcodecs_WebP, encode_decode_with_alpha_webp)
 TEST(Imgcodecs_WebP, webP_load_animation)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "readwrite/opencv_logo.webp";
+    const string filename = root + "readwrite/OpenCV_logo_white.png";
+    const string webp_filename = root + "readwrite/OpenCV_logo.webp";
+    vector<Mat> png_frames;
+
 
     Mat image = imread(filename, IMREAD_UNCHANGED);
-    ASSERT_FALSE(image.empty());
+    png_frames.push_back(image.clone());
+    Mat roi = image(Rect(0, 680, 680, 220));
+    for (int i = 0; i < 15; i++)
+    {
+        roi = roi - Scalar(20,20,20);
+        png_frames.push_back(image.clone());
+    }
+    EXPECT_EQ(true, imwrite(webp_filename, png_frames));
 
     vector<Mat> webp_frames;
-    imreadmulti(filename, webp_frames, IMREAD_UNCHANGED);
-    ASSERT_FALSE(webp_frames[1].empty());
-    EXPECT_EQ(0, cv::norm(image, webp_frames[0], NORM_INF));
-    EXPECT_EQ(4, webp_frames[1].channels());
+    EXPECT_EQ(true, imreadmulti(webp_filename, webp_frames, IMREAD_UNCHANGED));
+    EXPECT_EQ(png_frames.size()-2, webp_frames.size());
+
+    for (int i = 0; i < 14; i++)
+    {
+        EXPECT_EQ(214, cv::norm(png_frames[i], webp_frames[i], NORM_INF));
+    }
+    //EXPECT_EQ(15, imcount(webp_filename));
 }
 #endif // HAVE_WEBP
 

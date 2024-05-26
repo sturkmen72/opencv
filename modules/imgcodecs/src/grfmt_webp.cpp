@@ -375,6 +375,138 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
     return size > 0;
 }
 
+static int SetLoopCount(int loop_count, WebPData* const webp_data) {
+    int ok = 1;
+    WebPMuxError err;
+    uint32_t features;
+    WebPMuxAnimParams new_params;
+    WebPMux* const mux = WebPMuxCreate(webp_data, 1);
+    if (mux == NULL) return 0;
+
+    err = WebPMuxGetFeatures(mux, &features);
+    ok = (err == WEBP_MUX_OK);
+    if (!ok || !(features & ANIMATION_FLAG)) goto End;
+
+    err = WebPMuxGetAnimationParams(mux, &new_params);
+    ok = (err == WEBP_MUX_OK);
+    if (ok) {
+        new_params.loop_count = loop_count;
+        err = WebPMuxSetAnimationParams(mux, &new_params);
+        ok = (err == WEBP_MUX_OK);
+    }
+    if (ok) {
+        WebPDataClear(webp_data);
+        err = WebPMuxAssemble(mux, webp_data);
+        ok = (err == WEBP_MUX_OK);
+    }
+
+End:
+    WebPMuxDelete(mux);
+    if (!ok) {
+        fprintf(stderr, "Error during loop-count setting\n");
+    }
+    return ok;
+}
+
+bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
+{
+    //"WebP codec supports 8U images only"
+    WebPAnimEncoder* anim_encoder = NULL;
+    int pic_num = 0;
+    int duration = 100;
+    int timestamp_ms = 0;
+    int loop_count = 0;
+    const int width = img_vec[0].cols, height = img_vec[0].rows;
+
+    WebPAnimEncoderOptions anim_config;
+    WebPConfig config;
+    WebPPicture pic;
+    WebPData webp_data;
+
+    int ok =0;
+
+    WebPDataInit(&webp_data);
+    if (!WebPAnimEncoderOptionsInit(&anim_config) ||
+        !WebPConfigInit(&config) ||
+        !WebPPictureInit(&pic)) {
+        fprintf(stderr, "Library version mismatch!\n");
+        goto End;
+    }
+
+    config.lossless = 1;
+    config.quality = 100.0f;
+
+    if (params.size() > 1)
+    {
+        if (params[0] == IMWRITE_WEBP_QUALITY)
+        {
+            config.lossless = 0;
+            config.quality = static_cast<float>(params[1]);
+            printf("quality %f\n", config.quality);
+            if (config.quality < 1.0f)
+            {
+                config.quality = 1.0f;
+            }
+            if (config.quality > 100.0f)
+            {
+                config.lossless = 1;
+            }
+        }
+    }
+
+    anim_encoder = WebPAnimEncoderNew(width, height, &anim_config);
+
+    pic.width = width;
+    pic.height = height;
+    pic.use_argb = 1;
+    pic.argb_stride = width;
+    WebPEncode(&config, &pic);
+
+    for (int i = 0; i < img_vec.size(); i++)
+    {
+        pic.argb = (uint32_t*)img_vec[i].data;
+        ok = WebPAnimEncoderAdd(anim_encoder, &pic, timestamp_ms, &config);
+        timestamp_ms += duration;
+        loop_count++;
+    }
+
+    WebPData assembled;
+    WebPAnimEncoderAssemble(anim_encoder, &assembled);
+
+    // add a last fake frame to signal the last duration
+    ok = ok && WebPAnimEncoderAdd(anim_encoder, NULL, timestamp_ms, NULL);
+    ok = ok && WebPAnimEncoderAssemble(anim_encoder, &webp_data);
+
+End:
+    // free resources
+    WebPAnimEncoderDelete(anim_encoder);
+
+    if (ok && loop_count > 0) {  // Re-mux to add loop count.
+       // ok = SetLoopCount(loop_count, &webp_data);
+    }
+
+    if (ok)
+    {
+        if (m_buf)
+        {
+            m_buf->resize(webp_data.size);
+            memcpy(&(*m_buf)[0], webp_data.bytes, webp_data.size);
+        }
+        else
+        {
+            FILE* fd = fopen(m_filename.c_str(), "wb");
+            if (fd != NULL)
+            {
+                fwrite(webp_data.bytes, webp_data.size, sizeof(uint8_t), fd);
+                fclose(fd); fd = NULL;
+            }
+        }
+    }
+
+    WebPDataClear(&webp_data);
+    return ok > 0;
+}
+
 }
 
 #endif

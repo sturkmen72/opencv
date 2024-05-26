@@ -412,10 +412,8 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
 {
     //"WebP codec supports 8U images only"
     WebPAnimEncoder* anim_encoder = NULL;
-    int pic_num = 0;
     int duration = 100;
     int timestamp_ms = 0;
-    int loop_count = 0;
     const int width = img_vec[0].cols, height = img_vec[0].rows;
 
     WebPAnimEncoderOptions anim_config;
@@ -467,7 +465,6 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
         pic.argb = (uint32_t*)img_vec[i].data;
         ok = WebPAnimEncoderAdd(anim_encoder, &pic, timestamp_ms, &config);
         timestamp_ms += duration;
-        loop_count++;
     }
 
     WebPData assembled;
@@ -478,13 +475,6 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
     ok = ok && WebPAnimEncoderAssemble(anim_encoder, &webp_data);
 
 End:
-    // free resources
-    WebPAnimEncoderDelete(anim_encoder);
-
-    if (ok && loop_count > 0) {  // Re-mux to add loop count.
-       // ok = SetLoopCount(loop_count, &webp_data);
-    }
-
     if (ok)
     {
         if (m_buf)
@@ -503,6 +493,8 @@ End:
         }
     }
 
+    // free resources
+    WebPAnimEncoderDelete(anim_encoder);
     WebPDataClear(&webp_data);
     return ok > 0;
 }

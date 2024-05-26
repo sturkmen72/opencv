@@ -209,15 +209,15 @@ bool WebPDecoder::readData(Mat &img)
                 fprintf(stderr, "Error parsing image");
                 return false;
             }
-            //WebPAnimInfo anim_info;
-            //WebPAnimDecoderGetInfo(anim_decoder, &anim_info);
         }
 
         uint8_t* buf;
         int timestamp;
 
         WebPAnimDecoderGetNext(anim_decoder, &buf, &timestamp);
-        Mat tmp(Size(m_height, m_width), CV_8UC4, buf);
+        //WebPAnimInfo anim_info;
+        //WebPAnimDecoderGetInfo(anim_decoder, &anim_info);
+        Mat tmp(Size(m_width, m_height), CV_8UC4, buf);
         tmp.copyTo(img);
 
         return true;

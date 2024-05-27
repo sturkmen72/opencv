@@ -427,7 +427,7 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
     pic.argb_stride = width;
     WebPEncode(&config, &pic);
 
-    for (int i = 0; i < img_vec.size(); i++)
+    for (size_t i = 0; i < img_vec.size(); i++)
     {
         pic.argb = (uint32_t*)img_vec[i].data;
         ok = WebPAnimEncoderAdd(anim_encoder, &pic, timestamp_ms, &config);

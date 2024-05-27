@@ -377,7 +377,8 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
-    //"WebP codec supports 8U images only"
+    int ok =0;
+#ifdef HAVE_WEBPANIM    
     WebPAnimEncoder* anim_encoder = NULL;
     int duration = 100;
     int timestamp_ms = 0;
@@ -388,7 +389,7 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
     WebPPicture pic;
     WebPData webp_data;
 
-    int ok =0;
+
 
     WebPDataInit(&webp_data);
     if (!WebPAnimEncoderOptionsInit(&anim_config) ||
@@ -407,7 +408,6 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
         {
             config.lossless = 0;
             config.quality = static_cast<float>(params[1]);
-            printf("quality %f\n", config.quality);
             if (config.quality < 1.0f)
             {
                 config.quality = 1.0f;
@@ -463,6 +463,7 @@ End:
     // free resources
     WebPAnimEncoderDelete(anim_encoder);
     WebPDataClear(&webp_data);
+#endif
     return ok > 0;
 }
 

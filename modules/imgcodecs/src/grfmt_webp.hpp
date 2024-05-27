@@ -53,10 +53,6 @@
 #include <webp/mux.h>
 #include <fstream>
 
-#if WEBP_DECODER_ABI_VERSION >= 0x0206
-#define HAVE_WEBPANIM
-#endif
-
 namespace cv
 {
 
@@ -81,11 +77,9 @@ protected:
     size_t fs_size;
     Mat data;
     int channels;
-#ifdef HAVE_WEBPANIM
     WebPAnimDecoder* anim_decoder;
     bool m_has_animation;
     int frame_count;
-#endif
 };
 
 class WebPEncoder CV_FINAL : public BaseImageEncoder

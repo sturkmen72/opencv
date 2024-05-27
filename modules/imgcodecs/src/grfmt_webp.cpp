@@ -104,10 +104,7 @@ ImageDecoder WebPDecoder::newDecoder() const
 
 bool WebPDecoder::readHeader()
 {
-#ifdef HAVE_WEBPANIM
     anim_decoder = NULL;
-#endif
-
     uint8_t header[WEBP_HEADER_SIZE] = { 0 };
     if (m_buf.empty())
     {
@@ -132,12 +129,8 @@ bool WebPDecoder::readHeader()
     WebPBitstreamFeatures features;
     if (VP8_STATUS_OK == WebPGetFeatures(header, sizeof(header), &features))
     {
-#ifdef HAVE_WEBPANIM
-        m_has_animation = features.has_animation > 0;
-#else
-        CV_CheckEQ(features.has_animation, 0, "WebP backend does not support animated webp images");
-#endif
 
+        m_has_animation = features.has_animation > 0;
         m_width  = features.width;
         m_height = features.height;
 
@@ -191,7 +184,6 @@ bool WebPDecoder::readData(Mat &img)
 
     uchar* res_ptr = NULL;
 
-#ifdef HAVE_WEBPANIM
     if (m_has_animation)
     {
         if (anim_decoder == NULL)
@@ -222,7 +214,6 @@ bool WebPDecoder::readData(Mat &img)
 
         return true;
     }
-#endif
 
     if (channels == 3)
     {
@@ -266,11 +257,7 @@ bool WebPDecoder::readData(Mat &img)
 bool WebPDecoder::nextPage()
 {
     // Prepare the next page, if any.
-#ifdef HAVE_WEBPANIM
     return WebPAnimDecoderHasMoreFrames(anim_decoder) > 0;
-#else
-    return false;
-#endif
 }
 
 WebPEncoder::WebPEncoder()
@@ -295,7 +282,7 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
     bool comp_lossless = true;
     float quality = 100.0f;
 
-    if (params.size() > 1)
+    if (params.size() > 1) // this part should be updated if new IMWRITE_WEBP_ parameter added
     {
         if (params[0] == IMWRITE_WEBP_QUALITY)
         {
@@ -378,7 +365,6 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
     int ok =0;
-#ifdef HAVE_WEBPANIM    
     WebPAnimEncoder* anim_encoder = NULL;
     int duration = 100;
     int timestamp_ms = 0;
@@ -463,7 +449,6 @@ End:
     // free resources
     WebPAnimEncoderDelete(anim_encoder);
     WebPDataClear(&webp_data);
-#endif
     return ok > 0;
 }
 

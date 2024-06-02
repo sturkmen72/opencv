@@ -118,11 +118,13 @@ TEST(Imgcodecs_WebP, load_save_multiframes)
     Mat image = imread(filename, IMREAD_UNCHANGED);
     png_frames.push_back(image.clone());
     Mat roi = image(Rect(0, 680, 680, 220));
+
     for (int i = 0; i < 15; i++)
     {
         roi = roi - Scalar(0,0,0,20);
         png_frames.push_back(image.clone());
     }
+
     string output = cv::tempfile(".webp");
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> webp_frames;

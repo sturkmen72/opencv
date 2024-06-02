@@ -53,6 +53,9 @@
 #include <webp/mux.h>
 #include <fstream>
 
+struct WebPAnimDecoder;
+struct WebPAnimEncoder;
+
 namespace cv
 {
 
@@ -92,6 +95,9 @@ public:
     bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) CV_OVERRIDE;
 
     ImageEncoder newEncoder() const CV_OVERRIDE;
+
+protected:
+    WebPAnimEncoder* anim_encoder;
 };
 
 }

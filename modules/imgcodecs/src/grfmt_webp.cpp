@@ -58,6 +58,8 @@
 
 #include <opencv2/core/utils/configuration.private.hpp>
 
+struct WebPAnimEncoderOptions;
+
 namespace cv
 {
 
@@ -365,7 +367,6 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
     int ok =0;
-    WebPAnimEncoder* anim_encoder = NULL;
     int duration = 100;
     int timestamp_ms = 0;
     const int width = img_vec[0].cols, height = img_vec[0].rows;

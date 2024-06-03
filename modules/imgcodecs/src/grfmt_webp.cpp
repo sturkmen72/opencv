@@ -58,8 +58,6 @@
 
 #include <opencv2/core/utils/configuration.private.hpp>
 
-struct WebPAnimEncoderOptions;
-
 namespace cv
 {
 

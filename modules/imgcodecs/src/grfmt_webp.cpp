@@ -160,7 +160,7 @@ bool WebPDecoder::readData(Mat &img)
     CV_CheckEQ(img.cols, m_width, "");
     CV_CheckEQ(img.rows, m_height, "");
 
-    if (m_buf.empty() & data.empty())
+    if (m_buf.empty() && data.empty())
     {
         fs.seekg(0, std::ios::beg); CV_Assert(fs && "File stream error");
         data.create(1, validateToInt(fs_size), CV_8UC1);

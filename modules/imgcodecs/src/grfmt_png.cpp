@@ -449,6 +449,18 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
     return result;
 }
 
+bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
+{
+    // ******  WIP *****
+    // ****** test *****
+    std::vector<Image> imgs;
+
+    int r1 = load_apng(m_filename, imgs);
+    save_strip_png("test_new"+m_filename, imgs);
+    printf("writemulti %d",r1);
+    return true;
+}
+
 }
 
 #endif

@@ -30,9 +30,6 @@
  * ------------
  */
  
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,6 +55,10 @@
 
 const unsigned long cMaxPNGSize = 16384UL;
 
+void info_fn(png_structp png_ptr, png_infop info_ptr);
+void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
+int processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
+
 void info_fn(png_structp png_ptr, png_infop info_ptr)
 {
   png_set_expand(png_ptr);
@@ -70,8 +71,9 @@ void info_fn(png_structp png_ptr, png_infop info_ptr)
 
 void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
 {
-  Image * image = (Image *)png_get_progressive_ptr(png_ptr);
-  png_progressive_combine_row(png_ptr, image->rows[row_num], new_row);
+    CV_UNUSED(pass);
+    Image* image = (Image*)png_get_progressive_ptr(png_ptr);
+    png_progressive_combine_row(png_ptr, image->rows[row_num], new_row);
 }
 
 void compose_frame(unsigned char ** rows_dst, unsigned char ** rows_src, unsigned char bop, unsigned int x, unsigned int y, unsigned int w, unsigned int h)

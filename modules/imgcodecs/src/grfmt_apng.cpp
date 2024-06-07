@@ -57,7 +57,10 @@ const unsigned long cMaxPNGSize = 16384UL;
 
 void info_fn(png_structp png_ptr, png_infop info_ptr);
 void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
+void compose_frame(unsigned char** rows_dst, unsigned char** rows_src, unsigned char bop, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 int processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
+int processing_data(png_structp png_ptr, png_infop info_ptr, unsigned char* p, unsigned int size);
+int processing_finish(png_structp png_ptr, png_infop info_ptr);
 
 void info_fn(png_structp png_ptr, png_infop info_ptr)
 {

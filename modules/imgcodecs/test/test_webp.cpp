@@ -125,14 +125,16 @@ TEST(Imgcodecs_WebP, load_save_multiframes)
         png_frames.push_back(image.clone());
     }
 
-    string output = cv::tempfile(".webp");
+    string output = root + "readwrite/OpenCV_logo_white.webp";
     EXPECT_EQ(true, imwrite(output, png_frames));
-    string avifoutput = cv::tempfile(".avif");
+    string avifoutput = root + "readwrite/OpenCV_logo_white.avif";
     EXPECT_EQ(true, imwrite(avifoutput, png_frames));
+    string tifoutput = root + "readwrite/OpenCV_logo_white.tif";
+    EXPECT_EQ(true, imwrite(tifoutput, png_frames));
     vector<Mat> webp_frames;
     EXPECT_EQ(true, imreadmulti(output, webp_frames, IMREAD_UNCHANGED));
     EXPECT_EQ(png_frames.size()-2, webp_frames.size()); // because last 3 images are identical so 1 image inserted as last frame and its duration calculated by libwebP
-    EXPECT_EQ(50, imcount(avifoutput)); //TO DO : actual return value is 1. should be frames count
+    EXPECT_EQ(17, imcount(avifoutput)); //TO DO : actual return value is 1. should be frames count
     EXPECT_EQ(0, remove(output.c_str()));
 }
 #endif // HAVE_WEBP

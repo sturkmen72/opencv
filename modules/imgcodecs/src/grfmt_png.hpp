@@ -97,7 +97,6 @@ protected:
 
 }
 
-struct CHUNK { unsigned char* p; unsigned int size; };
 struct Image
 {
     typedef unsigned char* ROW;

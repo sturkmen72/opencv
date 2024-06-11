@@ -39,6 +39,12 @@
 
 #include "grfmt_png.hpp"
 
+#if defined _MSC_VER && _MSC_VER >= 1200
+ // interaction between '_setjmp' and C++ object destruction is non-portable
+#pragma warning( disable: 4611 )
+#pragma warning( disable: 4244 )
+#endif
+
 #define notabc(c) ((c) < 65 || (c) > 122 || ((c) > 90 && (c) < 97))
 
 #define id_IHDR 0x52444849
@@ -52,6 +58,7 @@
 #define PNG_USER_CHUNK_MALLOC_MAX 8000000
 #endif
 
+struct CHUNK { unsigned char* p; unsigned int size; };
 
 const unsigned long cMaxPNGSize = 16384UL;
 
@@ -61,6 +68,7 @@ void compose_frame(unsigned char** rows_dst, unsigned char** rows_src, unsigned 
 int processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
 int processing_data(png_structp png_ptr, png_infop info_ptr, unsigned char* p, unsigned int size);
 int processing_finish(png_structp png_ptr, png_infop info_ptr);
+void deflate_rect_op(unsigned char* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
 
 void info_fn(png_structp png_ptr, png_infop info_ptr)
 {
@@ -414,69 +422,6 @@ int load_apng(std::string inputFileName, std::vector<Image>& img)
 
   return res;
 }
-
-void save_strip_png(std::string outFileName, std::vector<Image>& img)
-{
-  FILE * f;
-  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  png_infop info_ptr = png_create_info_struct(png_ptr);
-
-  if (!png_ptr || !info_ptr)
-    return;
-
-  if (setjmp(png_jmpbuf(png_ptr)))
-  {
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    return;
-  }
-
-  if ((f = fopen(outFileName.c_str(), "wb")) != 0)
-  {
-    unsigned int w = img[0].w;
-    unsigned int h = img[0].h * (unsigned int)img.size();
-    png_init_io(png_ptr, f);
-    png_set_compression_level(png_ptr, 9);
-    png_set_IHDR(png_ptr, info_ptr, w, h, 8, 6, 0, 0, 0);
-    png_write_info(png_ptr, info_ptr);
-    for (size_t i=0; i<img.size(); i++)
-    {
-      for (unsigned int j=0; j<img[i].h; j++)
-        png_write_row(png_ptr, img[i].rows[j]);
-    }
-    png_write_end(png_ptr, info_ptr);
-    fclose(f);
-  }
-  png_destroy_write_struct(&png_ptr, &info_ptr);
-}
-
-void save_png(char * szOut, Image * image)
-{
-  FILE * f;
-  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  png_infop info_ptr = png_create_info_struct(png_ptr);
-
-  if (!png_ptr || !info_ptr)
-    return;
-
-  if (setjmp(png_jmpbuf(png_ptr)))
-  {
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    return;
-  }
-
-  if ((f = fopen(szOut, "wb")) != 0)
-  {
-    png_init_io(png_ptr, f);
-    png_set_compression_level(png_ptr, 9);
-    png_set_IHDR(png_ptr, info_ptr, image->w, image->h, 8, 6, 0, 0, 0);
-    png_write_info(png_ptr, info_ptr);
-    png_write_image(png_ptr, image->rows);
-    png_write_end(png_ptr, info_ptr);
-    fclose(f);
-  }
-  png_destroy_write_struct(&png_ptr, &info_ptr);
-}
-
 
 struct OP { unsigned char* p; unsigned int size; int x, y, w, h, valid, filters; };
 struct rgb { unsigned char r, g, b; };

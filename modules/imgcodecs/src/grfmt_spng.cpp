@@ -600,7 +600,7 @@ bool SPngEncoder::write(const Mat &img, const std::vector<int> &params)
                 else
                     img.copyTo(rgba);
             }  
-            result = SPNG_OK == spng_encode_image(ctx, rgba.data(), rgba.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+            result = SPNG_OK == spng_encode_image(ctx, rgba.data, rgba.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
         }
     }
 

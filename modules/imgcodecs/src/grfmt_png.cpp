@@ -446,7 +446,7 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
     std::vector<Image> imgs;
 
     int r1 = load_apng(m_filename, imgs);
-    save_strip_png("test_new"+m_filename, imgs);
+    save_apng("test_new"+m_filename, imgs, 0, 0, 6, 0, 0);
     printf("writemulti %d",r1);
     return true;
 }

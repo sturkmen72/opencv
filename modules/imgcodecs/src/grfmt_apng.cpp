@@ -918,7 +918,7 @@ void deflate_rect_fin(int deflate_method, int iter, unsigned char* zbuf, unsigne
         }
 }
 
-int save_apng(char* szOut, std::vector<APNGFrame>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter)
+int save_apng(std::string outputFileName, std::vector<Image>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter)
 {
     FILE* f;
     unsigned int i, j, k;
@@ -962,7 +962,7 @@ int save_apng(char* szOut, std::vector<APNGFrame>& frames, unsigned int first, u
                 }
     }
 
-    if ((f = fopen(szOut, "wb")) != 0)
+    if ((f = fopen(outputFileName.c_str(), "wb")) != 0)
     {
         unsigned char buf_IHDR[13];
         unsigned char buf_acTL[8];
@@ -1031,7 +1031,7 @@ int save_apng(char* szOut, std::vector<APNGFrame>& frames, unsigned int first, u
         bop = 0;
         next_seq_num = 0;
 
-        printf("saving %s (frame %d of %d)\n", szOut, 1 - first, num_frames - first);
+        //printf("saving %s (frame %d of %d)\n", outputFileName.c_str(), 1 - first, num_frames - first);
         for (j = 0; j < 6; j++)
             op[j].valid = 0;
         deflate_rect_op(frames[0].p, x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
@@ -1041,7 +1041,7 @@ int save_apng(char* szOut, std::vector<APNGFrame>& frames, unsigned int first, u
         {
             write_IDATs(f, 0, zbuf, zsize, idat_size);
 
-            printf("saving %s (frame %d of %d)\n", szOut, 1, num_frames - first);
+            //printf("saving %s (frame %d of %d)\n", outputFileName.c_str(), 1, num_frames - first);
             for (j = 0; j < 6; j++)
                 op[j].valid = 0;
             deflate_rect_op(frames[1].p, x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
@@ -1053,7 +1053,7 @@ int save_apng(char* szOut, std::vector<APNGFrame>& frames, unsigned int first, u
             unsigned int op_min;
             int          op_best;
 
-            printf("saving %s (frame %d of %d)\n", szOut, i - first + 2, num_frames - first);
+            //printf("saving %s (frame %d of %d)\n", outputFileName.c_str(), i - first + 2, num_frames - first);
             for (j = 0; j < 6; j++)
                 op[j].valid = 0;
 

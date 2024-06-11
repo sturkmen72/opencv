@@ -118,11 +118,9 @@ struct Image
     void free() { delete[] rows; delete[] p; }
 };
 
-struct APNGFrame { unsigned char* p, ** rows; unsigned int w, h, delay_num, delay_den; };
-
 int load_apng(std::string inputFileName, std::vector<Image>& img);
 void save_strip_png(std::string outFileName, std::vector<Image>& imgs);
-int save_apng(char* szOut, std::vector<APNGFrame>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
+int save_apng(std::string outputFileName, std::vector<Image>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
 
 #endif
 

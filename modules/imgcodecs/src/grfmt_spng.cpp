@@ -590,7 +590,17 @@ bool SPngEncoder::write(const Mat &img, const std::vector<int> &params)
             }
             spng_set_option(ctx, SPNG_IMG_COMPRESSION_STRATEGY, compression_strategy);
 
-            result = SPNG_OK == spng_encode_image(ctx, img.data(), img.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+            Mat rgba;
+            if (channels > 1)
+                cvtColor(img, rgba, COLOR_BGRA2RGBA);
+            else
+            {
+                if (img.isContinuous())
+                    rgba = img;
+                else
+                    img.copyTo(rgba);
+            }  
+            result = SPNG_OK == spng_encode_image(ctx, rgba.data(), rgba.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
         }
     }
 

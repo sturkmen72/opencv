@@ -591,7 +591,9 @@ bool SPngEncoder::write(const Mat &img, const std::vector<int> &params)
             spng_set_option(ctx, SPNG_IMG_COMPRESSION_STRATEGY, compression_strategy);
 
             Mat rgba;
-            if (channels > 1)
+            if (channels == 3)
+                cvtColor(img, rgba, COLOR_BGR2RGB);
+            else if (channels == 4)
                 cvtColor(img, rgba, COLOR_BGRA2RGBA);
             else
             {
@@ -599,8 +601,9 @@ bool SPngEncoder::write(const Mat &img, const std::vector<int> &params)
                     rgba = img;
                 else
                     img.copyTo(rgba);
-            }  
-            result = SPNG_OK == spng_encode_image(ctx, rgba.data, rgba.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+            }
+            spng_encode_chunks(ctx);
+            result = SPNG_OK == spng_encode_image(ctx, rgba.data, rgba.channels() * rgba.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
         }
     }
 

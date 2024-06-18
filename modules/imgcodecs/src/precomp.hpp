@@ -45,6 +45,7 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/core/utility.hpp"
 #include "opencv2/core/private.hpp"
+#include "opencv2/imgproc.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>

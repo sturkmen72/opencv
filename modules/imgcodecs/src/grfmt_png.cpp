@@ -108,7 +108,11 @@ namespace cv
     int processing_finish(png_structp png_ptr, png_infop info_ptr);
     void deflate_rect_op(unsigned char* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
     int load_apng(std::string inputFileName, std::vector<Image>& img);
-    void save_strip_png(std::string outFileName, std::vector<Image>& imgs);
+    void write_chunk(FILE* f, const char* name, unsigned char* data, unsigned int length);
+    void cv::write_IDATs(FILE*, int, unsigned char*, unsigned int, unsigned int);
+    void cv::process_rect(unsigned char*, int, int, int, int, unsigned char*);
+    void cv::get_rect(unsigned int, unsigned int, unsigned char*, unsigned char*, unsigned char*, unsigned int, unsigned int, int, unsigned int, unsigned int, int);
+    void cv::deflate_rect_fin(int, int, unsigned char*, unsigned int*, int, int, unsigned char*, int, int);
     int save_apng(std::string outputFileName, std::vector<Image>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
 
     void info_fn(png_structp png_ptr, png_infop info_ptr)

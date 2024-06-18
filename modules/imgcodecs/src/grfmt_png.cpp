@@ -13,7 +13,8 @@
     and png2bmp sample from libpng distribution (Copyright (C) 1999-2001 MIYASAKA Masaru)
 \****************************************************************************************/
 
-//this file includes some part of APNG Disassembler 2.9 and APNG Optimizer 1.4 
+/****************************************************************************************\
+*this file includes some part of APNG Disassembler 2.9 and APNG Optimizer 1.4 
 
 /* APNG Disassembler 2.9
  *
@@ -1547,6 +1548,8 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
 {
     // ******  WIP *****
     // ****** test *****
+    CV_UNUSED(img_vec);
+    CV_UNUSED(params);
     std::vector<Image> imgs;
 
     int r1 = load_apng(m_filename, imgs);

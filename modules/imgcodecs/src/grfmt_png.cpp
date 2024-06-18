@@ -110,10 +110,10 @@ namespace cv
     void deflate_rect_op(unsigned char* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
     int load_apng(std::string inputFileName, std::vector<Image>& img);
     void write_chunk(FILE* f, const char* name, unsigned char* data, unsigned int length);
-    void cv::write_IDATs(FILE*, int, unsigned char*, unsigned int, unsigned int);
-    void cv::process_rect(unsigned char*, int, int, int, int, unsigned char*);
-    void cv::get_rect(unsigned int, unsigned int, unsigned char*, unsigned char*, unsigned char*, unsigned int, unsigned int, int, unsigned int, unsigned int, int);
-    void cv::deflate_rect_fin(int, int, unsigned char*, unsigned int*, int, int, unsigned char*, int, int);
+    void write_IDATs(FILE*, int, unsigned char*, unsigned int, unsigned int);
+    void process_rect(unsigned char*, int, int, int, int, unsigned char*);
+    void get_rect(unsigned int, unsigned int, unsigned char*, unsigned char*, unsigned char*, unsigned int, unsigned int, int, unsigned int, unsigned int, int);
+    void deflate_rect_fin(int, int, unsigned char*, unsigned int*, int, int, unsigned char*, int, int);
     int save_apng(std::string outputFileName, std::vector<Image>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
 
     void info_fn(png_structp png_ptr, png_infop info_ptr)
@@ -128,6 +128,7 @@ namespace cv
 
     void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
     {
+        CV_UNUSED(pass);
         Image* image = (Image*)png_get_progressive_ptr(png_ptr);
         png_progressive_combine_row(png_ptr, image->rows[row_num], new_row);
     }
@@ -865,6 +866,7 @@ namespace cv
 
     void deflate_rect_fin(int deflate_method, int iter, unsigned char* zbuf, unsigned int* zsize, int bpp, int stride, unsigned char* rows, int zbuf_size, int n)
     {
+        CV_UNUSED(iter);
         unsigned char* row = op[n].p + op[n].y * stride + op[n].x * bpp;
         int rowbytes = op[n].w * bpp;
 

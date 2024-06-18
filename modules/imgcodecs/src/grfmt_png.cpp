@@ -1188,11 +1188,6 @@ PngDecoder::PngDecoder()
 PngDecoder::~PngDecoder()
 {
     close();
-    std::vector<Image> imgs;
-    printf("file %s", m_filename.c_str());
-    int r1 = load_apng(m_filename, imgs);
-    save_apng("test_new" + m_filename, imgs, 0, 0, 6, 0, 0);
-    printf("writemulti %d", r1);
 }
 
 ImageDecoder PngDecoder::newDecoder() const

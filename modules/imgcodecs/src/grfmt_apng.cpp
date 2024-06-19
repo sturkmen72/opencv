@@ -185,6 +185,8 @@ namespace cv
         : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
         _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
         _rows(NULL) {
+        memset(_palette, 0, sizeof(_palette));
+        memset(_transparency, 0, sizeof(_transparency));
         // TODO save extracted info to self
         FILE* f;
         if ((f = fopen(filePath.c_str(), "rb")) != 0) {
@@ -982,6 +984,10 @@ ApngEncoder::ApngEncoder()
     next_seq_num = 0;
     trnssize = 0;
     palsize = 0;
+    memset(palette, 0, sizeof(palette));
+    memset(trns, 0, sizeof(trns));
+    memset(op, 0, sizeof(op));
+    process_callback = { 0 };
 }
 
 

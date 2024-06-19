@@ -13,7 +13,6 @@
 namespace cv
 {
     struct CHUNK { unsigned char* p; unsigned int size; };
-   // struct APNGFrame { unsigned char* p, ** rows; unsigned int w, h, delay_num, delay_den; };
     struct COLORS { unsigned int num; unsigned char r, g, b, a; };
     struct OP { unsigned char* p; unsigned int size; int x, y, w, h, valid, filters; };
 
@@ -139,7 +138,7 @@ namespace cv
         bool save(const std::string& outPath) const;
 
     private:
-    }; // class APNGFrame
+    };
 
 class ApngDecoder CV_FINAL : public BaseImageDecoder
 {

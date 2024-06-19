@@ -63,6 +63,10 @@
 
 namespace cv
 {
+    void info_fn(png_structp png_ptr, png_infop info_ptr);
+    void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
+    int cmp_colors(const void* arg1, const void* arg2);
+
     void info_fn(png_structp png_ptr, png_infop info_ptr)
     {
         png_set_expand(png_ptr);
@@ -99,6 +103,16 @@ namespace cv
 
     APNGOpt::APNGOpt(void (*callback)(float))
     {
+        op_zbuf1 = NULL;
+        op_zbuf2 = NULL;
+        op_zstream1.zalloc = NULL;
+        op_zstream2.zalloc = NULL;
+        row_buf = NULL;
+        sub_row = NULL;
+        up_row = NULL;
+        avg_row = NULL;
+        paeth_row = NULL;
+        next_seq_num = 0;
         trnssize = 0;
         palsize = 0;
         process_callback = callback;

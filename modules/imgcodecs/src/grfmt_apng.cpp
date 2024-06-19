@@ -455,14 +455,16 @@ void  ApngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
 
 bool ApngDecoder::setSource(const String& filename)
 {
-
-    printf(" ApngDecoder::setSource(%s) is succeed!\n", filename.c_str());
-
     std::vector<APNGFrame> frames;
     unsigned int first, loops;
-    printf("try load_apng(%s)\n", filename.c_str());
-    int r1 = load_apng(m_filename, frames, first, loops);
-    printf("load_apng returns %d first : %d loops : %d \n", r1, first, loops);
+
+    TickMeter tm;
+
+    tm.start();
+    int r1 = load_apng(filename, frames, first, loops);
+    tm.stop();
+    printf("Loading Time : %f sec.\n", tm.getTimeSec());
+    printf("load_apng(%s) first : %d loops : %d \n", filename.c_str(), first, loops);
 
     return true;
 }
@@ -752,7 +754,6 @@ int ApngDecoder::processing_finish(png_structp png_ptr, png_infop info_ptr)
 
 int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops)
 {
-    printf("load_apng\n");
     FILE* f;
     unsigned int id, i, j, w, h, w0, h0, x0, y0;
     unsigned int delay_num, delay_den, dop, bop, rowbytes, imagesize;
@@ -767,14 +768,12 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
     APNGFrame frameRaw;
     APNGFrame frameCur;
     APNGFrame frameNext;
-    int res = -1;
+    int result = -1;
     first = 0;
     const unsigned long cMaxPNGSize = 1000000UL;
 
-    printf("load_apng  try fopen(%s)\n", inputFileName.c_str());
     if ((f = fopen(inputFileName.c_str(), "rb")) != 0)
     {
-        printf("load_apng  fopen(%s) succed!\n", inputFileName.c_str());
         if (fread(sig, 1, 8, f) == 8 && png_sig_cmp(sig, 0, 8) == 0)
         {
             id = read_chunk(f, &chunkIHDR);
@@ -788,7 +787,7 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 if (w > cMaxPNGSize || h > cMaxPNGSize)
                 {
                     fclose(f);
-                    return res;
+                    return result;
                 }
 
                 x0 = 0;
@@ -968,7 +967,11 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 delete[] frameRaw.pixels();
 
                 if (!frames.empty())
-                    res = 0;
+                {
+                    result = 0;
+                    printf("Frames size %zd\n", frames.size());
+                }
+                    
             }
 
             for (i = 0; i < chunksInfo.size(); i++)
@@ -980,7 +983,7 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
         fclose(f);
     }
 
-    return res;
+    return result;
 }
 
 /////////////////////// PngEncoder ///////////////////

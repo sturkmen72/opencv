@@ -230,7 +230,7 @@ namespace cv
                     (void)png_set_interlace_handling(png_ptr);
                     png_read_update_info(png_ptr, info_ptr);
                     _colorType = png_get_color_type(png_ptr, info_ptr);
-                    rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+                    rowbytes = (int)png_get_rowbytes(png_ptr, info_ptr);
                     memset(_palette, 255, sizeof(_palette));
                     memset(_transparency, 255, sizeof(_transparency));
 
@@ -963,7 +963,6 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 {
                     result = 0;
                 }
-                    
             }
 
             for (i = 0; i < chunksInfo.size(); i++)
@@ -1207,7 +1206,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
     unsigned int colors = 0;
     unsigned int size = frames[0].width() * frames[0].height();
     unsigned int has_tcolor = 0;
-    unsigned int num_frames = frames.size();
+    unsigned int num_frames = (int)frames.size();
 
     memset(&cube, 0, sizeof(cube));
     memset(&gray, 0, sizeof(gray));

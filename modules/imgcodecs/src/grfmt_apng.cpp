@@ -458,13 +458,7 @@ bool ApngDecoder::setSource(const String& filename)
     std::vector<APNGFrame> frames;
     unsigned int first, loops;
 
-    TickMeter tm;
-
-    tm.start();
-    int r1 = load_apng(filename, frames, first, loops);
-    tm.stop();
-    printf("Loading Time : %f sec.\n", tm.getTimeSec());
-    printf("load_apng(%s) first : %d loops : %d \n", filename.c_str(), first, loops);
+    load_apng(filename, frames, first, loops);
 
     return true;
 }
@@ -783,7 +777,6 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 w0 = w = png_get_uint_32(chunkIHDR.p + 8);
                 h0 = h = png_get_uint_32(chunkIHDR.p + 12);
 
-                printf("in load_apng w : %d h : %d \n", w, h);
                 if (w > cMaxPNGSize || h > cMaxPNGSize)
                 {
                     fclose(f);
@@ -969,7 +962,6 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 if (!frames.empty())
                 {
                     result = 0;
-                    printf("Frames size %zd\n", frames.size());
                 }
                     
             }

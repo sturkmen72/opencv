@@ -218,8 +218,8 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
-    //Mat im = imread("elephant_apng_zopfli.png");
-    Mat im =imread("read.png");
+    Mat im = imread("elephant_apng_zopfli.png");
+    //Mat im =imread("read.png");
     imshow("elephant_apng_zopfli", im);
     waitKey(1500);
     return 0;

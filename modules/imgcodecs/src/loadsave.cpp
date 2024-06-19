@@ -408,9 +408,15 @@ imread_( const String& filename, int flags, OutputArray mat )
     ImageDecoder sApngDecoder = makePtr<ApngDecoder>();
     ImageEncoder sApngEncoder = makePtr<ApngEncoder>();
 
+    TickMeter tm;
 
-    if(sApngDecoder->setSource(filename))
-      printf(" filename : %s .. setSource() is succeed!\n", filename.c_str());
+    tm.start();
+    sApngDecoder->setSource(filename);
+    tm.stop();
+
+    double timeApngDecoder = tm.getTimeSec();
+    tm.reset();
+    tm.start();
 
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
@@ -519,6 +525,10 @@ imread_( const String& filename, int flags, OutputArray mat )
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }
 
+    tm.stop();
+
+    printf("time ApngDecoder : %f sec.\n", timeApngDecoder);
+    printf("time  PngDecoder : %f sec.\n", tm.getTimeSec());
     return true;
 }
 

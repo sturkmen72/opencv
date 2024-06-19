@@ -342,7 +342,6 @@ namespace cv
     // Save frame to a PNG image file.
     // Return true if save succeeded.
     bool APNGFrame::save(const std::string& outPath) const {
-        bool result = true;
         FILE* f;
         if ((f = fopen(outPath.c_str(), "wb")) != 0) {
             png_structp png_ptr =
@@ -384,13 +383,13 @@ namespace cv
                 png_write_end(png_ptr, info_ptr);
             }
             else
-                result = false;
+                return false;
             png_destroy_write_struct(&png_ptr, &info_ptr);
             fclose(f);
+            return true;
         }
-        else
-            result = false;
-        return result;
+
+        return false;
     }
 
 /////////////////////// PngDecoder ///////////////////

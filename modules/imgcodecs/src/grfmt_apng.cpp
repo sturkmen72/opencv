@@ -79,9 +79,10 @@ namespace cv
 
     void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
     {
+
         CV_UNUSED(pass);
-       // APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
-       // png_progressive_combine_row(png_ptr, frame->rows[row_num], new_row);
+        APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
+        png_progressive_combine_row(png_ptr, frame->rows()[row_num], new_row);
     }
 
     int cmp_colors(const void* arg1, const void* arg2)
@@ -404,6 +405,7 @@ ApngDecoder::ApngDecoder()
     m_buf_supported = true;
     m_buf_pos = 0;
     m_bit_depth = 0;
+
 }
 
 
@@ -449,6 +451,20 @@ void  ApngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
     }
     memcpy( dst, decoder->m_buf.ptr() + decoder->m_buf_pos, size );
     decoder->m_buf_pos += size;
+}
+
+bool ApngDecoder::setSource(const String& filename)
+{
+
+    printf(" ApngDecoder::setSource(%s) is succeed!\n", filename.c_str());
+
+    std::vector<APNGFrame> frames;
+    unsigned int first, loops;
+    printf("try load_apng(%s)\n", filename.c_str());
+    int r1 = load_apng(m_filename, frames, first, loops);
+    printf("load_apng returns %d first : %d loops : %d \n", r1, first, loops);
+
+    return true;
 }
 
 bool  ApngDecoder::readHeader()
@@ -734,9 +750,9 @@ int ApngDecoder::processing_finish(png_structp png_ptr, png_infop info_ptr)
     return 0;
 }
 
-
 int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops)
 {
+    printf("load_apng\n");
     FILE* f;
     unsigned int id, i, j, w, h, w0, h0, x0, y0;
     unsigned int delay_num, delay_den, dop, bop, rowbytes, imagesize;
@@ -748,15 +764,17 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
     std::vector<CHUNK> chunksInfo;
     bool isAnimated = false;
     bool hasInfo = false;
-    APNGFrame frameRaw = { 0 };
-    APNGFrame frameCur = { 0 };
-    APNGFrame frameNext = { 0 };
+    APNGFrame frameRaw;
+    APNGFrame frameCur;
+    APNGFrame frameNext;
     int res = -1;
     first = 0;
     const unsigned long cMaxPNGSize = 1000000UL;
 
+    printf("load_apng  try fopen(%s)\n", inputFileName.c_str());
     if ((f = fopen(inputFileName.c_str(), "rb")) != 0)
     {
+        printf("load_apng  fopen(%s) succed!\n", inputFileName.c_str());
         if (fread(sig, 1, 8, f) == 8 && png_sig_cmp(sig, 0, 8) == 0)
         {
             id = read_chunk(f, &chunkIHDR);
@@ -766,6 +784,7 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 w0 = w = png_get_uint_32(chunkIHDR.p + 8);
                 h0 = h = png_get_uint_32(chunkIHDR.p + 12);
 
+                printf("in load_apng w : %d h : %d \n", w, h);
                 if (w > cMaxPNGSize || h > cMaxPNGSize)
                 {
                     fclose(f);
@@ -1399,6 +1418,11 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
 
 void ApngEncoder::optim_image(std::vector<APNGFrame>& frames, unsigned int& coltype, int minQuality, int maxQuality)
 {
+    CV_UNUSED(frames);
+    CV_UNUSED(coltype);
+    CV_UNUSED(minQuality);
+    CV_UNUSED(maxQuality);
+
     /*
     unsigned int size = frames.size();
     unsigned int width = frames[0].w;
@@ -1934,7 +1958,6 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
     unsigned int tcolor = 0;
     unsigned int rowbytes = width * bpp;
     unsigned int imagesize = rowbytes * height;
-    char* ptr;
     size_t fileSize = 0;
 
     unsigned char* temp = new unsigned char[imagesize];

@@ -9,6 +9,8 @@
 
 #include "grfmt_base.hpp"
 #include "bitstrm.hpp"
+#include <png.h>
+#include <zlib.h>
 
 namespace cv
 {
@@ -150,6 +152,7 @@ public:
     int load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops);
     bool  readData( Mat& img ) CV_OVERRIDE;
     bool  readHeader() CV_OVERRIDE;
+    bool  setSource(const String& filename) CV_OVERRIDE;
     void  close();
 
     ImageDecoder newDecoder() const CV_OVERRIDE;

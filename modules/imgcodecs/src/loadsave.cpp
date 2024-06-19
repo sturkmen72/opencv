@@ -230,6 +230,7 @@ ImageCodecInitializer& getCodecs()
     return g_codecs;
 }
 
+
 /**
  * Find the decoders
  *
@@ -403,6 +404,14 @@ static void ApplyExifOrientation(ExifEntry_t orientationTag, OutputArray img)
 static bool
 imread_( const String& filename, int flags, OutputArray mat )
 {
+
+    ImageDecoder sApngDecoder = makePtr<ApngDecoder>();
+    ImageEncoder sApngEncoder = makePtr<ApngEncoder>();
+
+
+    if(sApngDecoder->setSource(filename))
+      printf(" filename : %s .. setSource() is succeed!\n", filename.c_str());
+
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
 

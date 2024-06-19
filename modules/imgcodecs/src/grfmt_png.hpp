@@ -48,27 +48,6 @@
 #include "grfmt_base.hpp"
 #include "bitstrm.hpp"
 
-
-struct Image
-{
-    typedef unsigned char* ROW;
-    unsigned int w, h, bpp, delay_num, delay_den;
-    unsigned char* p;
-    ROW* rows;
-    Image() : w(0), h(0), bpp(0), delay_num(1), delay_den(10), p(0), rows(0) { }
-    ~Image() { }
-    void init(unsigned int w1, unsigned int h1, unsigned int bpp1)
-    {
-        w = w1; h = h1; bpp = bpp1;
-        int rowbytes = w * bpp;
-        rows = new ROW[h];
-        rows[0] = p = new unsigned char[h * rowbytes];
-        for (unsigned int j = 1; j < h; j++)
-            rows[j] = rows[j - 1] + rowbytes;
-    }
-    void free() { delete[] rows; delete[] p; }
-};
-
 namespace cv
 {
 
@@ -117,10 +96,6 @@ protected:
 };
 
 }
-
-int load_apng(std::string inputFileName, std::vector<Image>& img);
-void save_strip_png(std::string outFileName, std::vector<Image>& imgs);
-int save_apng(std::string outputFileName, std::vector<Image>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
 
 #endif
 

@@ -13,8 +13,7 @@
     and png2bmp sample from libpng distribution (Copyright (C) 1999-2001 MIYASAKA Masaru)
 \****************************************************************************************/
 
-/****************************************************************************************\
-*this file includes some part of APNG Disassembler 2.9 and APNG Optimizer 1.4 
+//this file includes some part of APNG Disassembler 2.9 and APNG Optimizer 1.4
 
 /* APNG Disassembler 2.9
  *
@@ -921,7 +920,7 @@ namespace cv
         unsigned int idat_size, zbuf_size, zsize;
         unsigned char* zbuf;
         unsigned char header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-        unsigned int num_frames = frames.size();
+        unsigned int num_frames = (int)frames.size();
         unsigned int width = frames[0].w;
         unsigned int height = frames[0].h;
         unsigned int bpp = (coltype == 6) ? 4 : (coltype == 2) ? 3 : (coltype == 4) ? 2 : 1;

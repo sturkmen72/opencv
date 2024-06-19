@@ -80,8 +80,8 @@ namespace cv
     void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
     {
         CV_UNUSED(pass);
-        APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
-        png_progressive_combine_row(png_ptr, frame->rows[row_num], new_row);
+       // APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
+       // png_progressive_combine_row(png_ptr, frame->rows[row_num], new_row);
     }
 
     int cmp_colors(const void* arg1, const void* arg2)
@@ -101,6 +101,295 @@ namespace cv
         return (int)(((COLORS*)arg1)->b) - (int)(((COLORS*)arg2)->b);
     }
 
+
+
+
+    unsigned char* APNGFrame::pixels(unsigned char* setPixels) {
+        if (setPixels != NULL)
+            _pixels = setPixels;
+        return _pixels;
+    }
+
+    unsigned int APNGFrame::width(unsigned int setWidth) {
+        if (setWidth != 0)
+            _width = setWidth;
+        return _width;
+    }
+
+    unsigned int APNGFrame::height(unsigned int setHeight) {
+        if (setHeight != 0)
+            _height = setHeight;
+        return _height;
+    }
+
+    unsigned char APNGFrame::colorType(unsigned char setColorType) {
+        if (setColorType != 255)
+
+            _colorType = setColorType;
+        return _colorType;
+    }
+
+    rgb* APNGFrame::palette(rgb* setPalette) {
+        if (setPalette != NULL)
+            memcpy(_palette, setPalette,
+                std::min(sizeof(_palette), sizeof(setPalette)));
+        return _palette;
+    }
+
+    unsigned char* APNGFrame::transparency(unsigned char* setTransparency) {
+        if (setTransparency != NULL)
+            memcpy(_transparency, setTransparency,
+                std::min(sizeof(_transparency), sizeof(setTransparency)));
+        return _transparency;
+    }
+
+    int APNGFrame::paletteSize(int setPaletteSize) {
+        if (setPaletteSize != 0)
+            _paletteSize = setPaletteSize;
+        return _paletteSize;
+    }
+
+    int APNGFrame::transparencySize(int setTransparencySize) {
+        if (setTransparencySize != 0)
+            _transparencySize = setTransparencySize;
+        return _transparencySize;
+    }
+
+    unsigned int APNGFrame::delay_num(unsigned int setDelayNum) {
+        if (setDelayNum != 0)
+            _delay_num = setDelayNum;
+        return _delay_num;
+    }
+
+    unsigned int APNGFrame::delay_den(unsigned int setDelayDen) {
+        if (setDelayDen != 0)
+            _delay_den = setDelayDen;
+        return _delay_den;
+    }
+
+    unsigned char** APNGFrame::rows(unsigned char** setRows) {
+        if (setRows != NULL)
+            _rows = setRows;
+        return _rows;
+    }
+
+    APNGFrame::APNGFrame()
+        : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
+        _transparencySize(0), _delay_num(0), _delay_den(0), _rows(NULL) {
+        memset(_palette, 0, sizeof(_palette));
+        memset(_transparency, 0, sizeof(_transparency));
+    }
+
+    APNGFrame::APNGFrame(const std::string& filePath, unsigned delayNum,
+        unsigned delayDen)
+        : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
+        _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
+        _rows(NULL) {
+        // TODO save extracted info to self
+        FILE* f;
+        if ((f = fopen(filePath.c_str(), "rb")) != 0) {
+            unsigned char sig[8];
+
+            if (fread(sig, 1, 8, f) == 8 && png_sig_cmp(sig, 0, 8) == 0) {
+                png_structp png_ptr =
+                    png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+                png_infop info_ptr = png_create_info_struct(png_ptr);
+                if (png_ptr && info_ptr) {
+                    png_byte depth;
+                    png_uint_32 rowbytes, i;
+                    png_colorp palette;
+                    png_color_16p trans_color;
+                    png_bytep trans_alpha;
+
+                    if (setjmp(png_jmpbuf(png_ptr))) {
+                        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+                        fclose(f);
+                        return;
+                    }
+
+                    png_init_io(png_ptr, f);
+                    png_set_sig_bytes(png_ptr, 8);
+                    png_read_info(png_ptr, info_ptr);
+                    _width = png_get_image_width(png_ptr, info_ptr);
+                    _height = png_get_image_height(png_ptr, info_ptr);
+                    _colorType = png_get_color_type(png_ptr, info_ptr);
+                    depth = png_get_bit_depth(png_ptr, info_ptr);
+                    if (depth < 8) {
+                        if (_colorType == PNG_COLOR_TYPE_PALETTE)
+                            png_set_packing(png_ptr);
+                        else
+                            png_set_expand(png_ptr);
+                    }
+                    else if (depth > 8) {
+                        png_set_expand(png_ptr);
+                        png_set_strip_16(png_ptr);
+                    }
+                    (void)png_set_interlace_handling(png_ptr);
+                    png_read_update_info(png_ptr, info_ptr);
+                    _colorType = png_get_color_type(png_ptr, info_ptr);
+                    rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+                    memset(_palette, 255, sizeof(_palette));
+                    memset(_transparency, 255, sizeof(_transparency));
+
+                    if (png_get_PLTE(png_ptr, info_ptr, &palette, &_paletteSize))
+                        memcpy(_palette, palette, _paletteSize * 3);
+                    else
+                        _paletteSize = 0;
+
+                    if (png_get_tRNS(png_ptr, info_ptr, &trans_alpha, &_transparencySize,
+                        &trans_color)) {
+                        if (_transparencySize > 0) {
+                            if (_colorType == PNG_COLOR_TYPE_GRAY) {
+                                _transparency[0] = 0;
+                                _transparency[1] = trans_color->gray & 0xFF;
+                                _transparencySize = 2;
+                            }
+                            else if (_colorType == PNG_COLOR_TYPE_RGB) {
+                                _transparency[0] = 0;
+                                _transparency[1] = trans_color->red & 0xFF;
+                                _transparency[2] = 0;
+                                _transparency[3] = trans_color->green & 0xFF;
+                                _transparency[4] = 0;
+                                _transparency[5] = trans_color->blue & 0xFF;
+                                _transparencySize = 6;
+                            }
+                            else if (_colorType == PNG_COLOR_TYPE_PALETTE)
+                                memcpy(_transparency, trans_alpha, _transparencySize);
+                            else
+                                _transparencySize = 0;
+                        }
+                    }
+                    else
+                        _transparencySize = 0;
+
+                    _pixels = new unsigned char[_height * rowbytes];
+                    _rows = new png_bytep[_height * sizeof(png_bytep)];
+
+                    for (i = 0; i < _height; ++i)
+                        _rows[i] = _pixels + i * rowbytes;
+
+                    png_read_image(png_ptr, _rows);
+                    png_read_end(png_ptr, NULL);
+                }
+                png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+            }
+            fclose(f);
+        }
+    }
+
+    APNGFrame::APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
+        rgb* trns_color, unsigned delayNum, unsigned delayDen)
+        : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
+        _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
+        _rows(NULL) {
+        memset(_palette, 0, sizeof(_palette));
+        memset(_transparency, 0, sizeof(_transparency));
+
+        if (pixels != NULL) {
+            png_uint_32 rowbytes = width * 3;
+
+            _width = width;
+            _height = height;
+            _colorType = 2;
+
+            _pixels = new unsigned char[_height * rowbytes];
+            _rows = new png_bytep[_height * sizeof(png_bytep)];
+
+            memcpy(_pixels, pixels, _height * rowbytes);
+
+            for (unsigned int i = 0; i < _height; ++i)
+                _rows[i] = _pixels + i * rowbytes;
+
+            if (trns_color != NULL) {
+                _transparency[0] = 0;
+                _transparency[1] = trns_color->r;
+                _transparency[2] = 0;
+                _transparency[3] = trns_color->g;
+                _transparency[4] = 0;
+                _transparency[5] = trns_color->b;
+                _transparencySize = 6;
+            }
+        }
+    }
+
+    APNGFrame::APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
+        unsigned delayNum, unsigned delayDen)
+        : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
+        _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
+        _rows(NULL) {
+        memset(_palette, 0, sizeof(_palette));
+        memset(_transparency, 0, sizeof(_transparency));
+
+        if (pixels != NULL) {
+            png_uint_32 rowbytes = width * 4;
+
+            _width = width;
+            _height = height;
+            _colorType = 6;
+
+            _pixels = new unsigned char[_height * rowbytes];
+            _rows = new png_bytep[_height * sizeof(png_bytep)];
+
+            memcpy(_pixels, pixels, _height * rowbytes);
+
+            for (unsigned int i = 0; i < _height; ++i)
+                _rows[i] = _pixels + i * rowbytes;
+        }
+    }
+
+    // Save frame to a PNG image file.
+    // Return true if save succeeded.
+    bool APNGFrame::save(const std::string& outPath) const {
+        bool result = true;
+        FILE* f;
+        if ((f = fopen(outPath.c_str(), "wb")) != 0) {
+            png_structp png_ptr =
+                png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+            png_infop info_ptr = png_create_info_struct(png_ptr);
+            if (png_ptr && info_ptr) {
+                if (setjmp(png_jmpbuf(png_ptr))) {
+                    png_destroy_read_struct(&png_ptr, &info_ptr, 0);
+                    fclose(f);
+                    return false;
+                }
+                png_init_io(png_ptr, f);
+                png_set_compression_level(png_ptr, 9);
+                png_set_IHDR(png_ptr, info_ptr, _width, _height, 8, _colorType, 0, 0, 0);
+                if (_paletteSize > 0) {
+                    png_color palette[PNG_MAX_PALETTE_LENGTH];
+                    memcpy(palette, _palette, _paletteSize * 3);
+                    png_set_PLTE(png_ptr, info_ptr, palette, _paletteSize);
+                }
+                if (_transparencySize > 0) {
+                    png_color_16 trans_color;
+                    if (_colorType == PNG_COLOR_TYPE_GRAY) {
+                        trans_color.gray = _transparency[1];
+                        png_set_tRNS(png_ptr, info_ptr, NULL, 0, &trans_color);
+                    }
+                    else if (_colorType == PNG_COLOR_TYPE_RGB) {
+                        trans_color.red = _transparency[1];
+                        trans_color.green = _transparency[3];
+                        trans_color.blue = _transparency[5];
+                        png_set_tRNS(png_ptr, info_ptr, NULL, 0, &trans_color);
+                    }
+                    else if (_colorType == PNG_COLOR_TYPE_PALETTE)
+                        png_set_tRNS(png_ptr, info_ptr,
+                            const_cast<unsigned char*>(_transparency),
+                            _transparencySize, NULL);
+                }
+                png_write_info(png_ptr, info_ptr);
+                png_write_image(png_ptr, _rows);
+                png_write_end(png_ptr, info_ptr);
+            }
+            else
+                result = false;
+            png_destroy_write_struct(&png_ptr, &info_ptr);
+            fclose(f);
+        }
+        else
+            result = false;
+        return result;
+    }
 
 /////////////////////// PngDecoder ///////////////////
 
@@ -491,19 +780,19 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 rowbytes = w * 4;
                 imagesize = h * rowbytes;
 
-                frameRaw.p = new unsigned char[imagesize];
-                frameRaw.rows = new png_bytep[h * sizeof(png_bytep)];
+                frameRaw.pixels(new unsigned char[imagesize]);
+                frameRaw.rows(new png_bytep[h * sizeof(png_bytep)]);
                 for (j = 0; j < h; j++)
-                    frameRaw.rows[j] = frameRaw.p + j * rowbytes;
+                    frameRaw.rows()[j] = frameRaw.pixels() + j * rowbytes;
 
                 if (!processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
                 {
-                    frameCur.w = w;
-                    frameCur.h = h;
-                    frameCur.p = new unsigned char[imagesize];
-                    frameCur.rows = new png_bytep[h * sizeof(png_bytep)];
+                    frameCur.width(w);
+                    frameCur.height(h);
+                    frameCur.pixels(new unsigned char[imagesize]);
+                    frameCur.rows(new png_bytep[h * sizeof(png_bytep)]);
                     for (j = 0; j < h; j++)
-                        frameCur.rows[j] = frameCur.p + j * rowbytes;
+                        frameCur.rows()[j] = frameCur.pixels() + j * rowbytes;
 
                     while (!feof(f))
                     {
@@ -523,34 +812,34 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                             {
                                 if (!processing_finish(png_ptr, info_ptr))
                                 {
-                                    frameNext.p = new unsigned char[imagesize];
-                                    frameNext.rows = new png_bytep[h * sizeof(png_bytep)];
+                                    frameNext.pixels(new unsigned char[imagesize]);
+                                    frameNext.rows(new png_bytep[h * sizeof(png_bytep)]);
                                     for (j = 0; j < h; j++)
-                                        frameNext.rows[j] = frameNext.p + j * rowbytes;
+                                        frameNext.rows()[j] = frameNext.pixels() + j * rowbytes;
 
                                     if (dop == 2)
-                                        memcpy(frameNext.p, frameCur.p, imagesize);
+                                        memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
 
-                                    compose_frame(frameCur.rows, frameRaw.rows, bop, x0, y0, w0, h0);
-                                    frameCur.delay_num = delay_num;
-                                    frameCur.delay_den = delay_den;
+                                    compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
+                                    frameCur.delay_num(delay_num);
+                                    frameCur.delay_den(delay_den);
 
                                     frames.push_back(frameCur);
 
                                     if (dop != 2)
                                     {
-                                        memcpy(frameNext.p, frameCur.p, imagesize);
+                                        memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
                                         if (dop == 1)
                                             for (j = 0; j < h0; j++)
-                                                memset(frameNext.rows[y0 + j] + x0 * 4, 0, w0 * 4);
+                                                memset(frameNext.rows()[y0 + j] + x0 * 4, 0, w0 * 4);
                                     }
-                                    frameCur.p = frameNext.p;
-                                    frameCur.rows = frameNext.rows;
+                                    frameCur.pixels(frameNext.pixels());
+                                    frameCur.rows(frameNext.rows());
                                 }
                                 else
                                 {
-                                    delete[] frameCur.rows;
-                                    delete[] frameCur.p;
+                                    delete[] frameCur.rows();
+                                    delete[] frameCur.pixels();
                                     delete[] chunk.p;
                                     break;
                                 }
@@ -568,8 +857,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
 
                             if (w0 > cMaxPNGSize || h0 > cMaxPNGSize || x0 > cMaxPNGSize || y0 > cMaxPNGSize || x0 + w0 > w || y0 + h0 > h || dop > 2 || bop > 1)
                             {
-                                delete[] frameCur.rows;
-                                delete[] frameCur.p;
+                                delete[] frameCur.rows();
+                                delete[] frameCur.pixels();
                                 delete[] chunk.p;
                                 break;
                             }
@@ -579,8 +868,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                                 memcpy(chunkIHDR.p + 8, chunk.p + 12, 8);
                                 if (processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
                                 {
-                                    delete[] frameCur.rows;
-                                    delete[] frameCur.p;
+                                    delete[] frameCur.rows();
+                                    delete[] frameCur.pixels();
                                     delete[] chunk.p;
                                     break;
                                 }
@@ -600,8 +889,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                             hasInfo = true;
                             if (processing_data(png_ptr, info_ptr, chunk.p, chunk.size))
                             {
-                                delete[] frameCur.rows;
-                                delete[] frameCur.p;
+                                delete[] frameCur.rows();
+                                delete[] frameCur.pixels();
                                 delete[] chunk.p;
                                 break;
                             }
@@ -612,8 +901,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                             memcpy(chunk.p + 8, "IDAT", 4);
                             if (processing_data(png_ptr, info_ptr, chunk.p + 4, chunk.size - 4))
                             {
-                                delete[] frameCur.rows;
-                                delete[] frameCur.p;
+                                delete[] frameCur.rows();
+                                delete[] frameCur.pixels();
                                 delete[] chunk.p;
                                 break;
                             }
@@ -622,15 +911,15 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                         {
                             if (hasInfo && !processing_finish(png_ptr, info_ptr))
                             {
-                                compose_frame(frameCur.rows, frameRaw.rows, bop, x0, y0, w0, h0);
-                                frameCur.delay_num = delay_num;
-                                frameCur.delay_den = delay_den;
+                                compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
+                                frameCur.delay_num(delay_num);
+                                frameCur.delay_den(delay_den);
                                 frames.push_back(frameCur);
                             }
                             else
                             {
-                                delete[] frameCur.rows;
-                                delete[] frameCur.p;
+                                delete[] frameCur.rows();
+                                delete[] frameCur.pixels();
                             }
                             delete[] chunk.p;
                             break;
@@ -644,8 +933,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                         {
                             if (processing_data(png_ptr, info_ptr, chunk.p, chunk.size))
                             {
-                                delete[] frameCur.rows;
-                                delete[] frameCur.p;
+                                delete[] frameCur.rows();
+                                delete[] frameCur.pixels();
                                 delete[] chunk.p;
                                 break;
                             }
@@ -655,8 +944,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                         delete[] chunk.p;
                     }
                 }
-                delete[] frameRaw.rows;
-                delete[] frameRaw.p;
+                delete[] frameRaw.rows();
+                delete[] frameRaw.pixels();
 
                 if (!frames.empty())
                     res = 0;
@@ -838,11 +1127,11 @@ void ApngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
 {
     unsigned int i, j;
     unsigned char* sp;
-    unsigned int size = frames[0].w * frames[0].h;
+    unsigned int size = frames[0].width() * frames[0].height();
 
     for (i = 0; i < frames.size(); i++)
     {
-        sp = frames[i].p;
+        sp = frames[i].pixels();
         for (j = 0; j < size; j++, sp += 4)
             if (sp[3] == 0)
                 sp[0] = sp[1] = sp[2] = 0;
@@ -852,27 +1141,27 @@ void ApngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
 
 void ApngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, unsigned int first)
 {
-    unsigned int imagesize = frames[0].w * frames[0].h * 4;
+    unsigned int imagesize = frames[0].width() * frames[0].height() * 4;
     unsigned int i = first;
 
     while (++i < frames.size())
     {
-        if (memcmp(frames[i - 1].p, frames[i].p, imagesize) != 0)
+        if (memcmp(frames[i - 1].pixels(), frames[i].pixels(), imagesize) != 0)
             continue;
 
         i--;
-        delete[] frames[i].p;
-        delete[] frames[i].rows;
-        unsigned int num = frames[i].delay_num;
-        unsigned int den = frames[i].delay_den;
+        delete[] frames[i].pixels();
+        delete[] frames[i].rows();
+        unsigned int num = frames[i].delay_num();
+        unsigned int den = frames[i].delay_den();
         frames.erase(frames.begin() + i);
 
-        if (frames[i].delay_den == den)
-            frames[i].delay_num += num;
+        if (frames[i].delay_den() == den)
+            frames[i].delay_num(frames[i].delay_num()+num);
         else
         {
-            frames[i].delay_num = num = num * frames[i].delay_den + den * frames[i].delay_num;
-            frames[i].delay_den = den = den * frames[i].delay_den;
+            frames[i].delay_num(num * frames[i].delay_den() + den * frames[i].delay_num());
+            frames[i].delay_den(den * frames[i].delay_den());
             while (num && den)
             {
                 if (num > den)
@@ -881,8 +1170,8 @@ void ApngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, unsigned int 
                     den = den % num;
             }
             num += den;
-            frames[i].delay_num /= num;
-            frames[i].delay_den /= num;
+            frames[i].delay_num(frames[i].delay_num() / num);
+            frames[i].delay_den(frames[i].delay_den() / num);
         }
 
         process_callback(0.2 + i / float(frames.size()) * 0.1);
@@ -897,7 +1186,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
     unsigned char gray[256];
     COLORS col[256];
     unsigned int colors = 0;
-    unsigned int size = frames[0].w * frames[0].h;
+    unsigned int size = frames[0].width() * frames[0].height();
     unsigned int has_tcolor = 0;
     unsigned int num_frames = frames.size();
 
@@ -919,7 +1208,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
 
     for (i = 0; i < num_frames; i++)
     {
-        sp = frames[i].p;
+        sp = frames[i].pixels();
         for (j = 0; j < size; j++)
         {
             r = *sp++;
@@ -985,7 +1274,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
 
         for (i = 0; i < num_frames; i++)
         {
-            sp = dp = frames[i].p;
+            sp = dp = frames[i].pixels();
             for (j = 0; j < size; j++, sp += 4)
             {
                 if (sp[3] == 0)
@@ -1017,7 +1306,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
 
         for (i = 0; i < num_frames; i++)
         {
-            sp = dp = frames[i].p;
+            sp = dp = frames[i].pixels();
             for (j = 0; j < size; j++)
             {
                 r = *sp++;
@@ -1036,7 +1325,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
         coltype = 4;
         for (i = 0; i < num_frames; i++)
         {
-            sp = dp = frames[i].p;
+            sp = dp = frames[i].pixels();
             for (j = 0; j < size; j++, sp += 4)
             {
                 *dp++ = sp[2];
@@ -1063,7 +1352,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
             coltype = 2;
             for (i = 0; i < num_frames; i++)
             {
-                sp = dp = frames[i].p;
+                sp = dp = frames[i].pixels();
                 for (j = 0; j < size; j++)
                 {
                     *dp++ = *sp++;
@@ -1078,7 +1367,7 @@ void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int
             coltype = 2;
             for (i = 0; i < num_frames; i++)
             {
-                sp = dp = frames[i].p;
+                sp = dp = frames[i].pixels();
                 for (j = 0; j < size; j++)
                 {
                     r = *sp++;
@@ -1631,8 +1920,8 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
     unsigned char* zbuf;
     unsigned char header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
     unsigned int num_frames = (int)frames.size();
-    unsigned int width = frames[0].w;
-    unsigned int height = frames[0].h;
+    unsigned int width = frames[0].width();
+    unsigned int height = frames[0].height();
     unsigned int bpp = (coltype == 6) ? 4 : (coltype == 2) ? 3
         : (coltype == 4) ? 2
         : 1;
@@ -1740,7 +2029,7 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
         // printf("saving %s (frame %d of %d)\n", szOut, 1-first, num_frames-first);
         for (j = 0; j < 6; j++)
             op[j].valid = 0;
-        deflate_rect_op(frames[0].p, x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
+        deflate_rect_op(frames[0].pixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
         deflate_rect_fin(deflate_method, iter, zbuf, &zsize, bpp, rowbytes, rows, zbuf_size, 0);
 
         process_callback(0.5 + ((1 - first) / float(num_frames - first)) * 0.5);
@@ -1750,7 +2039,7 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
             process_callback(0.5 + ((1) / float(num_frames - first)) * 0.5);
             for (j = 0; j < 6; j++)
                 op[j].valid = 0;
-            deflate_rect_op(frames[1].p, x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
+            deflate_rect_op(frames[1].pixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
             deflate_rect_fin(deflate_method, iter, zbuf, &zsize, bpp, rowbytes, rows, zbuf_size, 0);
         }
 
@@ -1763,12 +2052,12 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
                 op[j].valid = 0;
 
             /* dispose = none */
-            get_rect(width, height, frames[i].p, frames[i + 1].p, over1, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 0);
+            get_rect(width, height, frames[i].pixels(), frames[i + 1].pixels(), over1, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 0);
 
             /* dispose = background */
             if (has_tcolor)
             {
-                memcpy(temp, frames[i].p, imagesize);
+                memcpy(temp, frames[i].pixels(), imagesize);
                 if (coltype == 2)
                     for (j = 0; j < h0; j++)
                         for (k = 0; k < w0; k++)
@@ -1777,12 +2066,12 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
                     for (j = 0; j < h0; j++)
                         memset(temp + ((j + y0) * width + x0) * bpp, tcolor, w0 * bpp);
 
-                get_rect(width, height, temp, frames[i + 1].p, over2, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 1);
+                get_rect(width, height, temp, frames[i + 1].pixels(), over2, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 1);
             }
 
             /* dispose = previous */
             if (i > first)
-                get_rect(width, height, rest, frames[i + 1].p, over3, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 2);
+                get_rect(width, height, rest, frames[i + 1].pixels(), over3, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 2);
 
             op_min = op[0].size;
             op_best = 0;
@@ -1803,8 +2092,8 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
             png_save_uint_32(buf_fcTL + 8, h0);
             png_save_uint_32(buf_fcTL + 12, x0);
             png_save_uint_32(buf_fcTL + 16, y0);
-            png_save_uint_16(buf_fcTL + 20, frames[i].delay_num);
-            png_save_uint_16(buf_fcTL + 22, frames[i].delay_den);
+            png_save_uint_16(buf_fcTL + 20, frames[i].delay_num());
+            png_save_uint_16(buf_fcTL + 22, frames[i].delay_den());
             buf_fcTL[24] = dop;
             buf_fcTL[25] = bop;
             write_chunk(f, "fcTL", buf_fcTL, 26);
@@ -1813,7 +2102,7 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
 
             /* process apng dispose - begin */
             if (dop != 2)
-                memcpy(rest, frames[i].p, imagesize);
+                memcpy(rest, frames[i].pixels(), imagesize);
 
             if (dop == 1)
             {
@@ -1843,8 +2132,8 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
             png_save_uint_32(buf_fcTL + 8, h0);
             png_save_uint_32(buf_fcTL + 12, x0);
             png_save_uint_32(buf_fcTL + 16, y0);
-            png_save_uint_16(buf_fcTL + 20, frames[num_frames - 1].delay_num);
-            png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].delay_den);
+            png_save_uint_16(buf_fcTL + 20, frames[num_frames - 1].delay_num());
+            png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].delay_den());
             buf_fcTL[24] = 0;
             buf_fcTL[25] = bop;
             write_chunk(f, "fcTL", buf_fcTL, 26);

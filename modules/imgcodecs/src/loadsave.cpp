@@ -387,19 +387,6 @@ static void ApplyExifOrientation(ExifEntry_t orientationTag, Mat& img)
 static bool
 imread_( const String& filename, int flags, Mat& mat )
 {
-    ImageDecoder sApngDecoder = makePtr<ApngDecoder>();
-    ImageEncoder sApngEncoder = makePtr<ApngEncoder>();
-
-    TickMeter tm;
-
-    tm.start();
-    sApngDecoder->setSource(filename);
-    tm.stop();
-
-    double timeApngDecoder = tm.getTimeSec();
-    tm.reset();
-    tm.start();
-
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
 
@@ -416,6 +403,22 @@ imread_( const String& filename, int flags, Mat& mat )
     /// if no decoder was found, return nothing.
     if( !decoder ){
         return 0;
+    }
+
+    TickMeter tm;
+    double timeApngDecoder = 0;
+    if (decoder->checkSignature("\x89\x50\x4e\x47\xd\xa\x1a\xa"))
+    {
+        ImageDecoder sApngDecoder = makePtr<ApngDecoder>();
+        ImageEncoder sApngEncoder = makePtr<ApngEncoder>();
+
+        tm.start();
+        sApngDecoder->setSource(filename);
+        tm.stop();
+
+        timeApngDecoder = tm.getTimeSec();
+        tm.reset();
+        tm.start();
     }
 
     int scale_denom = 1;
@@ -513,9 +516,13 @@ imread_( const String& filename, int flags, Mat& mat )
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }
 
-    tm.stop();
-    printf("***********************************\ntime ApngDecoder : %f sec.\n", timeApngDecoder);
-    printf("time  PngDecoder : %f sec.\n***********************************\n", tm.getTimeSec());
+    if (timeApngDecoder > 0)
+    {
+        tm.stop();
+        printf("***********************************\ntime ApngDecoder : %f sec.\n", timeApngDecoder);
+        printf("time  PngDecoder : %f sec.\n", tm.getTimeSec());
+        printf("path : %s - %d\n***********************************\n", filename.c_str(), flags);
+    }
 
     return true;
 }

@@ -42,7 +42,7 @@
 
 #include "precomp.hpp"
 
-#ifdef HAVE_PNG_TEST
+#ifdef HAVE_PNG
 
 /****************************************************************************************\
     This part of the file implements PNG codec on base of libpng library,

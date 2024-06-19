@@ -387,6 +387,19 @@ static void ApplyExifOrientation(ExifEntry_t orientationTag, Mat& img)
 static bool
 imread_( const String& filename, int flags, Mat& mat )
 {
+    ImageDecoder sApngDecoder = makePtr<ApngDecoder>();
+    ImageEncoder sApngEncoder = makePtr<ApngEncoder>();
+
+    TickMeter tm;
+
+    tm.start();
+    sApngDecoder->setSource(filename);
+    tm.stop();
+
+    double timeApngDecoder = tm.getTimeSec();
+    tm.reset();
+    tm.start();
+
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
 
@@ -499,6 +512,10 @@ imread_( const String& filename, int flags, Mat& mat )
     {
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }
+
+    tm.stop();
+    printf("***********************************\ntime ApngDecoder : %f sec.\n", timeApngDecoder);
+    printf("time  PngDecoder : %f sec.\n***********************************\n", tm.getTimeSec());
 
     return true;
 }

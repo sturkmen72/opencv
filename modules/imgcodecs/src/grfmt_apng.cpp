@@ -490,11 +490,13 @@ bool ApngDecoder::setSource(const String& filename)
 
     load_apng(filename, frames, first, loops);
 
-    for (int i = 0; i < frames.size(); i++)
+    /*
+    /for (int i = 0; i < frames.size(); i++)
     {
         String fname = format("frame%d.png", i);
-        //frames[i].save(fname);
+        frames[i].save(fname);
     }
+    */
     return true;
 }
 
@@ -860,8 +862,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                                     frameCur.delayDen(delay_den);
                                     frames.push_back(frameCur);
 
-                                    /*
-                                    String fname = format("frameRaw%.2d.png", frames.size() - 1);
+                                    
+                                    /*String fname = format("frameRaw%.2d.png", frames.size() - 1);
                                     frameRaw.save(fname);
                                     fname = format("frameCur%.2d.png", frames.size() - 1);
                                     frameCur.save(fname);

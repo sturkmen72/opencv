@@ -132,12 +132,19 @@ namespace cv
         return (int)(((COLORS*)arg1)->b) - (int)(((COLORS*)arg2)->b);
     }
 
+    APNGFrame::APNGFrame()
+        : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
+        _transparencySize(0), _delayNum(0), _delayDen(0), _rows(NULL)
+    {
+        memset(_palette, 0, sizeof(_palette));
+        memset(_transparency, 0, sizeof(_transparency));
+    }
 
     APNGFrame::APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
         unsigned delayNum, unsigned delayDen)
         : _pixels(NULL), m_width(0), m_height(0), m_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen),
-        _rows(NULL) {
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+    {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
 
@@ -161,8 +168,8 @@ namespace cv
     APNGFrame::APNGFrame(const std::string& filePath, unsigned delayNum,
         unsigned delayDen)
         : _pixels(NULL), m_width(0), m_height(0), m_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen),
-        _rows(NULL) {
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+    {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
         // TODO save extracted info to self
@@ -260,8 +267,8 @@ namespace cv
     APNGFrame::APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
         rgb* trns_color, unsigned delayNum, unsigned delayDen)
         : _pixels(NULL), m_width(0), m_height(0), m_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen),
-        _rows(NULL) {
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+    {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
 
@@ -292,51 +299,59 @@ namespace cv
         }
     }
 
-    unsigned char* APNGFrame::pixels(unsigned char* setPixels) {
+    unsigned char* APNGFrame::pixels(unsigned char* setPixels)
+    {
         if (setPixels != NULL)
             _pixels = setPixels;
         return _pixels;
     }
 
-    rgb* APNGFrame::palette(rgb* setPalette) {
+    rgb* APNGFrame::palette(rgb* setPalette)
+    {
         if (setPalette != NULL)
             memcpy(_palette, setPalette,
                 std::min(sizeof(_palette), sizeof(setPalette)));
         return _palette;
     }
 
-    unsigned char* APNGFrame::transparency(unsigned char* setTransparency) {
+    unsigned char* APNGFrame::transparency(unsigned char* setTransparency)
+    {
         if (setTransparency != NULL)
             memcpy(_transparency, setTransparency,
                 std::min(sizeof(_transparency), sizeof(setTransparency)));
         return _transparency;
     }
 
-    int APNGFrame::paletteSize(int setPaletteSize) {
+    int APNGFrame::paletteSize(int setPaletteSize)
+    {
         if (setPaletteSize != 0)
             _paletteSize = setPaletteSize;
         return _paletteSize;
     }
 
-    int APNGFrame::transparencySize(int setTransparencySize) {
+    int APNGFrame::transparencySize(int setTransparencySize)
+    {
         if (setTransparencySize != 0)
             _transparencySize = setTransparencySize;
         return _transparencySize;
     }
 
-    unsigned int APNGFrame::delayNum(unsigned int setDelayNum) {
+    unsigned int APNGFrame::delayNum(unsigned int setDelayNum)
+    {
         if (setDelayNum != 0)
             _delayNum = setDelayNum;
         return _delayNum;
     }
 
-    unsigned int APNGFrame::delayDen(unsigned int setDelayDen) {
+    unsigned int APNGFrame::delayDen(unsigned int setDelayDen)
+    {
         if (setDelayDen != 0)
             _delayDen = setDelayDen;
         return _delayDen;
     }
 
-    unsigned char** APNGFrame::rows(unsigned char** setRows) {
+    unsigned char** APNGFrame::rows(unsigned char** setRows)
+    {
         if (setRows != NULL)
             _rows = setRows;
         return _rows;
@@ -344,7 +359,8 @@ namespace cv
 
     // Save frame to a PNG image file.
     // Return true if save succeeded.
-    bool APNGFrame::save(const std::string& outPath) const {
+    bool APNGFrame::save(const std::string& outPath) const
+    {
         FILE* f;
         if ((f = fopen(outPath.c_str(), "wb")) != 0) {
             png_structp png_ptr =

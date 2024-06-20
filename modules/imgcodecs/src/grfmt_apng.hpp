@@ -66,7 +66,7 @@ struct COLORS { unsigned int num; unsigned char r, g, b, a; };
 struct OP { unsigned char* p; unsigned int size; int x, y, w, h, valid, filters; };
 
 const unsigned DEFAULT_FRAME_NUMERATOR = 100; //!< @brief The default numerator for the frame delay fraction.
-const unsigned DEFAULT_FRAME_DENOMINATOR = 1000; //!< @brief The default denominator for the frame delay fraction.
+const unsigned DEFAULT_FRAME_DENOMINATOR =  1000; //!< @brief The default denominator for the frame delay fraction.
 
 typedef struct {
     unsigned char r, g, b;
@@ -84,6 +84,7 @@ public:
      * @brief Creates an empty APNGFrame.
      */
     APNGFrame();
+    virtual ~APNGFrame() {}
 
     /**
      * @brief Creates an APNGFrame from a PNG file.
@@ -139,18 +140,13 @@ public:
      */
     bool save(const std::string& outPath) const;
 
+    int width() const { return m_width; }
+    int height() const { return m_height; }
+    virtual int type() const { return m_type; }
+
     // Raw pixel data
     unsigned char* pixels(unsigned char* setPixels = NULL);
     unsigned char* _pixels;
-
-    unsigned int width(unsigned int setWidth = 0);
-    unsigned int height(unsigned int setHeight = 0);
-    unsigned int _width;
-    unsigned int _height;
-
-    // PNG color type
-    unsigned char colorType(unsigned char setColorType = 255);
-    unsigned char _colorType;
 
     // Palette into
     rgb* palette(rgb* setPalette = NULL);
@@ -176,6 +172,11 @@ public:
 
     unsigned char** rows(unsigned char** setRows = NULL);
     unsigned char** _rows;
+
+protected:
+    int  m_width;  // width  of the image ( filled by readHeader )
+    int  m_height; // height of the image ( filled by readHeader )
+    int  m_type;
 
 };
 

@@ -81,8 +81,6 @@ namespace cv
     {
         CV_UNUSED(pass);
         APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
-        if(row_num>390)
-            printf("row_num: %d\n", row_num);
         png_progressive_combine_row(png_ptr, frame->rows()[row_num], new_row);
     }
 
@@ -464,7 +462,7 @@ bool ApngDecoder::setSource(const String& filename)
     for (int i = 0; i < frames.size(); i++)
     {
         String fname = format("frame%d.png", i);
-        frames[i].save(fname);
+        //frames[i].save(fname);
     }
     return true;
 }
@@ -765,9 +763,9 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
     std::vector<CHUNK> chunksInfo;
     bool isAnimated = false;
     bool hasInfo = false;
-    APNGFrame frameRaw;
-    APNGFrame frameCur;
-    APNGFrame frameNext;
+    APNGFrame frameRaw(inputFileName); //initialized temporarily by reading from file.
+    APNGFrame frameCur(inputFileName); //initialized temporarily by reading from file.
+    APNGFrame frameNext(inputFileName); //initialized temporarily by reading from file.
     int result = -1;
     first = 0;
     const unsigned long cMaxPNGSize = 1000000UL;
@@ -805,7 +803,6 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
 
                 if (!processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
                 {
-                    frameRaw.save("t1.png");
                     frameCur.width(w);
                     frameCur.height(h);
                     frameCur.pixels(new unsigned char[imagesize]);
@@ -842,8 +839,14 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                                     compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
                                     frameCur.delayNum(delay_num);
                                     frameCur.delayDen(delay_den);
-
                                     frames.push_back(frameCur);
+
+                                    String fname = format("frameRaw%.2d.png", frames.size() - 1);
+                                    //frameRaw.save(fname);
+                                    fname = format("frameCur%.2d.png", frames.size() - 1);
+                                    //frameCur.save(fname);
+                                    fname = format("frameNext%.2d.png", frames.size()-1);
+                                    //frameNext.save(fname);
 
                                     if (dop != 2)
                                     {
@@ -968,6 +971,7 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
 
                 if (!frames.empty())
                 {
+                    printf("***********************************\nfile name : %s .. frames in the file : %zd\n", inputFileName.c_str(), frames.size());
                     result = 0;
                 }
             }

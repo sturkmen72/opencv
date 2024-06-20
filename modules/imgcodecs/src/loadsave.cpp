@@ -519,9 +519,9 @@ imread_( const String& filename, int flags, Mat& mat )
     if (timeApngDecoder > 0)
     {
         tm.stop();
-        printf("***********************************\ntime ApngDecoder : %f sec.\n", timeApngDecoder);
-        printf("time  PngDecoder : %f sec.\n", tm.getTimeSec());
-        printf("file name : %s - (flags : %d)\n***********************************\n", filename.c_str(), flags);
+        printf("***********************************\nloading time ApngDecoder : %f sec.\n", timeApngDecoder);
+        printf("loading time  PngDecoder : %f sec.\n", tm.getTimeSec());
+        printf("\nflags value of imread() func : %d\n***********************************\n", flags);
     }
 
     return true;

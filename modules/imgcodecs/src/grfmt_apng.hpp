@@ -81,9 +81,17 @@ class APNGFrame
 {
 public:
     /**
-     * @brief Creates an empty APNGFrame.
+     * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
+     * @param pixels The RGBA pixel data.
+     * @param width The width of the pixel data.
+     * @param height The height of the pixel data.
+     * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
      */
-    APNGFrame();
+    APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
+        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
+        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+
     virtual ~APNGFrame() {}
 
     /**
@@ -119,18 +127,6 @@ public:
      */
     APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
         rgb* trns_color = NULL, unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
-
-    /**
-     * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
-     * @param pixels The RGBA pixel data.
-     * @param width The width of the pixel data.
-     * @param height The height of the pixel data.
-     * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
-     * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
-     */
-    APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
-        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
         unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
 
     /**

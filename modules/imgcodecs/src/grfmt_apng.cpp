@@ -763,9 +763,6 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
     std::vector<CHUNK> chunksInfo;
     bool isAnimated = false;
     bool hasInfo = false;
-    APNGFrame frameRaw(inputFileName); //initialized temporarily by reading from file.
-    APNGFrame frameCur(inputFileName); //initialized temporarily by reading from file.
-    APNGFrame frameNext(inputFileName); //initialized temporarily by reading from file.
     int result = -1;
     first = 0;
     const unsigned long cMaxPNGSize = 1000000UL;
@@ -796,20 +793,16 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                 rowbytes = w * 4;
                 imagesize = h * rowbytes;
 
-                frameRaw.pixels(new unsigned char[imagesize]);
-                frameRaw.rows(new png_bytep[h * sizeof(png_bytep)]);
-                for (j = 0; j < h; j++)
-                    frameRaw.rows()[j] = frameRaw.pixels() + j * rowbytes;
+                rgba* frameRaw_pixels = new rgba[w * h];
+                rgba* frameCur_pixels = new rgba[w * h];
+                rgba* frameNext_pixels = new rgba[w * h];
+
+                APNGFrame frameRaw(frameRaw_pixels, w, h);
+                APNGFrame frameCur(frameCur_pixels, w, h);
+                APNGFrame frameNext(frameNext_pixels, w, h);
 
                 if (!processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
                 {
-                    frameCur.width(w);
-                    frameCur.height(h);
-                    frameCur.pixels(new unsigned char[imagesize]);
-                    frameCur.rows(new png_bytep[h * sizeof(png_bytep)]);
-                    for (j = 0; j < h; j++)
-                        frameCur.rows()[j] = frameCur.pixels() + j * rowbytes;
-
                     while (!feof(f))
                     {
                         id = read_chunk(f, &chunk);
@@ -828,11 +821,6 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                             {
                                 if (!processing_finish(png_ptr, info_ptr))
                                 {
-                                    frameNext.pixels(new unsigned char[imagesize]);
-                                    frameNext.rows(new png_bytep[h * sizeof(png_bytep)]);
-                                    for (j = 0; j < h; j++)
-                                        frameNext.rows()[j] = frameNext.pixels() + j * rowbytes;
-
                                     if (dop == 2)
                                         memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
 
@@ -841,12 +829,14 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                                     frameCur.delayDen(delay_den);
                                     frames.push_back(frameCur);
 
+                                    /*
                                     String fname = format("frameRaw%.2d.png", frames.size() - 1);
-                                    //frameRaw.save(fname);
+                                    frameRaw.save(fname);
                                     fname = format("frameCur%.2d.png", frames.size() - 1);
-                                    //frameCur.save(fname);
-                                    fname = format("frameNext%.2d.png", frames.size()-1);
-                                    //frameNext.save(fname);
+                                    frameCur.save(fname);
+                                    fname = format("frameNext%.2d.png", frames.size() - 1);
+                                    frameNext.save(fname);
+                                    */
 
                                     if (dop != 2)
                                     {

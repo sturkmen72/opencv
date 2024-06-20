@@ -153,7 +153,7 @@ namespace cv
 
             memcpy(_pixels, pixels, m_height * rowbytes);
 
-            for (unsigned int i = 0; i < m_height; ++i)
+            for (int i = 0; i < m_height; ++i)
                 _rows[i] = _pixels + i * rowbytes;
         }
     }
@@ -176,7 +176,7 @@ namespace cv
                 png_infop info_ptr = png_create_info_struct(png_ptr);
                 if (png_ptr && info_ptr) {
                     png_byte depth;
-                    png_uint_32 rowbytes, i;
+                    png_uint_32 rowbytes;
                     png_colorp palette;
                     png_color_16p trans_color;
                     png_bytep trans_alpha;
@@ -245,7 +245,7 @@ namespace cv
                     _pixels = new unsigned char[m_height * rowbytes];
                     _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
-                    for (i = 0; i < m_height; ++i)
+                    for (int i = 0; i < m_height; ++i)
                         _rows[i] = _pixels + i * rowbytes;
 
                     png_read_image(png_ptr, _rows);
@@ -277,7 +277,7 @@ namespace cv
 
             memcpy(_pixels, pixels, m_height * rowbytes);
 
-            for (unsigned int i = 0; i < m_height; ++i)
+            for (int i = 0; i < m_height; ++i)
                 _rows[i] = _pixels + i * rowbytes;
 
             if (trns_color != NULL) {

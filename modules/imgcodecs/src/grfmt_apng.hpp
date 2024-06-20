@@ -80,6 +80,9 @@ typedef struct {
 class APNGFrame
 {
 public:
+    APNGFrame();
+    virtual ~APNGFrame() {}
+
     /**
      * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
      * @param pixels The RGBA pixel data.
@@ -91,8 +94,6 @@ public:
     APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
         unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
         unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
-
-    virtual ~APNGFrame() {}
 
     /**
      * @brief Creates an APNGFrame from a PNG file.

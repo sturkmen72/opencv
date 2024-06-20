@@ -96,7 +96,6 @@ namespace cv
 {
     void info_fn(png_structp png_ptr, png_infop info_ptr);
     void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
-    int cmp_colors(const void* arg1, const void* arg2);
 
     void info_fn(png_structp png_ptr, png_infop info_ptr)
     {
@@ -115,34 +114,52 @@ namespace cv
         png_progressive_combine_row(png_ptr, frame->rows()[row_num], new_row);
     }
 
-    int cmp_colors(const void* arg1, const void* arg2)
-    {
-        if (((COLORS*)arg1)->a != ((COLORS*)arg2)->a)
-            return (int)(((COLORS*)arg1)->a) - (int)(((COLORS*)arg2)->a);
-
-        if (((COLORS*)arg1)->num != ((COLORS*)arg2)->num)
-            return (int)(((COLORS*)arg2)->num) - (int)(((COLORS*)arg1)->num);
-
-        if (((COLORS*)arg1)->r != ((COLORS*)arg2)->r)
-            return (int)(((COLORS*)arg1)->r) - (int)(((COLORS*)arg2)->r);
-
-        if (((COLORS*)arg1)->g != ((COLORS*)arg2)->g)
-            return (int)(((COLORS*)arg1)->g) - (int)(((COLORS*)arg2)->g);
-
-        return (int)(((COLORS*)arg1)->b) - (int)(((COLORS*)arg2)->b);
-    }
-
     APNGFrame::APNGFrame()
-        : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
+        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(0), _delayDen(0), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
     }
 
+    APNGFrame::APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
+        rgb* trns_color, unsigned delayNum, unsigned delayDen)
+        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+    {
+        memset(_palette, 0, sizeof(_palette));
+        memset(_transparency, 0, sizeof(_transparency));
+
+        if (pixels != NULL) {
+            png_uint_32 rowbytes = width * 3;
+
+            m_width = width;
+            m_height = height;
+            m_color_type = PNG_COLOR_MASK_COLOR;
+
+            _pixels = new unsigned char[m_height * rowbytes];
+            _rows = new png_bytep[m_height * sizeof(png_bytep)];
+
+            memcpy(_pixels, pixels, m_height * rowbytes);
+
+            for (int i = 0; i < m_height; ++i)
+                _rows[i] = _pixels + i * rowbytes;
+
+            if (trns_color != NULL) {
+                _transparency[0] = 0;
+                _transparency[1] = trns_color->r;
+                _transparency[2] = 0;
+                _transparency[3] = trns_color->g;
+                _transparency[4] = 0;
+                _transparency[5] = trns_color->b;
+                _transparencySize = 6;
+            }
+        }
+    }
+
     APNGFrame::APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
         unsigned delayNum, unsigned delayDen)
-        : _pixels(NULL), m_width(0), m_height(0), m_type(0), _paletteSize(0),
+        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
@@ -153,7 +170,7 @@ namespace cv
 
             m_width = width;
             m_height = height;
-            m_type = 6;
+            m_color_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
             _pixels = new unsigned char[m_height * rowbytes];
             _rows = new png_bytep[m_height * sizeof(png_bytep)];
@@ -167,7 +184,7 @@ namespace cv
 
     APNGFrame::APNGFrame(const std::string& filePath, unsigned delayNum,
         unsigned delayDen)
-        : _pixels(NULL), m_width(0), m_height(0), m_type(0), _paletteSize(0),
+        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
@@ -199,10 +216,10 @@ namespace cv
                     png_read_info(png_ptr, info_ptr);
                     m_width = png_get_image_width(png_ptr, info_ptr);
                     m_height = png_get_image_height(png_ptr, info_ptr);
-                    m_type = png_get_color_type(png_ptr, info_ptr);
+                    m_color_type = png_get_color_type(png_ptr, info_ptr);
                     depth = png_get_bit_depth(png_ptr, info_ptr);
                     if (depth < 8) {
-                        if (m_type == PNG_COLOR_TYPE_PALETTE)
+                        if (m_color_type == PNG_COLOR_TYPE_PALETTE)
                             png_set_packing(png_ptr);
                         else
                             png_set_expand(png_ptr);
@@ -213,7 +230,7 @@ namespace cv
                     }
                     (void)png_set_interlace_handling(png_ptr);
                     png_read_update_info(png_ptr, info_ptr);
-                    m_type = png_get_color_type(png_ptr, info_ptr);
+                    m_color_type = png_get_color_type(png_ptr, info_ptr);
                     rowbytes = (int)png_get_rowbytes(png_ptr, info_ptr);
                     memset(_palette, 255, sizeof(_palette));
                     memset(_transparency, 255, sizeof(_transparency));
@@ -226,12 +243,12 @@ namespace cv
                     if (png_get_tRNS(png_ptr, info_ptr, &trans_alpha, &_transparencySize,
                         &trans_color)) {
                         if (_transparencySize > 0) {
-                            if (m_type == PNG_COLOR_TYPE_GRAY) {
+                            if (m_color_type == PNG_COLOR_TYPE_GRAY) {
                                 _transparency[0] = 0;
                                 _transparency[1] = trans_color->gray & 0xFF;
                                 _transparencySize = 2;
                             }
-                            else if (m_type == PNG_COLOR_TYPE_RGB) {
+                            else if (m_color_type == PNG_COLOR_TYPE_RGB) {
                                 _transparency[0] = 0;
                                 _transparency[1] = trans_color->red & 0xFF;
                                 _transparency[2] = 0;
@@ -240,7 +257,7 @@ namespace cv
                                 _transparency[5] = trans_color->blue & 0xFF;
                                 _transparencySize = 6;
                             }
-                            else if (m_type == PNG_COLOR_TYPE_PALETTE)
+                            else if (m_color_type == PNG_COLOR_TYPE_PALETTE)
                                 memcpy(_transparency, trans_alpha, _transparencySize);
                             else
                                 _transparencySize = 0;
@@ -261,41 +278,6 @@ namespace cv
                 png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
             }
             fclose(f);
-        }
-    }
-
-    APNGFrame::APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
-        rgb* trns_color, unsigned delayNum, unsigned delayDen)
-        : _pixels(NULL), m_width(0), m_height(0), m_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
-    {
-        memset(_palette, 0, sizeof(_palette));
-        memset(_transparency, 0, sizeof(_transparency));
-
-        if (pixels != NULL) {
-            png_uint_32 rowbytes = width * 3;
-
-            m_width = width;
-            m_height = height;
-            m_type = 2;
-
-            _pixels = new unsigned char[m_height * rowbytes];
-            _rows = new png_bytep[m_height * sizeof(png_bytep)];
-
-            memcpy(_pixels, pixels, m_height * rowbytes);
-
-            for (int i = 0; i < m_height; ++i)
-                _rows[i] = _pixels + i * rowbytes;
-
-            if (trns_color != NULL) {
-                _transparency[0] = 0;
-                _transparency[1] = trns_color->r;
-                _transparency[2] = 0;
-                _transparency[3] = trns_color->g;
-                _transparency[4] = 0;
-                _transparency[5] = trns_color->b;
-                _transparencySize = 6;
-            }
         }
     }
 
@@ -374,7 +356,7 @@ namespace cv
                 }
                 png_init_io(png_ptr, f);
                 png_set_compression_level(png_ptr, 9);
-                png_set_IHDR(png_ptr, info_ptr, m_width, m_height, 8, m_type, 0, 0, 0);
+                png_set_IHDR(png_ptr, info_ptr, m_width, m_height, 8, m_color_type, 0, 0, 0);
                 if (_paletteSize > 0) {
                     png_color palette[PNG_MAX_PALETTE_LENGTH];
                     memcpy(palette, _palette, _paletteSize * 3);
@@ -382,22 +364,23 @@ namespace cv
                 }
                 if (_transparencySize > 0) {
                     png_color_16 trans_color;
-                    if (m_type == PNG_COLOR_TYPE_GRAY) {
+                    if (m_color_type == PNG_COLOR_TYPE_GRAY) {
                         trans_color.gray = _transparency[1];
                         png_set_tRNS(png_ptr, info_ptr, NULL, 0, &trans_color);
                     }
-                    else if (m_type == PNG_COLOR_TYPE_RGB) {
+                    else if (m_color_type == PNG_COLOR_TYPE_RGB) {
                         trans_color.red = _transparency[1];
                         trans_color.green = _transparency[3];
                         trans_color.blue = _transparency[5];
                         png_set_tRNS(png_ptr, info_ptr, NULL, 0, &trans_color);
                     }
-                    else if (m_type == PNG_COLOR_TYPE_PALETTE)
+                    else if (m_color_type == PNG_COLOR_TYPE_PALETTE)
                         png_set_tRNS(png_ptr, info_ptr,
                             const_cast<unsigned char*>(_transparency),
                             _transparencySize, NULL);
                 }
                 png_write_info(png_ptr, info_ptr);
+                png_set_bgr(png_ptr);
                 png_write_image(png_ptr, _rows);
                 png_write_end(png_ptr, info_ptr);
             }
@@ -726,6 +709,7 @@ int ApngDecoder::processing_start(png_structp& png_ptr, png_infop& info_ptr, voi
 
     png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
     png_set_progressive_read_fn(png_ptr, frame_ptr, info_fn, row_fn, NULL);
+    png_set_bgr(png_ptr);
 
     png_process_data(png_ptr, info_ptr, header, 8);
     png_process_data(png_ptr, info_ptr, chunkIHDR.p, chunkIHDR.size);
@@ -1215,286 +1199,6 @@ void ApngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, unsigned int 
 
         process_callback(0.2 + i / float(frames.size()) * 0.1);
     }
-}
-
-void ApngEncoder::optim_downconvert(std::vector<APNGFrame>& frames, unsigned int& coltype)
-{
-    unsigned int i, j, k, r, g, b, a;
-    unsigned char* sp, * dp;
-    unsigned char cube[4096];
-    unsigned char gray[256];
-    COLORS col[256];
-    unsigned int colors = 0;
-    unsigned int size = frames[0].width() * frames[0].height();
-    unsigned int has_tcolor = 0;
-    unsigned int num_frames = (int)frames.size();
-
-    memset(&cube, 0, sizeof(cube));
-    memset(&gray, 0, sizeof(gray));
-
-    for (i = 0; i < 256; i++)
-    {
-        col[i].num = 0;
-        col[i].r = col[i].g = col[i].b = i;
-        col[i].a = trns[i] = 255;
-    }
-    palsize = trnssize = 0;
-    coltype = 6;
-
-    int transparent = 255;
-    int simple_trans = 1;
-    int grayscale = 1;
-
-    for (i = 0; i < num_frames; i++)
-    {
-        sp = frames[i].pixels();
-        for (j = 0; j < size; j++)
-        {
-            r = *sp++;
-            g = *sp++;
-            b = *sp++;
-            a = *sp++;
-            transparent &= a;
-
-            if (a != 0)
-            {
-                if (a != 255)
-                    simple_trans = 0;
-                else if (((r | g | b) & 15) == 0)
-                    cube[(r << 4) + g + (b >> 4)] = 1;
-
-                if (r != g || g != b)
-                    grayscale = 0;
-                else
-                    gray[r] = 1;
-            }
-
-            if (colors <= 256)
-            {
-                int found = 0;
-                for (k = 0; k < colors; k++)
-                    if (col[k].r == r && col[k].g == g && col[k].b == b && col[k].a == a)
-                    {
-                        found = 1;
-                        col[k].num++;
-                        break;
-                    }
-                if (found == 0)
-                {
-                    if (colors < 256)
-                    {
-                        col[colors].num++;
-                        col[colors].r = r;
-                        col[colors].g = g;
-                        col[colors].b = b;
-                        col[colors].a = a;
-                        if (a == 0)
-                            has_tcolor = 1;
-                    }
-                    colors++;
-                }
-            }
-        }
-        process_callback(0.3 + i / float(num_frames) * 0.1);
-    }
-
-    if (grayscale && simple_trans && colors <= 256) /* 6 -> 0 */
-    {
-        coltype = 0;
-
-        for (i = 0; i < 256; i++)
-            if (gray[i] == 0)
-            {
-                trns[0] = 0;
-                trns[1] = i;
-                trnssize = 2;
-                break;
-            }
-
-        for (i = 0; i < num_frames; i++)
-        {
-            sp = dp = frames[i].pixels();
-            for (j = 0; j < size; j++, sp += 4)
-            {
-                if (sp[3] == 0)
-                    *dp++ = trns[1];
-                else
-                    *dp++ = sp[0];
-            }
-        }
-    }
-    else if (colors <= 256) /* 6 -> 3 */
-    {
-        coltype = 3;
-
-        if (has_tcolor == 0 && colors < 256)
-            col[colors++].a = 0;
-
-        qsort(&col[0], colors, sizeof(COLORS), cmp_colors);
-
-        palsize = colors;
-        for (i = 0; i < colors; i++)
-        {
-            palette[i].r = col[i].r;
-            palette[i].g = col[i].g;
-            palette[i].b = col[i].b;
-            trns[i] = col[i].a;
-            if (trns[i] != 255)
-                trnssize = i + 1;
-        }
-
-        for (i = 0; i < num_frames; i++)
-        {
-            sp = dp = frames[i].pixels();
-            for (j = 0; j < size; j++)
-            {
-                r = *sp++;
-                g = *sp++;
-                b = *sp++;
-                a = *sp++;
-                for (k = 0; k < colors; k++)
-                    if (col[k].r == r && col[k].g == g && col[k].b == b && col[k].a == a)
-                        break;
-                *dp++ = k;
-            }
-        }
-    }
-    else if (grayscale) /* 6 -> 4 */
-    {
-        coltype = 4;
-        for (i = 0; i < num_frames; i++)
-        {
-            sp = dp = frames[i].pixels();
-            for (j = 0; j < size; j++, sp += 4)
-            {
-                *dp++ = sp[2];
-                *dp++ = sp[3];
-            }
-        }
-    }
-    else if (simple_trans) /* 6 -> 2 */
-    {
-        for (i = 0; i < 4096; i++)
-            if (cube[i] == 0)
-            {
-                trns[0] = 0;
-                trns[1] = (i >> 4) & 0xF0;
-                trns[2] = 0;
-                trns[3] = i & 0xF0;
-                trns[4] = 0;
-                trns[5] = (i << 4) & 0xF0;
-                trnssize = 6;
-                break;
-            }
-        if (transparent == 255)
-        {
-            coltype = 2;
-            for (i = 0; i < num_frames; i++)
-            {
-                sp = dp = frames[i].pixels();
-                for (j = 0; j < size; j++)
-                {
-                    *dp++ = *sp++;
-                    *dp++ = *sp++;
-                    *dp++ = *sp++;
-                    sp++;
-                }
-            }
-        }
-        else if (trnssize != 0)
-        {
-            coltype = 2;
-            for (i = 0; i < num_frames; i++)
-            {
-                sp = dp = frames[i].pixels();
-                for (j = 0; j < size; j++)
-                {
-                    r = *sp++;
-                    g = *sp++;
-                    b = *sp++;
-                    a = *sp++;
-                    if (a == 0)
-                    {
-                        *dp++ = trns[1];
-                        *dp++ = trns[3];
-                        *dp++ = trns[5];
-                    }
-                    else
-                    {
-                        *dp++ = r;
-                        *dp++ = g;
-                        *dp++ = b;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void ApngEncoder::optim_image(std::vector<APNGFrame>& frames, unsigned int& coltype, int minQuality, int maxQuality)
-{
-    CV_UNUSED(frames);
-    CV_UNUSED(coltype);
-    CV_UNUSED(minQuality);
-    CV_UNUSED(maxQuality);
-
-    /*
-    unsigned int size = frames.size();
-    unsigned int width = frames[0].w;
-    unsigned int height = frames[0].h;
-    unsigned int imageSize = width * height * 4;
-    liq_attr* attr = liq_attr_create();
-    liq_set_quality(attr, minQuality, maxQuality);
-    liq_histogram* hist = liq_histogram_create(attr);
-    unsigned char* pixels[size];
-    liq_image* images[size];
-
-    for (int i = 0; i < size; i++)
-    {
-        unsigned char* raw_rgba_pixels = (unsigned char*)malloc(imageSize);
-        memcpy(raw_rgba_pixels, frames[i].p, imageSize);
-
-        liq_image* image = liq_image_create_rgba(attr, raw_rgba_pixels, width, height, 0);
-        liq_histogram_add_image(hist, attr, image);
-
-        pixels[i] = raw_rgba_pixels;
-        images[i] = image;
-        process_callback(0.3 + i / float(size) * 0.1);
-    }
-
-    liq_result* res;
-    coltype = 3;
-    int errorCode = liq_histogram_quantize(hist, attr, &res);
-    if (errorCode == LIQ_OK)
-    {
-        for (int i = 0; i < size; i++)
-        {
-            liq_write_remapped_image(res, images[i], frames[i].p, imageSize);
-        }
-        const liq_palette* liqPalette = liq_get_palette(res);
-        palsize = liqPalette->count;
-        for (size_t i = 0; i < liqPalette->count; i++)
-        {
-            palette[i].r = liqPalette->entries[i].r;
-            palette[i].g = liqPalette->entries[i].g;
-            palette[i].b = liqPalette->entries[i].b;
-            trns[i] = liqPalette->entries[i].a;
-            if (trns[i] != 255)
-                trnssize = i + 1;
-
-            process_callback(0.4 + i / float(palsize) * 0.1);
-        }
-    }
-
-    for (int i = 0; i < size; i++)
-    {
-        delete[] pixels[i];
-        liq_image_destroy(images[i]);
-    }
-    liq_result_destroy(res);
-    liq_attr_destroy(attr);
-    liq_histogram_destroy(hist);
-    */
 }
 
 void ApngEncoder::write_chunk(FILE* f, const char* name, unsigned char* data, unsigned int length)

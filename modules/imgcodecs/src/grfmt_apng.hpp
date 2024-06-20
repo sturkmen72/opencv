@@ -171,9 +171,10 @@ public:
     unsigned char** _rows;
 
 protected:
-    int  m_width;  // width  of the image ( filled by readHeader )
-    int  m_height; // height of the image ( filled by readHeader )
+    int  m_width;
+    int  m_height;
     int  m_type;
+    int  m_color_type;
 
 };
 
@@ -224,8 +225,6 @@ public:
     size_t save_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
     void optim_dirty(std::vector<APNGFrame>& frames);
     void optim_duplicates(std::vector<APNGFrame>& frames, unsigned int first);
-    void optim_downconvert(std::vector<APNGFrame>& frames, unsigned int& coltype);
-    void optim_image(std::vector<APNGFrame>& frames, unsigned int& coltype, int minQuality, int maxQuality);
 
     ImageEncoder newEncoder() const CV_OVERRIDE;
 

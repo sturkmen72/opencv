@@ -218,6 +218,9 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
+    Mat im = imread("elephant_apng_zopfli.png",IMREAD_UNCHANGED);
+    imshow("elephant_apng_zopfli.png", im);
+    waitKey();
     // Use the cmdlineparser to process input arguments
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"

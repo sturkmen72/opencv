@@ -521,7 +521,7 @@ imread_( const String& filename, int flags, Mat& mat )
         tm.stop();
         printf("***********************************\ntime ApngDecoder : %f sec.\n", timeApngDecoder);
         printf("time  PngDecoder : %f sec.\n", tm.getTimeSec());
-        printf("path : %s - %d\n***********************************\n", filename.c_str(), flags);
+        printf("file name : %s - (flags : %d)\n***********************************\n", filename.c_str(), flags);
     }
 
     return true;

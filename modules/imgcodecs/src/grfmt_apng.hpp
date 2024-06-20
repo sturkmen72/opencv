@@ -63,11 +63,11 @@ namespace cv
         int _transparencySize;
 
         // Delay is numerator/denominator ratio, in seconds
-        unsigned int delay_num(unsigned int setDelayNum = 0);
-        unsigned int _delay_num;
+        unsigned int delayNum(unsigned int setDelayNum = 0);
+        unsigned int _delayNum;
 
-        unsigned int delay_den(unsigned int setDelayDen = 0);
-        unsigned int _delay_den;
+        unsigned int delayDen(unsigned int setDelayDen = 0);
+        unsigned int _delayDen;
 
         unsigned char** rows(unsigned char** setRows = NULL);
         unsigned char** _rows;

@@ -79,9 +79,10 @@ namespace cv
 
     void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass)
     {
-
         CV_UNUSED(pass);
         APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
+        if(row_num>390)
+            printf("row_num: %d\n", row_num);
         png_progressive_combine_row(png_ptr, frame->rows()[row_num], new_row);
     }
 
@@ -156,16 +157,16 @@ namespace cv
         return _transparencySize;
     }
 
-    unsigned int APNGFrame::delay_num(unsigned int setDelayNum) {
+    unsigned int APNGFrame::delayNum(unsigned int setDelayNum) {
         if (setDelayNum != 0)
-            _delay_num = setDelayNum;
-        return _delay_num;
+            _delayNum = setDelayNum;
+        return _delayNum;
     }
 
-    unsigned int APNGFrame::delay_den(unsigned int setDelayDen) {
+    unsigned int APNGFrame::delayDen(unsigned int setDelayDen) {
         if (setDelayDen != 0)
-            _delay_den = setDelayDen;
-        return _delay_den;
+            _delayDen = setDelayDen;
+        return _delayDen;
     }
 
     unsigned char** APNGFrame::rows(unsigned char** setRows) {
@@ -176,7 +177,7 @@ namespace cv
 
     APNGFrame::APNGFrame()
         : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
-        _transparencySize(0), _delay_num(0), _delay_den(0), _rows(NULL) {
+        _transparencySize(0), _delayNum(0), _delayDen(0), _rows(NULL) {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
     }
@@ -184,7 +185,7 @@ namespace cv
     APNGFrame::APNGFrame(const std::string& filePath, unsigned delayNum,
         unsigned delayDen)
         : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
-        _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen),
         _rows(NULL) {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
@@ -283,7 +284,7 @@ namespace cv
     APNGFrame::APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
         rgb* trns_color, unsigned delayNum, unsigned delayDen)
         : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
-        _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen),
         _rows(NULL) {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
@@ -318,7 +319,7 @@ namespace cv
     APNGFrame::APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
         unsigned delayNum, unsigned delayDen)
         : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
-        _transparencySize(0), _delay_num(delayNum), _delay_den(delayDen),
+        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen),
         _rows(NULL) {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
@@ -460,6 +461,11 @@ bool ApngDecoder::setSource(const String& filename)
 
     load_apng(filename, frames, first, loops);
 
+    for (int i = 0; i < frames.size(); i++)
+    {
+        String fname = format("frame%d.png", i);
+        frames[i].save(fname);
+    }
     return true;
 }
 
@@ -799,6 +805,7 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
 
                 if (!processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
                 {
+                    frameRaw.save("t1.png");
                     frameCur.width(w);
                     frameCur.height(h);
                     frameCur.pixels(new unsigned char[imagesize]);
@@ -833,8 +840,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                                         memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
 
                                     compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
-                                    frameCur.delay_num(delay_num);
-                                    frameCur.delay_den(delay_den);
+                                    frameCur.delayNum(delay_num);
+                                    frameCur.delayDen(delay_den);
 
                                     frames.push_back(frameCur);
 
@@ -924,8 +931,8 @@ int ApngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fr
                             if (hasInfo && !processing_finish(png_ptr, info_ptr))
                             {
                                 compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
-                                frameCur.delay_num(delay_num);
-                                frameCur.delay_den(delay_den);
+                                frameCur.delayNum(delay_num);
+                                frameCur.delayDen(delay_den);
                                 frames.push_back(frameCur);
                             }
                             else
@@ -1170,16 +1177,16 @@ void ApngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, unsigned int 
         i--;
         delete[] frames[i].pixels();
         delete[] frames[i].rows();
-        unsigned int num = frames[i].delay_num();
-        unsigned int den = frames[i].delay_den();
+        unsigned int num = frames[i].delayNum();
+        unsigned int den = frames[i].delayDen();
         frames.erase(frames.begin() + i);
 
-        if (frames[i].delay_den() == den)
-            frames[i].delay_num(frames[i].delay_num()+num);
+        if (frames[i].delayDen() == den)
+            frames[i].delayNum(frames[i].delayNum()+num);
         else
         {
-            frames[i].delay_num(num * frames[i].delay_den() + den * frames[i].delay_num());
-            frames[i].delay_den(den * frames[i].delay_den());
+            frames[i].delayNum(num * frames[i].delayDen() + den * frames[i].delayNum());
+            frames[i].delayDen(den * frames[i].delayDen());
             while (num && den)
             {
                 if (num > den)
@@ -1188,8 +1195,8 @@ void ApngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, unsigned int 
                     den = den % num;
             }
             num += den;
-            frames[i].delay_num(frames[i].delay_num() / num);
-            frames[i].delay_den(frames[i].delay_den() / num);
+            frames[i].delayNum(frames[i].delayNum() / num);
+            frames[i].delayDen(frames[i].delayDen() / num);
         }
 
         process_callback(0.2 + i / float(frames.size()) * 0.1);
@@ -2114,8 +2121,8 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
             png_save_uint_32(buf_fcTL + 8, h0);
             png_save_uint_32(buf_fcTL + 12, x0);
             png_save_uint_32(buf_fcTL + 16, y0);
-            png_save_uint_16(buf_fcTL + 20, frames[i].delay_num());
-            png_save_uint_16(buf_fcTL + 22, frames[i].delay_den());
+            png_save_uint_16(buf_fcTL + 20, frames[i].delayNum());
+            png_save_uint_16(buf_fcTL + 22, frames[i].delayDen());
             buf_fcTL[24] = dop;
             buf_fcTL[25] = bop;
             write_chunk(f, "fcTL", buf_fcTL, 26);
@@ -2154,8 +2161,8 @@ size_t ApngEncoder::save_apng(std::string outputFileName, std::vector<APNGFrame>
             png_save_uint_32(buf_fcTL + 8, h0);
             png_save_uint_32(buf_fcTL + 12, x0);
             png_save_uint_32(buf_fcTL + 16, y0);
-            png_save_uint_16(buf_fcTL + 20, frames[num_frames - 1].delay_num());
-            png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].delay_den());
+            png_save_uint_16(buf_fcTL + 20, frames[num_frames - 1].delayNum());
+            png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].delayDen());
             buf_fcTL[24] = 0;
             buf_fcTL[25] = bop;
             write_chunk(f, "fcTL", buf_fcTL, 26);

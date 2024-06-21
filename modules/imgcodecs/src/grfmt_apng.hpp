@@ -62,7 +62,6 @@ namespace cv
 {
 
 struct CHUNK { unsigned char* p; unsigned int size; };
-struct COLORS { unsigned int num; unsigned char r, g, b, a; };
 struct OP { unsigned char* p; unsigned int size; int x, y, w, h, valid, filters; };
 
 const unsigned DEFAULT_FRAME_NUMERATOR = 100; //!< @brief The default numerator for the frame delay fraction.
@@ -91,9 +90,9 @@ public:
      * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
      * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
      */
-    APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
-        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    APNGFrame(rgba* pixels, int width, int height,
+        int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
 
     /**
      * @brief Creates an APNGFrame from a PNG file.
@@ -102,8 +101,8 @@ public:
      * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
      */
     APNGFrame(const std::string& filePath,
-        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+        int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
 
     /**
      * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
@@ -113,9 +112,9 @@ public:
      * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
      * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
      */
-    APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
-        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    APNGFrame(rgb* pixels, int width, int height,
+        int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
 
     /**
      * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
@@ -126,9 +125,9 @@ public:
      * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
      * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
      */
-    APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
-        rgb* trns_color = NULL, unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    APNGFrame(rgb* pixels, int width, int height,
+        rgb* trns_color = NULL, int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
 
     /**
      * @brief Saves this frame as a single PNG file.
@@ -142,40 +141,37 @@ public:
     virtual int type() const { return m_type; }
 
     // Raw pixel data
-    unsigned char* pixels(unsigned char* setPixels = NULL);
-    unsigned char* _pixels;
+    uchar* pixels(uchar* setPixels = NULL);
 
     // Palette into
     rgb* palette(rgb* setPalette = NULL);
     rgb _palette[256];
 
     // Transparency info
-    unsigned char* transparency(unsigned char* setTransparency = NULL);
-    unsigned char _transparency[256];
+    uchar* transparency(uchar* setTransparency = NULL);
 
     // Sizes for palette and transparency records
     int paletteSize(int setPaletteSize = 0);
-    int _paletteSize;
-
     int transparencySize(int setTransparencySize = 0);
-    int _transparencySize;
 
     // Delay is numerator/denominator ratio, in seconds
-    unsigned int delayNum(unsigned int setDelayNum = 0);
-    unsigned int _delayNum;
+    int delayNum(int setDelayNum = 0);
+    int delayDen(int setDelayDen = 0);
+    uchar** rows(uchar** setRows = NULL);
 
-    unsigned int delayDen(unsigned int setDelayDen = 0);
-    unsigned int _delayDen;
-
-    unsigned char** rows(unsigned char** setRows = NULL);
-    unsigned char** _rows;
 
 protected:
+    uchar* m_pixels;
     int  m_width;
     int  m_height;
     int  m_type;
     int  m_color_type;
-
+    int _paletteSize;
+    int _transparencySize;
+    uchar _transparency[256];
+    int _delayNum;
+    int _delayDen;
+    uchar** _rows;
 };
 
 

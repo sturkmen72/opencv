@@ -115,16 +115,16 @@ namespace cv
     }
 
     APNGFrame::APNGFrame()
-        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(0), _delayDen(0), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
         memset(_transparency, 0, sizeof(_transparency));
     }
 
-    APNGFrame::APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
-        rgb* trns_color, unsigned delayNum, unsigned delayDen)
-        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
+    APNGFrame::APNGFrame(rgb* pixels, int width, int height,
+        rgb* trns_color, int delayNum, int delayDen)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
@@ -137,13 +137,13 @@ namespace cv
             m_height = height;
             m_color_type = PNG_COLOR_MASK_COLOR;
 
-            _pixels = new unsigned char[m_height * rowbytes];
+            m_pixels = new unsigned char[m_height * rowbytes];
             _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
-            memcpy(_pixels, pixels, m_height * rowbytes);
+            memcpy(m_pixels, pixels, m_height * rowbytes);
 
             for (int i = 0; i < m_height; ++i)
-                _rows[i] = _pixels + i * rowbytes;
+                _rows[i] = m_pixels + i * rowbytes;
 
             if (trns_color != NULL) {
                 _transparency[0] = 0;
@@ -157,9 +157,9 @@ namespace cv
         }
     }
 
-    APNGFrame::APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
-        unsigned delayNum, unsigned delayDen)
-        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
+    APNGFrame::APNGFrame(rgba* pixels, int width, int height,
+        int delayNum, int delayDen)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
@@ -172,19 +172,19 @@ namespace cv
             m_height = height;
             m_color_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
-            _pixels = new unsigned char[m_height * rowbytes];
+            m_pixels = new unsigned char[m_height * rowbytes];
             _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
-            memcpy(_pixels, pixels, m_height * rowbytes);
+            memcpy(m_pixels, pixels, m_height * rowbytes);
 
             for (int i = 0; i < m_height; ++i)
-                _rows[i] = _pixels + i * rowbytes;
+                _rows[i] = m_pixels + i * rowbytes;
         }
     }
 
-    APNGFrame::APNGFrame(const std::string& filePath, unsigned delayNum,
-        unsigned delayDen)
-        : _pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
+    APNGFrame::APNGFrame(const std::string& filePath, int delayNum,
+        int delayDen)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
         _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
     {
         memset(_palette, 0, sizeof(_palette));
@@ -192,7 +192,7 @@ namespace cv
         // TODO save extracted info to self
         FILE* f;
         if ((f = fopen(filePath.c_str(), "rb")) != 0) {
-            unsigned char sig[8];
+            uchar sig[8];
 
             if (fread(sig, 1, 8, f) == 8 && png_sig_cmp(sig, 0, 8) == 0) {
                 png_structp png_ptr =
@@ -266,11 +266,11 @@ namespace cv
                     else
                         _transparencySize = 0;
 
-                    _pixels = new unsigned char[m_height * rowbytes];
+                    m_pixels = new uchar[m_height * rowbytes];
                     _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
                     for (int i = 0; i < m_height; ++i)
-                        _rows[i] = _pixels + i * rowbytes;
+                        _rows[i] = m_pixels + i * rowbytes;
 
                     png_read_image(png_ptr, _rows);
                     png_read_end(png_ptr, NULL);
@@ -281,11 +281,11 @@ namespace cv
         }
     }
 
-    unsigned char* APNGFrame::pixels(unsigned char* setPixels)
+    uchar* APNGFrame::pixels(uchar* setPixels)
     {
         if (setPixels != NULL)
-            _pixels = setPixels;
-        return _pixels;
+            m_pixels = setPixels;
+        return m_pixels;
     }
 
     rgb* APNGFrame::palette(rgb* setPalette)
@@ -318,21 +318,21 @@ namespace cv
         return _transparencySize;
     }
 
-    unsigned int APNGFrame::delayNum(unsigned int setDelayNum)
+    int APNGFrame::delayNum(int setDelayNum)
     {
         if (setDelayNum != 0)
             _delayNum = setDelayNum;
         return _delayNum;
     }
 
-    unsigned int APNGFrame::delayDen(unsigned int setDelayDen)
+    int APNGFrame::delayDen(int setDelayDen)
     {
         if (setDelayDen != 0)
             _delayDen = setDelayDen;
         return _delayDen;
     }
 
-    unsigned char** APNGFrame::rows(unsigned char** setRows)
+    uchar** APNGFrame::rows(uchar** setRows)
     {
         if (setRows != NULL)
             _rows = setRows;

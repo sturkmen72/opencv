@@ -707,7 +707,7 @@ int ApngDecoder::processing_start(png_structp& png_ptr, png_infop& info_ptr, voi
         return 1;
     }
 
-    png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
+    //png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
     png_set_progressive_read_fn(png_ptr, frame_ptr, info_fn, row_fn, NULL);
     png_set_bgr(png_ptr);
 
@@ -1175,8 +1175,8 @@ void ApngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, unsigned int 
         i--;
         delete[] frames[i].pixels();
         delete[] frames[i].rows();
-        unsigned int num = frames[i].delayNum();
-        unsigned int den = frames[i].delayDen();
+        int num = frames[i].delayNum();
+        int den = frames[i].delayDen();
         frames.erase(frames.begin() + i);
 
         if (frames[i].delayDen() == den)

@@ -184,7 +184,6 @@ public:
 
     bool  readData( Mat& img ) CV_OVERRIDE;
     bool  readHeader() CV_OVERRIDE;
-    bool  setSource(const String& filename) CV_OVERRIDE;
     void  close();
 
     ImageDecoder newDecoder() const CV_OVERRIDE;
@@ -206,6 +205,8 @@ protected:
     FILE* m_f;
     int   m_color_type;
     size_t m_buf_pos;
+    bool m_is_animated;
+    int m_loops;
 };
 
 

@@ -177,8 +177,8 @@ struct ImageCodecInitializer
         decoders.push_back( makePtr<SPngDecoder>() );
         encoders.push_back( makePtr<SPngEncoder>() );
     #elif defined(HAVE_PNG)
-        decoders.push_back( makePtr<PngDecoder>() );
-        encoders.push_back( makePtr<PngEncoder>() );
+        decoders.push_back( makePtr<ApngDecoder>() );
+        encoders.push_back( makePtr<ApngEncoder>() );
     #endif
     #ifdef HAVE_GDCM
         decoders.push_back( makePtr<DICOMDecoder>() );
@@ -404,7 +404,7 @@ imread_( const String& filename, int flags, Mat& mat )
     if( !decoder ){
         return 0;
     }
-
+    /*
     TickMeter tm;
     double timeApngDecoder = 0;
     if (decoder->checkSignature("\x89\x50\x4e\x47\xd\xa\x1a\xa"))
@@ -420,7 +420,7 @@ imread_( const String& filename, int flags, Mat& mat )
         tm.reset();
         tm.start();
     }
-
+    */
     int scale_denom = 1;
     if( flags > IMREAD_LOAD_GDAL )
     {
@@ -516,13 +516,13 @@ imread_( const String& filename, int flags, Mat& mat )
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }
 
-    if (timeApngDecoder > 0)
+   /* if (timeApngDecoder > 0)
     {
         tm.stop();
         printf("***********************************\nloading time ApngDecoder : %f sec.\n", timeApngDecoder);
         printf("loading time  PngDecoder : %f sec.\n", tm.getTimeSec());
         printf("\nflags value of imread() func : %d\n***********************************\n", flags);
-    }
+    }*/
 
     return true;
 }

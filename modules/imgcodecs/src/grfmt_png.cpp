@@ -229,7 +229,7 @@ bool  PngDecoder::readHeader()
                     {
                         uchar sig[8];
                         uint id;
-                        CHUNK chunkIHDR, chunkacTL;
+                        CHUNK chunkIHDR, chunkacTL, chunkfcTL;
 
                         if (fread(sig, 1, 8, m_f))
                         {
@@ -242,6 +242,14 @@ bool  PngDecoder::readHeader()
                                 {
                                     m_is_animated = true;
                                     m_loops = png_get_uint_32(chunkacTL.p + 12);
+
+                                    id = read_chunk(m_f, &chunkfcTL);
+                                    if (id == id_fcTL && chunkfcTL.size == 38)
+                                    {
+                                        printf("chunkacTL\n");
+                                        int64 pos = ftell(m_f);
+                                        printf("pos : %d\n", (int)pos);
+                                    }
                                 }
                             }
                         }
@@ -351,6 +359,10 @@ bool  PngDecoder::readData( Mat& img )
                 buffer[y] = img.data + y*img.step;
 
             png_read_image( png_ptr, buffer );
+
+            if (m_is_animated)
+                return true;
+
             png_read_end( png_ptr, end_info );
 
 #ifdef PNG_eXIf_SUPPORTED
@@ -374,6 +386,27 @@ bool  PngDecoder::readData( Mat& img )
     }
 
     return result;
+}
+
+bool PngDecoder::nextPage() {
+    if (m_f)
+    {
+        int64 pos = ftell(m_f);
+        printf("nextPage called pos : %d\n", (int)pos);
+
+        uint id;
+        CHUNK chunkfcTL;
+
+        id = read_chunk(m_f, &chunkfcTL);
+        if (id == id_fcTL && chunkfcTL.size == 38)
+        {
+            printf("chunkacTL\n");
+            int64 pos = ftell(m_f);
+            printf("pos : %d\n", (int)pos);
+        }
+        return true;
+    }
+    return false;
 }
 
 void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h)

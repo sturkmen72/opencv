@@ -404,23 +404,7 @@ imread_( const String& filename, int flags, Mat& mat )
     if( !decoder ){
         return 0;
     }
-    /*
-    TickMeter tm;
-    double timeApngDecoder = 0;
-    if (decoder->checkSignature("\x89\x50\x4e\x47\xd\xa\x1a\xa"))
-    {
-        ImageDecoder sApngDecoder = makePtr<ApngDecoder>();
-        ImageEncoder sApngEncoder = makePtr<ApngEncoder>();
 
-        tm.start();
-        sApngDecoder->setSource(filename);
-        tm.stop();
-
-        timeApngDecoder = tm.getTimeSec();
-        tm.reset();
-        tm.start();
-    }
-    */
     int scale_denom = 1;
     if( flags > IMREAD_LOAD_GDAL )
     {
@@ -515,14 +499,6 @@ imread_( const String& filename, int flags, Mat& mat )
     {
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }
-
-   /* if (timeApngDecoder > 0)
-    {
-        tm.stop();
-        printf("***********************************\nloading time ApngDecoder : %f sec.\n", timeApngDecoder);
-        printf("loading time  PngDecoder : %f sec.\n", tm.getTimeSec());
-        printf("\nflags value of imread() func : %d\n***********************************\n", flags);
-    }*/
 
     return true;
 }

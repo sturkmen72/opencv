@@ -1722,7 +1722,6 @@ bool ApngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
         frames.push_back(APNGFrame(pixels, img_vec[i].cols, img_vec[i].rows));
     }
 
-    printf("frames size %zd\n", frames.size());
     unsigned int first =1;
     unsigned int loops=0;
     unsigned int coltype=6;
@@ -1857,7 +1856,6 @@ bool ApngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
 
         for (i = first; i < num_frames - 1; i++)
         {
-            printf("num_frames %zd\n", num_frames);
             unsigned int op_min;
             int op_best;
 
@@ -1978,7 +1976,6 @@ bool ApngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
     delete[] rest;
     delete[] rows;
 
-    printf("file size %zd\n", fileSize);
     return true;
 }
 

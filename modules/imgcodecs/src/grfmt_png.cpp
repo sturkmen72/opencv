@@ -246,9 +246,23 @@ bool  PngDecoder::readHeader()
                                     id = read_chunk(m_f, &chunkfcTL);
                                     if (id == id_fcTL && chunkfcTL.size == 38)
                                     {
-                                        printf("chunkacTL\n");
-                                        int64 pos = ftell(m_f);
-                                        printf("pos : %d\n", (int)pos);
+                                        uint w0 = png_get_uint_32(chunkfcTL.p + 12);
+                                        uint h0 = png_get_uint_32(chunkfcTL.p + 16);
+                                        uint x0 = png_get_uint_32(chunkfcTL.p + 20);
+                                        uint y0 = png_get_uint_32(chunkfcTL.p + 24);
+                                        int delay_num = png_get_uint_16(chunkfcTL.p + 28);
+                                        int delay_den = png_get_uint_16(chunkfcTL.p + 30);
+                                        char dop = chunkfcTL.p[32];
+                                        char bop = chunkfcTL.p[33];
+                                        printf("**frame props\n-------------------\n", bop);
+                                        printf("w0 : %d\n", w0);
+                                        printf("h0 : %d\n", h0);
+                                        printf("x0 : %d\n", x0);
+                                        printf("y0 : %d\n", y0);
+                                        printf("delay_num : %d\n", delay_num);
+                                        printf("delay_den : %d\n", delay_den);
+                                        printf("dop : %d\n", dop);
+                                        printf("bop : %d\n-------------------\n", bop);
                                     }
                                 }
                             }
@@ -358,10 +372,13 @@ bool  PngDecoder::readData( Mat& img )
             for( y = 0; y < m_height; y++ )
                 buffer[y] = img.data + y*img.step;
 
-            png_read_image( png_ptr, buffer );
-
             if (m_is_animated)
+            {
+
                 return true;
+            }
+
+            png_read_image( png_ptr, buffer );
 
             png_read_end( png_ptr, end_info );
 
@@ -391,18 +408,33 @@ bool  PngDecoder::readData( Mat& img )
 bool PngDecoder::nextPage() {
     if (m_f)
     {
-        int64 pos = ftell(m_f);
-        printf("nextPage called pos : %d\n", (int)pos);
-
         uint id;
         CHUNK chunkfcTL;
 
         id = read_chunk(m_f, &chunkfcTL);
         if (id == id_fcTL && chunkfcTL.size == 38)
         {
-            printf("chunkacTL\n");
-            int64 pos = ftell(m_f);
-            printf("pos : %d\n", (int)pos);
+            // At this point the old frame is done. Let's start a new one.
+            uint w0 = png_get_uint_32(chunkfcTL.p + 12);
+            uint h0 = png_get_uint_32(chunkfcTL.p + 16);
+            uint x0 = png_get_uint_32(chunkfcTL.p + 20);
+            uint y0 = png_get_uint_32(chunkfcTL.p + 24);
+            int delay_num = png_get_uint_16(chunkfcTL.p + 28);
+            int delay_den = png_get_uint_16(chunkfcTL.p + 30);
+            char dop = chunkfcTL.p[32];
+            char bop = chunkfcTL.p[33];
+            printf("**frame props\n-------------------\n", bop);
+            printf("w0 : %d\n", w0);
+            printf("h0 : %d\n", h0);
+            printf("x0 : %d\n", x0);
+            printf("y0 : %d\n", y0);
+            printf("delay_num : %d\n", delay_num);
+            printf("delay_den : %d\n", delay_den);
+            printf("dop : %d\n", dop);
+            printf("bop : %d\n-------------------\n", bop);
+
+            uchar sig[8];
+            fread(sig, 1, 8, m_f);
         }
         return true;
     }
@@ -1481,7 +1513,7 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
         frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
     }
 
-    uint first =1;
+    uint first =0;
     uint loops=10;
     uint coltype=6;
     int deflate_method=0;

@@ -1705,25 +1705,57 @@ void ApngEncoder::deflate_rect_fin(int deflate_method, int iter, unsigned char* 
 
 bool ApngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
+
+    int compression_level = 6;
+    int compression_strategy = IMWRITE_PNG_STRATEGY_RLE; // Default strategy
+    bool isBilevel = false;
+
+    for (size_t i = 0; i < params.size(); i += 2)
+    {
+        if (params[i] == IMWRITE_PNG_COMPRESSION)
+        {
+            compression_strategy = IMWRITE_PNG_STRATEGY_DEFAULT; // Default strategy
+            compression_level = params[i + 1];
+            compression_level = MIN(MAX(compression_level, 0), Z_BEST_COMPRESSION);
+        }
+        if (params[i] == IMWRITE_PNG_STRATEGY)
+        {
+            compression_strategy = params[i + 1];
+            compression_strategy = MIN(MAX(compression_strategy, 0), Z_FIXED);
+        }
+        if (params[i] == IMWRITE_PNG_BILEVEL)
+        {
+            isBilevel = params[i + 1] != 0;
+        }
+    }
+
     std::vector<APNGFrame> frames;
     for (size_t i = 0; i < img_vec.size(); i++)
     {
         rgba* pixels = (rgba*)img_vec[i].data;
         frames.push_back(APNGFrame(pixels, img_vec[i].cols, img_vec[i].rows));
     }
+
+
     for (size_t i = 0; i < img_vec.size(); i++)
     {
-        rgba* pixels = (rgba*)img_vec[i].data;
-        frames.push_back(APNGFrame(pixels, img_vec[i].cols, img_vec[i].rows));
+        Mat dst;
+        cvtColor(img_vec[i],dst,COLOR_BGRA2RGBA);
+        rgba* pixels = (rgba*)dst.data;
+        frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
     }
+
+    if(isBilevel)
     for (size_t i = 0; i < img_vec.size(); i++)
     {
-        rgba* pixels = (rgba*)img_vec[i].data;
-        frames.push_back(APNGFrame(pixels, img_vec[i].cols, img_vec[i].rows));
+        Mat dst;
+        cvtColor(img_vec[i], dst, COLOR_BGRA2RGBA);
+        rgba* pixels = (rgba*)dst.data;
+        frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
     }
 
     unsigned int first =1;
-    unsigned int loops=0;
+    unsigned int loops=10;
     unsigned int coltype=6;
     int deflate_method=0;
     int iter=0;
@@ -1744,7 +1776,6 @@ bool ApngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
     unsigned int tcolor = 0;
     unsigned int rowbytes = width * bpp;
     unsigned int imagesize = rowbytes * height;
-    size_t fileSize = 0;
 
     unsigned char* temp = new unsigned char[imagesize];
     unsigned char* over1 = new unsigned char[imagesize];
@@ -1807,13 +1838,13 @@ bool ApngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
         op_zstream1.zalloc = Z_NULL;
         op_zstream1.zfree = Z_NULL;
         op_zstream1.opaque = Z_NULL;
-        deflateInit2(&op_zstream1, Z_BEST_SPEED + 1, 8, 15, 8, Z_DEFAULT_STRATEGY);
+        deflateInit2(&op_zstream1, compression_level, 8, 15, 8, compression_strategy);
 
         op_zstream2.data_type = Z_BINARY;
         op_zstream2.zalloc = Z_NULL;
         op_zstream2.zfree = Z_NULL;
         op_zstream2.opaque = Z_NULL;
-        deflateInit2(&op_zstream2, Z_BEST_SPEED + 1, 8, 15, 8, Z_FILTERED);
+        deflateInit2(&op_zstream2, compression_level, 8, 15, 8, Z_FILTERED);
 
         idat_size = (rowbytes + 1) * height;
         zbuf_size = idat_size + ((idat_size + 7) >> 3) + ((idat_size + 63) >> 6) + 11;

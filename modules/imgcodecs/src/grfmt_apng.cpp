@@ -129,7 +129,7 @@ namespace cv
             m_height = height;
             m_color_type = PNG_COLOR_MASK_COLOR;
 
-            m_pixels = new unsigned char[m_height * rowbytes];
+            m_pixels = new uchar[m_height * rowbytes];
             _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
             memcpy(m_pixels, pixels, m_height * rowbytes);
@@ -164,7 +164,7 @@ namespace cv
             m_height = height;
             m_color_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
-            m_pixels = new unsigned char[m_height * rowbytes];
+            m_pixels = new uchar[m_height * rowbytes];
             _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
             memcpy(m_pixels, pixels, m_height * rowbytes);
@@ -285,7 +285,7 @@ namespace cv
                 m_height = src.rows;
                 m_color_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
-                m_pixels = new unsigned char[m_height * rowbytes];
+                m_pixels = new uchar[m_height * rowbytes];
                 _rows = new png_bytep[m_height * sizeof(png_bytep)];
 
                 memcpy(m_pixels, pixels, m_height * rowbytes);
@@ -313,7 +313,7 @@ namespace cv
         return _palette;
     }
 
-    unsigned char* APNGFrame::transparency(unsigned char* setTransparency)
+    uchar* APNGFrame::transparency(uchar* setTransparency)
     {
         if (setTransparency != NULL)
             memcpy(_transparency, setTransparency,
@@ -393,7 +393,7 @@ namespace cv
                     }
                     else if (m_color_type == PNG_COLOR_TYPE_PALETTE)
                         png_set_tRNS(png_ptr, info_ptr,
-                            const_cast<unsigned char*>(_transparency),
+                            const_cast<uchar*>(_transparency),
                             _transparencySize, NULL);
                 }
                 png_write_info(png_ptr, info_ptr);

@@ -61,15 +61,15 @@
 namespace cv
 {
 
-const unsigned DEFAULT_FRAME_NUMERATOR = 100; //!< @brief The default numerator for the frame delay fraction.
-const unsigned DEFAULT_FRAME_DENOMINATOR =  1000; //!< @brief The default denominator for the frame delay fraction.
+const uint DEFAULT_FRAME_NUMERATOR = 100; //!< @brief The default numerator for the frame delay fraction.
+const uint DEFAULT_FRAME_DENOMINATOR =  1000; //!< @brief The default denominator for the frame delay fraction.
 
 typedef struct {
-    unsigned char r, g, b;
+    uchar r, g, b;
 } rgb;
 
 typedef struct {
-    unsigned char r, g, b, a;
+    uchar r, g, b, a;
 } rgba;
 
 

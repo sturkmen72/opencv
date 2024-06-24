@@ -60,8 +60,8 @@
 namespace cv
 {
 
-struct CHUNK { uchar* p; unsigned int size; };
-struct OP { uchar* p; unsigned int size; int x, y, w, h, valid, filters; };
+struct CHUNK { uchar* p; uint size; };
+struct OP { uchar* p; uint size; int x, y, w, h, valid, filters; };
 
 class PngDecoder CV_FINAL : public BaseImageDecoder
 {
@@ -77,12 +77,12 @@ public:
     ImageDecoder newDecoder() const CV_OVERRIDE;
 
 protected:
-    unsigned int read_chunk(FILE* f, CHUNK* pChunk);
+    uint read_chunk(FILE* f, CHUNK* pChunk);
     int          processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
-    int          processing_data(png_structp png_ptr, png_infop info_ptr, uchar* p, unsigned int size);
+    int          processing_data(png_structp png_ptr, png_infop info_ptr, uchar* p, uint size);
     int          processing_finish(png_structp png_ptr, png_infop info_ptr);
-    void         compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
-    int          load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops);
+    void         compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h);
+    int          load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, uint& first, uint& loops);
     static void  readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
 
     int    m_bit_depth;
@@ -106,9 +106,9 @@ public:
     bool  isFormatSupported( int depth ) const CV_OVERRIDE;
     bool  write( const Mat& img, const std::vector<int>& params ) CV_OVERRIDE;
     bool  writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) CV_OVERRIDE;
-    size_t save_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
+    size_t save_apng(std::string inputFileName, std::vector<APNGFrame>& frames, uint first, uint loops, uint coltype, int deflate_method, int iter);
     void  optim_dirty(std::vector<APNGFrame>& frames);
-    void  optim_duplicates(std::vector<APNGFrame>& frames, unsigned int first);
+    void  optim_duplicates(std::vector<APNGFrame>& frames, uint first);
 
     ImageEncoder newEncoder() const CV_OVERRIDE;
 
@@ -117,12 +117,12 @@ protected:
     static void flushBuf(void* png_ptr);
 
 private:
-    void write_chunk(FILE* f, const char* name, uchar* data, unsigned int length);
-    void write_IDATs(FILE* f, int frame, uchar* data, unsigned int length, unsigned int idat_size);
+    void write_chunk(FILE* f, const char* name, uchar* data, uint length);
+    void write_IDATs(FILE* f, int frame, uchar* data, uint length, uint idat_size);
     void process_rect(uchar* row, int rowbytes, int bpp, int stride, int h, uchar* rows);
-    void deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, unsigned int* zsize, int bpp, int stride, uchar* rows, int zbuf_size, int n);
+    void deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uint* zsize, int bpp, int stride, uchar* rows, int zbuf_size, int n);
     void deflate_rect_op(uchar* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
-    void get_rect(unsigned int w, unsigned int h, uchar* pimage1, uchar* pimage2, uchar* ptemp, unsigned int bpp, unsigned int stride, int zbuf_size, unsigned int has_tcolor, unsigned int tcolor, int n);
+    void get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar* ptemp, uint bpp, uint stride, int zbuf_size, uint has_tcolor, uint tcolor, int n);
 
     void (*process_callback)(float);
     uchar*         op_zbuf1;
@@ -137,8 +137,8 @@ private:
     OP             op[6];
     rgb            palette[256];
     uchar          trns[256];
-    unsigned int   palsize, trnssize;
-    unsigned int   next_seq_num;
+    uint   palsize, trnssize;
+    uint   next_seq_num;
 };
 
 }

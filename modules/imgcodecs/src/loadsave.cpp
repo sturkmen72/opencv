@@ -177,8 +177,8 @@ struct ImageCodecInitializer
         decoders.push_back( makePtr<SPngDecoder>() );
         encoders.push_back( makePtr<SPngEncoder>() );
     #elif defined(HAVE_PNG)
-        decoders.push_back( makePtr<ApngDecoder>() );
-        encoders.push_back( makePtr<ApngEncoder>() );
+        decoders.push_back( makePtr<PngDecoder>() );
+        encoders.push_back( makePtr<PngEncoder>() );
     #endif
     #ifdef HAVE_GDCM
         decoders.push_back( makePtr<DICOMDecoder>() );

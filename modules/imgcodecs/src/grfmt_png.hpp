@@ -66,13 +66,13 @@ struct OP { uchar* p; uint size; int x, y, w, h, valid, filters; };
 class PngDecoder CV_FINAL : public BaseImageDecoder
 {
 public:
-
     PngDecoder();
     virtual ~PngDecoder();
 
     bool  readData( Mat& img ) CV_OVERRIDE;
     bool  readHeader() CV_OVERRIDE;
     void  close();
+    bool  nextPage() CV_OVERRIDE;
 
     ImageDecoder newDecoder() const CV_OVERRIDE;
 

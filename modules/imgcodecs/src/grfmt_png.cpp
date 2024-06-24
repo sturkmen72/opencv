@@ -1,456 +1,261 @@
-/*M///////////////////////////////////////////////////////////////////////////////////////
-//
-//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
-//
-//  By downloading, copying, installing or using the software you agree to this license.
-//  If you do not agree to this license, do not download, install,
-//  copy or use the software.
-//
-//
-//                           License Agreement
-//                For Open Source Computer Vision Library
-//
-// Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
-// Copyright (C) 2009, Willow Garage Inc., all rights reserved.
-// Third party copyrights are property of their respective owners.
-//
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-//
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
-//
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
-//
-//   * The name of the copyright holders may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
-//
-// This software is provided by the copyright holders and contributors "as is" and
-// any express or implied warranties, including, but not limited to, the implied
-// warranties of merchantability and fitness for a particular purpose are disclaimed.
-// In no event shall the Intel Corporation or contributors be liable for any direct,
-// indirect, incidental, special, exemplary, or consequential damages
-// (including, but not limited to, procurement of substitute goods or services;
-// loss of use, data, or profits; or business interruption) however caused
-// and on any theory of liability, whether in contract, strict liability,
-// or tort (including negligence or otherwise) arising in any way out of
-// the use of this software, even if advised of the possibility of such damage.
-//
-//M*/
+// This file is part of OpenCV project.
+// It is subject to the license terms in the LICENSE file found in the top-level
+// directory of this distribution and at http://opencv.org/license.html
 
-#include "precomp.hpp"
+/****************************************************************************\
+ *
+ *  this file includes some modified part of apngasm and APNG Optimizer 1.4
+ *  both have zlib license.
+ *
+ ****************************************************************************/
+
+
+ /*  apngasm
+ *
+ *  The next generation of apngasm, the APNG Assembler.
+ *  The apngasm CLI tool and library can assemble and disassemble APNG image files.
+ *
+ *  https://github.com/apngasm/apngasm
+
+
+ /* APNG Optimizer 1.4
+ *
+ * Makes APNG files smaller.
+ *
+ * http://sourceforge.net/projects/apng/files
+ *
+ * Copyright (c) 2011-2015 Max Stepin
+ * maxst at users.sourceforge.net
+ *
+ * zlib license
+ * ------------
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ */
+
+#ifndef _GRFMT_APNG_H_
+#define _GRFMT_APNG_H_
 
 #ifdef HAVE_PNG
 
-/****************************************************************************************\
-    This part of the file implements PNG codec on base of libpng library,
-    in particular, this code is based on example.c from libpng
-    (see otherlibs/_graphics/readme.txt for copyright notice)
-    and png2bmp sample from libpng distribution (Copyright (C) 1999-2001 MIYASAKA Masaru)
-\****************************************************************************************/
-
-#ifndef _LFS64_LARGEFILE
-#  define _LFS64_LARGEFILE 0
-#endif
-#ifndef _FILE_OFFSET_BITS
-#  define _FILE_OFFSET_BITS 0
-#endif
-
+#include "grfmt_base.hpp"
+#include "bitstrm.hpp"
 #include <png.h>
 #include <zlib.h>
-
-#include "grfmt_png.hpp"
-
-#if defined _MSC_VER && _MSC_VER >= 1200
-    // interaction between '_setjmp' and C++ object destruction is non-portable
-    #pragma warning( disable: 4611 )
-#endif
-
-// the following defines are a hack to avoid multiple problems with frame pointer handling and setjmp
-// see http://gcc.gnu.org/ml/gcc/2011-10/msg00324.html for some details
-#define mingw_getsp(...) 0
-#define __builtin_frame_address(...) 0
 
 namespace cv
 {
 
-/////////////////////// PngDecoder ///////////////////
+struct CHUNK { unsigned char* p; unsigned int size; };
+struct OP { unsigned char* p; unsigned int size; int x, y, w, h, valid, filters; };
 
-PngDecoder::PngDecoder()
+const unsigned DEFAULT_FRAME_NUMERATOR = 100; //!< @brief The default numerator for the frame delay fraction.
+const unsigned DEFAULT_FRAME_DENOMINATOR =  1000; //!< @brief The default denominator for the frame delay fraction.
+
+typedef struct {
+    unsigned char r, g, b;
+} rgb;
+
+typedef struct {
+    unsigned char r, g, b, a;
+} rgba;
+
+
+class APNGFrame
 {
-    m_signature = "\x89\x50\x4e\x47\xd\xa\x1a\xa";
-    m_color_type = 0;
-    m_png_ptr = 0;
-    m_info_ptr = m_end_info = 0;
-    m_f = 0;
-    m_buf_supported = true;
-    m_buf_pos = 0;
-    m_bit_depth = 0;
-}
+public:
+    APNGFrame();
+    virtual ~APNGFrame() {}
+
+    /**
+     * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
+     * @param pixels The RGBA pixel data.
+     * @param width The width of the pixel data.
+     * @param height The height of the pixel data.
+     * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
+     */
+    APNGFrame(rgba* pixels, int width, int height,
+        int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
+
+    /**
+     * @brief Creates an APNGFrame from a PNG file.
+     * @param filePath The relative or absolute path to an image file.
+     * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
+     */
+    APNGFrame(const std::string& filePath,
+        int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
+
+    /**
+     * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
+     * @param pixels The RGB pixel data.
+     * @param width The width of the pixel data.
+     * @param height The height of the pixel data.
+     * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
+     */
+    APNGFrame(rgb* pixels, int width, int height,
+        int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
+
+    /**
+     * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
+     * @param pixels The RGB pixel data.
+     * @param width The width of the pixel data.
+     * @param height The height of the pixel data.
+     * @param trns_color An array of transparency data.
+     * @param delayNum The delay numerator for this frame (defaults to DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to DEFAULT_FRAME_DENMINATOR).
+     */
+    APNGFrame(rgb* pixels, int width, int height,
+        rgb* trns_color = NULL, int delayNum = DEFAULT_FRAME_NUMERATOR,
+        int delayDen = DEFAULT_FRAME_DENOMINATOR);
+
+    /**
+     * @brief Saves this frame as a single PNG file.
+     * @param outPath The relative or absolute path to save the image file to.
+     * @return Returns true if save was successful.
+     */
+    bool save(const std::string& outPath) const;
+
+    int width() const { return m_width; }
+    int height() const { return m_height; }
+    virtual int type() const { return m_type; }
+
+    // Raw pixel data
+    uchar* pixels(uchar* setPixels = NULL);
+
+    // Palette into
+    rgb* palette(rgb* setPalette = NULL);
+    rgb _palette[256];
+
+    // Transparency info
+    uchar* transparency(uchar* setTransparency = NULL);
+
+    // Sizes for palette and transparency records
+    int paletteSize(int setPaletteSize = 0);
+    int transparencySize(int setTransparencySize = 0);
+
+    // Delay is numerator/denominator ratio, in seconds
+    int delayNum(int setDelayNum = 0);
+    int delayDen(int setDelayDen = 0);
+    uchar** rows(uchar** setRows = NULL);
 
 
-PngDecoder::~PngDecoder()
+protected:
+    uchar* m_pixels;
+    int  m_width;
+    int  m_height;
+    int  m_type;
+    int  m_color_type;
+    int _paletteSize;
+    int _transparencySize;
+    uchar _transparency[256];
+    int _delayNum;
+    int _delayDen;
+    uchar** _rows;
+};
+
+
+class ApngDecoder CV_FINAL : public BaseImageDecoder
 {
-    close();
-}
+public:
 
-ImageDecoder PngDecoder::newDecoder() const
+    ApngDecoder();
+    virtual ~ApngDecoder();
+
+    bool  readData( Mat& img ) CV_OVERRIDE;
+    bool  readHeader() CV_OVERRIDE;
+    void  close();
+
+    ImageDecoder newDecoder() const CV_OVERRIDE;
+
+protected:
+
+    unsigned int read_chunk(FILE* f, CHUNK* pChunk);
+    int processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
+    int processing_data(png_structp png_ptr, png_infop info_ptr, unsigned char* p, unsigned int size);
+    int processing_finish(png_structp png_ptr, png_infop info_ptr);
+    void compose_frame(unsigned char** rows_dst, unsigned char** rows_src, unsigned char bop, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+    int load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops);
+    static void readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
+
+    int   m_bit_depth;
+    void* m_png_ptr;  // pointer to decompression structure
+    void* m_info_ptr; // pointer to image information structure
+    void* m_end_info; // pointer to one more image information structure
+    FILE* m_f;
+    int   m_color_type;
+    size_t m_buf_pos;
+    bool m_is_animated;
+    int m_loops;
+};
+
+
+class ApngEncoder CV_FINAL : public BaseImageEncoder
 {
-    return makePtr<PngDecoder>();
-}
+public:
+    ApngEncoder();
+    virtual ~ApngEncoder();
 
-void  PngDecoder::close()
-{
-    if( m_f )
-    {
-        fclose( m_f );
-        m_f = 0;
-    }
+    bool isFormatSupported( int depth ) const CV_OVERRIDE;
+    bool write( const Mat& img, const std::vector<int>& params ) CV_OVERRIDE;
+    bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) CV_OVERRIDE;
+    size_t save_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int first, unsigned int loops, unsigned int coltype, int deflate_method, int iter);
+    void optim_dirty(std::vector<APNGFrame>& frames);
+    void optim_duplicates(std::vector<APNGFrame>& frames, unsigned int first);
 
-    if( m_png_ptr )
-    {
-        png_structp png_ptr = (png_structp)m_png_ptr;
-        png_infop info_ptr = (png_infop)m_info_ptr;
-        png_infop end_info = (png_infop)m_end_info;
-        png_destroy_read_struct( &png_ptr, &info_ptr, &end_info );
-        m_png_ptr = m_info_ptr = m_end_info = 0;
-    }
-}
+    ImageEncoder newEncoder() const CV_OVERRIDE;
 
+protected:
+    static void writeDataToBuf(void* png_ptr, uchar* src, size_t size);
+    static void flushBuf(void* png_ptr);
 
-void  PngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
-{
-    png_structp png_ptr = (png_structp)_png_ptr;
-    PngDecoder* decoder = (PngDecoder*)(png_get_io_ptr(png_ptr));
-    CV_Assert( decoder );
-    const Mat& buf = decoder->m_buf;
-    if( decoder->m_buf_pos + size > buf.cols*buf.rows*buf.elemSize() )
-    {
-        png_error(png_ptr, "PNG input buffer is incomplete");
-        return;
-    }
-    memcpy( dst, decoder->m_buf.ptr() + decoder->m_buf_pos, size );
-    decoder->m_buf_pos += size;
-}
+private:
+    void write_chunk(FILE* f, const char* name, unsigned char* data, unsigned int length);
+    void write_IDATs(FILE* f, int frame, unsigned char* data, unsigned int length, unsigned int idat_size);
+    void process_rect(unsigned char* row, int rowbytes, int bpp, int stride, int h, unsigned char* rows);
+    void deflate_rect_fin(int deflate_method, int iter, unsigned char* zbuf, unsigned int* zsize, int bpp, int stride, unsigned char* rows, int zbuf_size, int n);
+    void deflate_rect_op(unsigned char* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
+    void get_rect(unsigned int w, unsigned int h, unsigned char* pimage1, unsigned char* pimage2, unsigned char* ptemp, unsigned int bpp, unsigned int stride, int zbuf_size, unsigned int has_tcolor, unsigned int tcolor, int n);
 
-bool  PngDecoder::readHeader()
-{
-    volatile bool result = false;
-    close();
-
-    png_structp png_ptr = png_create_read_struct( PNG_LIBPNG_VER_STRING, 0, 0, 0 );
-
-    if( png_ptr )
-    {
-        png_infop info_ptr = png_create_info_struct( png_ptr );
-        png_infop end_info = png_create_info_struct( png_ptr );
-
-        m_png_ptr = png_ptr;
-        m_info_ptr = info_ptr;
-        m_end_info = end_info;
-        m_buf_pos = 0;
-
-        if( info_ptr && end_info )
-        {
-            if( setjmp( png_jmpbuf( png_ptr ) ) == 0 )
-            {
-                if( !m_buf.empty() )
-                    png_set_read_fn(png_ptr, this, (png_rw_ptr)readDataFromBuf );
-                else
-                {
-                    m_f = fopen( m_filename.c_str(), "rb" );
-                    if( m_f )
-                        png_init_io( png_ptr, m_f );
-                }
-
-                if( !m_buf.empty() || m_f )
-                {
-                    png_uint_32 wdth, hght;
-                    int bit_depth, color_type, num_trans=0;
-                    png_bytep trans;
-                    png_color_16p trans_values;
-
-                    png_read_info( png_ptr, info_ptr );
-
-                    png_get_IHDR( png_ptr, info_ptr, &wdth, &hght,
-                                  &bit_depth, &color_type, 0, 0, 0 );
-
-                    m_width = (int)wdth;
-                    m_height = (int)hght;
-                    m_color_type = color_type;
-                    m_bit_depth = bit_depth;
-
-                    if( bit_depth <= 8 || bit_depth == 16 )
-                    {
-                        switch(color_type)
-                        {
-                            case PNG_COLOR_TYPE_RGB:
-                            case PNG_COLOR_TYPE_PALETTE:
-                                png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, &trans_values);
-                                if( num_trans > 0 )
-                                    m_type = CV_8UC4;
-                                else
-                                    m_type = CV_8UC3;
-                                break;
-                            case PNG_COLOR_TYPE_GRAY_ALPHA:
-                            case PNG_COLOR_TYPE_RGB_ALPHA:
-                                m_type = CV_8UC4;
-                                break;
-                            default:
-                                m_type = CV_8UC1;
-                        }
-                        if( bit_depth == 16 )
-                            m_type = CV_MAKETYPE(CV_16U, CV_MAT_CN(m_type));
-                        result = true;
-                    }
-                }
-            }
-        }
-    }
-
-    return result;
-}
-
-
-bool  PngDecoder::readData( Mat& img )
-{
-    volatile bool result = false;
-    AutoBuffer<uchar*> _buffer(m_height);
-    uchar** buffer = _buffer.data();
-    bool color = img.channels() > 1;
-
-    png_structp png_ptr = (png_structp)m_png_ptr;
-    png_infop info_ptr = (png_infop)m_info_ptr;
-    png_infop end_info = (png_infop)m_end_info;
-
-    if( m_png_ptr && m_info_ptr && m_end_info && m_width && m_height )
-    {
-        if( setjmp( png_jmpbuf ( png_ptr ) ) == 0 )
-        {
-            int y;
-
-            if( img.depth() == CV_8U && m_bit_depth == 16 )
-                png_set_strip_16( png_ptr );
-            else if( !isBigEndian() )
-                png_set_swap( png_ptr );
-
-            if(img.channels() < 4)
-            {
-                /* observation: png_read_image() writes 400 bytes beyond
-                 * end of data when reading a 400x118 color png
-                 * "mpplus_sand.png".  OpenCV crashes even with demo
-                 * programs.  Looking at the loaded image I'd say we get 4
-                 * bytes per pixel instead of 3 bytes per pixel.  Test
-                 * indicate that it is a good idea to always ask for
-                 * stripping alpha..  18.11.2004 Axel Walthelm
-                 */
-                 png_set_strip_alpha( png_ptr );
-            } else
-                png_set_tRNS_to_alpha( png_ptr );
-
-            if( m_color_type == PNG_COLOR_TYPE_PALETTE )
-                png_set_palette_to_rgb( png_ptr );
-
-            if( (m_color_type & PNG_COLOR_MASK_COLOR) == 0 && m_bit_depth < 8 )
-#if (PNG_LIBPNG_VER_MAJOR*10000 + PNG_LIBPNG_VER_MINOR*100 + PNG_LIBPNG_VER_RELEASE >= 10209) || \
-    (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR == 0 && PNG_LIBPNG_VER_RELEASE >= 18)
-                png_set_expand_gray_1_2_4_to_8( png_ptr );
-#else
-                png_set_gray_1_2_4_to_8( png_ptr );
-#endif
-
-            if( (m_color_type & PNG_COLOR_MASK_COLOR) && color )
-                png_set_bgr( png_ptr ); // convert RGB to BGR
-            else if( color )
-                png_set_gray_to_rgb( png_ptr ); // Gray->RGB
-            else
-                png_set_rgb_to_gray( png_ptr, 1, 0.299, 0.587 ); // RGB->Gray
-
-            png_set_interlace_handling( png_ptr );
-            png_read_update_info( png_ptr, info_ptr );
-
-            for( y = 0; y < m_height; y++ )
-                buffer[y] = img.data + y*img.step;
-
-            png_read_image( png_ptr, buffer );
-            png_read_end( png_ptr, end_info );
-
-#ifdef PNG_eXIf_SUPPORTED
-            png_uint_32 num_exif = 0;
-            png_bytep exif = 0;
-
-            // Exif info could be in info_ptr (intro_info) or end_info per specification
-            if( png_get_valid(png_ptr, info_ptr, PNG_INFO_eXIf) )
-                png_get_eXIf_1(png_ptr, info_ptr, &num_exif, &exif);
-            else if( png_get_valid(png_ptr, end_info, PNG_INFO_eXIf) )
-                png_get_eXIf_1(png_ptr, end_info, &num_exif, &exif);
-
-            if( exif && num_exif > 0 )
-            {
-                m_exif.parseExif(exif, num_exif);
-            }
-#endif
-
-            result = true;
-        }
-    }
-
-    return result;
-}
-
-
-/////////////////////// PngEncoder ///////////////////
-
-
-PngEncoder::PngEncoder()
-{
-    m_description = "Portable Network Graphics files (*.png)";
-    m_buf_supported = true;
-}
-
-
-PngEncoder::~PngEncoder()
-{
-}
-
-
-bool  PngEncoder::isFormatSupported( int depth ) const
-{
-    return depth == CV_8U || depth == CV_16U;
-}
-
-ImageEncoder PngEncoder::newEncoder() const
-{
-    return makePtr<PngEncoder>();
-}
-
-
-void PngEncoder::writeDataToBuf(void* _png_ptr, uchar* src, size_t size)
-{
-    if( size == 0 )
-        return;
-    png_structp png_ptr = (png_structp)_png_ptr;
-    PngEncoder* encoder = (PngEncoder*)(png_get_io_ptr(png_ptr));
-    CV_Assert( encoder && encoder->m_buf );
-    size_t cursz = encoder->m_buf->size();
-    encoder->m_buf->resize(cursz + size);
-    memcpy( &(*encoder->m_buf)[cursz], src, size );
-}
-
-
-void PngEncoder::flushBuf(void*)
-{
-}
-
-bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
-{
-    png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, 0, 0, 0 );
-    png_infop info_ptr = 0;
-    FILE * volatile f = 0;
-    int y, width = img.cols, height = img.rows;
-    int depth = img.depth(), channels = img.channels();
-    volatile bool result = false;
-    AutoBuffer<uchar*> buffer;
-
-    if( depth != CV_8U && depth != CV_16U )
-        return false;
-
-    if( png_ptr )
-    {
-        info_ptr = png_create_info_struct( png_ptr );
-
-        if( info_ptr )
-        {
-            if( setjmp( png_jmpbuf ( png_ptr ) ) == 0 )
-            {
-                if( m_buf )
-                {
-                    png_set_write_fn(png_ptr, this,
-                        (png_rw_ptr)writeDataToBuf, (png_flush_ptr)flushBuf);
-                }
-                else
-                {
-                    f = fopen( m_filename.c_str(), "wb" );
-                    if( f )
-                        png_init_io( png_ptr, (png_FILE_p)f );
-                }
-
-                int compression_level = -1; // Invalid value to allow setting 0-9 as valid
-                int compression_strategy = IMWRITE_PNG_STRATEGY_RLE; // Default strategy
-                bool isBilevel = false;
-
-                for( size_t i = 0; i < params.size(); i += 2 )
-                {
-                    if( params[i] == IMWRITE_PNG_COMPRESSION )
-                    {
-                        compression_strategy = IMWRITE_PNG_STRATEGY_DEFAULT; // Default strategy
-                        compression_level = params[i+1];
-                        compression_level = MIN(MAX(compression_level, 0), Z_BEST_COMPRESSION);
-                    }
-                    if( params[i] == IMWRITE_PNG_STRATEGY )
-                    {
-                        compression_strategy = params[i+1];
-                        compression_strategy = MIN(MAX(compression_strategy, 0), Z_FIXED);
-                    }
-                    if( params[i] == IMWRITE_PNG_BILEVEL )
-                    {
-                        isBilevel = params[i+1] != 0;
-                    }
-                }
-
-                if( m_buf || f )
-                {
-                    if( compression_level >= 0 )
-                    {
-                        png_set_compression_level( png_ptr, compression_level );
-                    }
-                    else
-                    {
-                        // tune parameters for speed
-                        // (see http://wiki.linuxquestions.org/wiki/Libpng)
-                        png_set_filter(png_ptr, PNG_FILTER_TYPE_BASE, PNG_FILTER_SUB);
-                        png_set_compression_level(png_ptr, Z_BEST_SPEED);
-                    }
-                    png_set_compression_strategy(png_ptr, compression_strategy);
-
-                    png_set_IHDR( png_ptr, info_ptr, width, height, depth == CV_8U ? isBilevel?1:8 : 16,
-                        channels == 1 ? PNG_COLOR_TYPE_GRAY :
-                        channels == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGBA,
-                        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-                        PNG_FILTER_TYPE_DEFAULT );
-
-                    png_write_info( png_ptr, info_ptr );
-
-                    if (isBilevel)
-                        png_set_packing(png_ptr);
-
-                    png_set_bgr( png_ptr );
-                    if( !isBigEndian() )
-                        png_set_swap( png_ptr );
-
-                    buffer.allocate(height);
-                    for( y = 0; y < height; y++ )
-                        buffer[y] = img.data + y*img.step;
-
-                    png_write_image( png_ptr, buffer.data() );
-                    png_write_end( png_ptr, info_ptr );
-
-                    result = true;
-                }
-            }
-        }
-    }
-
-    png_destroy_write_struct( &png_ptr, &info_ptr );
-    if(f) fclose( (FILE*)f );
-
-    return result;
-}
+    void (*process_callback)(float);
+    unsigned char* op_zbuf1;
+    unsigned char* op_zbuf2;
+    z_stream       op_zstream1;
+    z_stream       op_zstream2;
+    unsigned char* row_buf;
+    unsigned char* sub_row;
+    unsigned char* up_row;
+    unsigned char* avg_row;
+    unsigned char* paeth_row;
+    OP             op[6];
+    rgb            palette[256];
+    unsigned char  trns[256];
+    unsigned int   palsize, trnssize;
+    unsigned int   next_seq_num;
+};
 
 }
 
 #endif
 
-/* End of file. */
+#endif/*_GRFMT_PNG_H_*/

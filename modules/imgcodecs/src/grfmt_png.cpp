@@ -254,7 +254,7 @@ bool  PngDecoder::readHeader()
                                         int delay_den = png_get_uint_16(chunkfcTL.p + 30);
                                         char dop = chunkfcTL.p[32];
                                         char bop = chunkfcTL.p[33];
-                                        printf("**frame props\n-------------------\n", bop);
+                                        printf("**frame props\n-------------------\n");
                                         printf("w0 : %d\n", w0);
                                         printf("h0 : %d\n", h0);
                                         printf("x0 : %d\n", x0);
@@ -372,14 +372,12 @@ bool  PngDecoder::readData( Mat& img )
             for( y = 0; y < m_height; y++ )
                 buffer[y] = img.data + y*img.step;
 
-            if (m_is_animated)
-            {
-
-                return true;
-            }
-
             png_read_image( png_ptr, buffer );
 
+            if (m_is_animated)
+            {
+                return true;
+            }
             png_read_end( png_ptr, end_info );
 
 #ifdef PNG_eXIf_SUPPORTED
@@ -423,7 +421,7 @@ bool PngDecoder::nextPage() {
             int delay_den = png_get_uint_16(chunkfcTL.p + 30);
             char dop = chunkfcTL.p[32];
             char bop = chunkfcTL.p[33];
-            printf("**frame props\n-------------------\n", bop);
+            printf("**frame props\n-------------------\n");
             printf("w0 : %d\n", w0);
             printf("h0 : %d\n", h0);
             printf("x0 : %d\n", x0);
@@ -638,14 +636,6 @@ int PngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fra
                                     frameCur.delayNum(delay_num);
                                     frameCur.delayDen(delay_den);
                                     frames.push_back(frameCur);
-
-                                    /*String fname = format("frameRaw%.2d.png", frames.size() - 1);
-                                    frameRaw.save(fname);
-                                    fname = format("frameCur%.2d.png", frames.size() - 1);
-                                    frameCur.save(fname);
-                                    fname = format("frameNext%.2d.png", frames.size() - 1);
-                                    frameNext.save(fname);
-                                    */
 
                                     if (dop != 2)
                                     {

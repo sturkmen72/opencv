@@ -78,22 +78,22 @@ public:
 
 protected:
     unsigned int read_chunk(FILE* f, CHUNK* pChunk);
-    int processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
-    int processing_data(png_structp png_ptr, png_infop info_ptr, unsigned char* p, unsigned int size);
-    int processing_finish(png_structp png_ptr, png_infop info_ptr);
-    void compose_frame(unsigned char** rows_dst, uchar** rows_src, uchar bop, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
-    int load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops);
-    static void readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
+    int          processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
+    int          processing_data(png_structp png_ptr, png_infop info_ptr, uchar* p, unsigned int size);
+    int          processing_finish(png_structp png_ptr, png_infop info_ptr);
+    void         compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+    int          load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, unsigned int& first, unsigned int& loops);
+    static void  readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
 
-    int   m_bit_depth;
-    void* m_png_ptr;  // pointer to decompression structure
-    void* m_info_ptr; // pointer to image information structure
-    void* m_end_info; // pointer to one more image information structure
-    FILE* m_f;
-    int   m_color_type;
+    int    m_bit_depth;
+    void*  m_png_ptr;  // pointer to decompression structure
+    void*  m_info_ptr; // pointer to image information structure
+    void*  m_end_info; // pointer to one more image information structure
+    FILE*  m_f;
+    int    m_color_type;
     size_t m_buf_pos;
-    bool m_is_animated;
-    int m_loops;
+    bool   m_is_animated;
+    int    m_loops;
 };
 
 
@@ -126,13 +126,13 @@ private:
 
     void (*process_callback)(float);
     uchar*         op_zbuf1;
-    uchar*         p_zbuf2;
+    uchar*         op_zbuf2;
     z_stream       op_zstream1;
     z_stream       op_zstream2;
     uchar*         row_buf;
     uchar*         sub_row;
     uchar*         up_row;
-    uchar*         vg_row;
+    uchar*         avg_row;
     uchar*         paeth_row;
     OP             op[6];
     rgb            palette[256];

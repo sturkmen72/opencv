@@ -1413,7 +1413,7 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
     if (deflate_method == 2)
     {
         CV_UNUSED(iter);
-#if 0  // needs zopfli 
+#if 0  // needs include "zopfli.h" 
         ZopfliOptions opt_zopfli;
         uchar* data = 0;
         size_t size = 0;
@@ -1430,9 +1430,11 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
     }
     else if (deflate_method == 1)
     {
+#if 0  // needs include "7z.h"
         unsigned size = zbuf_size;
-        //compress_rfc1950_7z(rows, op[n].h * (rowbytes + 1), zbuf, size, iter < 100 ? iter : 100, 255);
+        compress_rfc1950_7z(rows, op[n].h * (rowbytes + 1), zbuf, size, iter < 100 ? iter : 100, 255);
         *zsize = size;
+#endif
     }
     else
     {

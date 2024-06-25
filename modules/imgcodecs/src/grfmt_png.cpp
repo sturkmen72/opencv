@@ -432,9 +432,9 @@ bool PngDecoder::nextPage() {
             printf("bop : %d\n-------------------\n", bop);
 
             uchar sig[8];
-            fread(sig, 1, 8, m_f);
+            if (fread(sig, 1, 8, m_f))
+                return true;
         }
-        return true;
     }
     return false;
 }

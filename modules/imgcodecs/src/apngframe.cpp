@@ -277,7 +277,6 @@ APNGFrame::APNGFrame(rgba *pixels, unsigned int width, unsigned int height,
 // Save frame to a PNG image file.
 // Return true if save succeeded.
 bool APNGFrame::save(const std::string &outPath) const {
-  bool result = true;
   FILE *f;
   if ((f = fopen(outPath.c_str(), "wb")) != 0) {
     png_structp png_ptr =
@@ -315,13 +314,12 @@ bool APNGFrame::save(const std::string &outPath) const {
       png_write_info(png_ptr, info_ptr);
       png_write_image(png_ptr, _rows);
       png_write_end(png_ptr, info_ptr);
+      return true;
     } else
-      result = false;
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(f);
-  } else
-    result = false;
-  return result;
+  }
+  return false;
 }
 
-} // namespace apngasm
+} // namespace cv

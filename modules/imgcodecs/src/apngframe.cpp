@@ -1,4 +1,4 @@
-#include "apngframe.h"
+#include "apngframe.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>

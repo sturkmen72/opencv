@@ -43,6 +43,17 @@
 #include <cstring>
 #include <png.h>
 
+#if defined _MSC_VER && _MSC_VER >= 1200
+ // interaction between '_setjmp' and C++ object destruction is non-portable
+#pragma warning( disable: 4611 )
+#pragma warning( disable: 4244 )
+#endif
+
+// the following defines are a hack to avoid multiple problems with frame pointer handling and setjmp
+// see http://gcc.gnu.org/ml/gcc/2011-10/msg00324.html for some details
+#define mingw_getsp(...) 0
+#define __builtin_frame_address(...) 0
+
 namespace cv {
 
 unsigned char *APNGFrame::pixels(unsigned char *setPixels) {

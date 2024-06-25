@@ -2,50 +2,6 @@
 // It is subject to the license terms in the LICENSE file found in the top-level
 // directory of this distribution and at http://opencv.org/license.html
 
-/****************************************************************************\
- *
- *  this file includes some modified part of apngasm and APNG Optimizer 1.4
- *  both have zlib license.
- *
- ****************************************************************************/
-
-/*  apngasm
- *
- *  The next generation of apngasm, the APNG Assembler.
- *  The apngasm CLI tool and library can assemble and disassemble APNG image files.
- *
- *  https://github.com/apngasm/apngasm
-
- * APNG Optimizer 1.4
- *
- * Makes APNG files smaller.
- *
- * http://sourceforge.net/projects/apng/files
- *
- * Copyright (c) 2011-2015 Max Stepin
- * maxst at users.sourceforge.net
-
- * zlib license
- * ------------
- *
- * This software is provided 'as-is', without any express or implied
- * warranty.  In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- * 1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- * 2. Altered source versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.
- * 3. This notice may not be removed or altered from any source distribution.
- *
- */
-
 #ifndef _GRFMT_PNG_H_
 #define _GRFMT_PNG_H_
 

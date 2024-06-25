@@ -142,7 +142,6 @@ public:
 
     // Palette into
     rgb* palette(rgb* setPalette = NULL);
-    rgb _palette[256];
 
     // Transparency info
     uchar* transparency(uchar* setTransparency = NULL);
@@ -158,17 +157,18 @@ public:
 
 
 protected:
-    uchar* m_pixels;
-    int  m_width;
-    int  m_height;
-    int  m_type;
-    int  m_color_type;
-    int _paletteSize;
-    int _transparencySize;
-    uchar _transparency[256];
-    int _delayNum;
-    int _delayDen;
-    uchar** _rows;
+    uchar*  m_pixels;
+    int     m_width;
+    int     m_height;
+    int     m_type;
+    int     m_color_type;
+    int     m_paletteSize;
+    rgb     m_palette[256];
+    int     m_transparencySize;
+    uchar   m_transparency[256];
+    int     m_delayNum;
+    int     m_delayDen;
+    uchar** m_rows;
 };
 
 }

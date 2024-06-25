@@ -1496,7 +1496,6 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
         frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
     }
 
-    if(isBilevel)
     for (size_t i = 0; i < img_vec.size(); i++)
     {
         Mat dst;
@@ -1505,6 +1504,7 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
         frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
     }
 
+    CV_UNUSED(isBilevel);
     uint first =0;
     uint loops=10;
     uint coltype=6;

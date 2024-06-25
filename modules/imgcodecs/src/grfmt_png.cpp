@@ -1413,7 +1413,8 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
     if (deflate_method == 2)
     {
         CV_UNUSED(iter);
-        /*ZopfliOptions opt_zopfli;
+#if 0  // needs zopfli 
+        ZopfliOptions opt_zopfli;
         uchar* data = 0;
         size_t size = 0;
         ZopfliInitOptions(&opt_zopfli);
@@ -1424,7 +1425,8 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
             memcpy(zbuf, data, size);
             *zsize = size;
         }
-        free(data);*/
+        free(data);
+#endif
     }
     else if (deflate_method == 1)
     {

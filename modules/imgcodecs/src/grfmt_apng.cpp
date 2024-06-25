@@ -107,20 +107,20 @@
 namespace cv
 {
     APNGFrame::APNGFrame()
-        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(0), _delayDen(0), _rows(NULL)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), m_paletteSize(0),
+        m_transparencySize(0), m_delayNum(0), m_delayDen(0), m_rows(NULL)
     {
-        memset(_palette, 0, sizeof(_palette));
-        memset(_transparency, 0, sizeof(_transparency));
+        memset(m_palette, 0, sizeof(m_palette));
+        memset(m_transparency, 0, sizeof(m_transparency));
     }
 
     APNGFrame::APNGFrame(rgb* pixels, int width, int height,
         rgb* trns_color, int delayNum, int delayDen)
-        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), m_paletteSize(0),
+        m_transparencySize(0), m_delayNum(delayNum), m_delayDen(delayDen), m_rows(NULL)
     {
-        memset(_palette, 0, sizeof(_palette));
-        memset(_transparency, 0, sizeof(_transparency));
+        memset(m_palette, 0, sizeof(m_palette));
+        memset(m_transparency, 0, sizeof(m_transparency));
 
         if (pixels != NULL) {
             png_uint_32 rowbytes = width * 3;
@@ -130,32 +130,32 @@ namespace cv
             m_color_type = PNG_COLOR_MASK_COLOR;
 
             m_pixels = new uchar[m_height * rowbytes];
-            _rows = new png_bytep[m_height * sizeof(png_bytep)];
+            m_rows = new png_bytep[m_height * sizeof(png_bytep)];
 
             memcpy(m_pixels, pixels, m_height * rowbytes);
 
             for (int i = 0; i < m_height; ++i)
-                _rows[i] = m_pixels + i * rowbytes;
+                m_rows[i] = m_pixels + i * rowbytes;
 
             if (trns_color != NULL) {
-                _transparency[0] = 0;
-                _transparency[1] = trns_color->r;
-                _transparency[2] = 0;
-                _transparency[3] = trns_color->g;
-                _transparency[4] = 0;
-                _transparency[5] = trns_color->b;
-                _transparencySize = 6;
+                m_transparency[0] = 0;
+                m_transparency[1] = trns_color->r;
+                m_transparency[2] = 0;
+                m_transparency[3] = trns_color->g;
+                m_transparency[4] = 0;
+                m_transparency[5] = trns_color->b;
+                m_transparencySize = 6;
             }
         }
     }
 
     APNGFrame::APNGFrame(rgba* pixels, int width, int height,
         int delayNum, int delayDen)
-        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), m_paletteSize(0),
+        m_transparencySize(0), m_delayNum(delayNum), m_delayDen(delayDen), m_rows(NULL)
     {
-        memset(_palette, 0, sizeof(_palette));
-        memset(_transparency, 0, sizeof(_transparency));
+        memset(m_palette, 0, sizeof(m_palette));
+        memset(m_transparency, 0, sizeof(m_transparency));
 
         if (pixels != NULL) {
             png_uint_32 rowbytes = width * 4;
@@ -165,21 +165,21 @@ namespace cv
             m_color_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
             m_pixels = new uchar[m_height * rowbytes];
-            _rows = new png_bytep[m_height * sizeof(png_bytep)];
+            m_rows = new png_bytep[m_height * sizeof(png_bytep)];
 
             memcpy(m_pixels, pixels, m_height * rowbytes);
 
             for (int i = 0; i < m_height; ++i)
-                _rows[i] = m_pixels + i * rowbytes;
+                m_rows[i] = m_pixels + i * rowbytes;
         }
     }
 
     APNGFrame::APNGFrame(const std::string& filePath, int delayNum, int delayDen)
-        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), _paletteSize(0),
-        _transparencySize(0), _delayNum(delayNum), _delayDen(delayDen), _rows(NULL)
+        : m_pixels(NULL), m_width(0), m_height(0), m_color_type(0), m_paletteSize(0),
+        m_transparencySize(0), m_delayNum(delayNum), m_delayDen(delayDen), m_rows(NULL)
     {
-        memset(_palette, 0, sizeof(_palette));
-        memset(_transparency, 0, sizeof(_transparency));
+        memset(m_palette, 0, sizeof(m_palette));
+        memset(m_transparency, 0, sizeof(m_transparency));
         // TODO save extracted info to self
         FILE* f;
         if ((f = fopen(filePath.c_str(), "rb")) != 0) {
@@ -223,47 +223,47 @@ namespace cv
                     png_read_update_info(png_ptr, info_ptr);
                     m_color_type = png_get_color_type(png_ptr, info_ptr);
                     rowbytes = (int)png_get_rowbytes(png_ptr, info_ptr);
-                    memset(_palette, 255, sizeof(_palette));
-                    memset(_transparency, 255, sizeof(_transparency));
+                    memset(m_palette, 255, sizeof(m_palette));
+                    memset(m_transparency, 255, sizeof(m_transparency));
 
-                    if (png_get_PLTE(png_ptr, info_ptr, &palette, &_paletteSize))
-                        memcpy(_palette, palette, _paletteSize * 3);
+                    if (png_get_PLTE(png_ptr, info_ptr, &palette, &m_paletteSize))
+                        memcpy(m_palette, palette, m_paletteSize * 3);
                     else
-                        _paletteSize = 0;
+                        m_paletteSize = 0;
 
-                    if (png_get_tRNS(png_ptr, info_ptr, &trans_alpha, &_transparencySize,
+                    if (png_get_tRNS(png_ptr, info_ptr, &trans_alpha, &m_transparencySize,
                         &trans_color)) {
-                        if (_transparencySize > 0) {
+                        if (m_transparencySize > 0) {
                             if (m_color_type == PNG_COLOR_TYPE_GRAY) {
-                                _transparency[0] = 0;
-                                _transparency[1] = trans_color->gray & 0xFF;
-                                _transparencySize = 2;
+                                m_transparency[0] = 0;
+                                m_transparency[1] = trans_color->gray & 0xFF;
+                                m_transparencySize = 2;
                             }
                             else if (m_color_type == PNG_COLOR_TYPE_RGB) {
-                                _transparency[0] = 0;
-                                _transparency[1] = trans_color->red & 0xFF;
-                                _transparency[2] = 0;
-                                _transparency[3] = trans_color->green & 0xFF;
-                                _transparency[4] = 0;
-                                _transparency[5] = trans_color->blue & 0xFF;
-                                _transparencySize = 6;
+                                m_transparency[0] = 0;
+                                m_transparency[1] = trans_color->red & 0xFF;
+                                m_transparency[2] = 0;
+                                m_transparency[3] = trans_color->green & 0xFF;
+                                m_transparency[4] = 0;
+                                m_transparency[5] = trans_color->blue & 0xFF;
+                                m_transparencySize = 6;
                             }
                             else if (m_color_type == PNG_COLOR_TYPE_PALETTE)
-                                memcpy(_transparency, trans_alpha, _transparencySize);
+                                memcpy(m_transparency, trans_alpha, m_transparencySize);
                             else
-                                _transparencySize = 0;
+                                m_transparencySize = 0;
                         }
                     }
                     else
-                        _transparencySize = 0;
+                        m_transparencySize = 0;
 
                     m_pixels = new uchar[m_height * rowbytes];
-                    _rows = new png_bytep[m_height * sizeof(png_bytep)];
+                    m_rows = new png_bytep[m_height * sizeof(png_bytep)];
 
                     for (int i = 0; i < m_height; ++i)
-                        _rows[i] = m_pixels + i * rowbytes;
+                        m_rows[i] = m_pixels + i * rowbytes;
 
-                    png_read_image(png_ptr, _rows);
+                    png_read_image(png_ptr, m_rows);
                     png_read_end(png_ptr, NULL);
                 }
                 png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -274,8 +274,8 @@ namespace cv
     /*
     APNGFrame::APNGFrame(Mat src, int delayNum, int delayDen)
     {
-        memset(_palette, 0, sizeof(_palette));
-        memset(_transparency, 0, sizeof(_transparency));
+        memset(m_palette, 0, sizeof(m_palette));
+        memset(m_transparency, 0, sizeof(m_transparency));
 
         if (!src.empty()
         {
@@ -286,12 +286,12 @@ namespace cv
                 m_color_type = PNG_COLOR_TYPE_RGB_ALPHA;
 
                 m_pixels = new uchar[m_height * rowbytes];
-                _rows = new png_bytep[m_height * sizeof(png_bytep)];
+                m_rows = new png_bytep[m_height * sizeof(png_bytep)];
 
                 memcpy(m_pixels, pixels, m_height * rowbytes);
 
             for (int i = 0; i < m_height; ++i)
-                _rows[i] = m_pixels + i * rowbytes;
+                m_rows[i] = m_pixels + i * rowbytes;
         }
 
     }
@@ -308,52 +308,52 @@ namespace cv
     rgb* APNGFrame::palette(rgb* setPalette)
     {
         if (setPalette != NULL)
-            memcpy(_palette, setPalette,
-                std::min(sizeof(_palette), sizeof(setPalette)));
-        return _palette;
+            memcpy(m_palette, setPalette,
+                std::min(sizeof(m_palette), sizeof(setPalette)));
+        return m_palette;
     }
 
     uchar* APNGFrame::transparency(uchar* setTransparency)
     {
         if (setTransparency != NULL)
-            memcpy(_transparency, setTransparency,
-                std::min(sizeof(_transparency), sizeof(setTransparency)));
-        return _transparency;
+            memcpy(m_transparency, setTransparency,
+                std::min(sizeof(m_transparency), sizeof(setTransparency)));
+        return m_transparency;
     }
 
     int APNGFrame::paletteSize(int setPaletteSize)
     {
         if (setPaletteSize != 0)
-            _paletteSize = setPaletteSize;
-        return _paletteSize;
+            m_paletteSize = setPaletteSize;
+        return m_paletteSize;
     }
 
     int APNGFrame::transparencySize(int setTransparencySize)
     {
         if (setTransparencySize != 0)
-            _transparencySize = setTransparencySize;
-        return _transparencySize;
+            m_transparencySize = setTransparencySize;
+        return m_transparencySize;
     }
 
     int APNGFrame::delayNum(int setDelayNum)
     {
         if (setDelayNum != 0)
-            _delayNum = setDelayNum;
-        return _delayNum;
+            m_delayNum = setDelayNum;
+        return m_delayNum;
     }
 
     int APNGFrame::delayDen(int setDelayDen)
     {
         if (setDelayDen != 0)
-            _delayDen = setDelayDen;
-        return _delayDen;
+            m_delayDen = setDelayDen;
+        return m_delayDen;
     }
 
     uchar** APNGFrame::rows(uchar** setRows)
     {
         if (setRows != NULL)
-            _rows = setRows;
-        return _rows;
+            m_rows = setRows;
+        return m_rows;
     }
 
     // Save frame to a PNG image file.
@@ -374,31 +374,31 @@ namespace cv
                 png_init_io(png_ptr, f);
                 png_set_compression_level(png_ptr, 9);
                 png_set_IHDR(png_ptr, info_ptr, m_width, m_height, 8, m_color_type, 0, 0, 0);
-                if (_paletteSize > 0) {
+                if (m_paletteSize > 0) {
                     png_color palette[PNG_MAX_PALETTE_LENGTH];
-                    memcpy(palette, _palette, _paletteSize * 3);
-                    png_set_PLTE(png_ptr, info_ptr, palette, _paletteSize);
+                    memcpy(palette, m_palette, m_paletteSize * 3);
+                    png_set_PLTE(png_ptr, info_ptr, palette, m_paletteSize);
                 }
-                if (_transparencySize > 0) {
+                if (m_transparencySize > 0) {
                     png_color_16 trans_color;
                     if (m_color_type == PNG_COLOR_TYPE_GRAY) {
-                        trans_color.gray = _transparency[1];
+                        trans_color.gray = m_transparency[1];
                         png_set_tRNS(png_ptr, info_ptr, NULL, 0, &trans_color);
                     }
                     else if (m_color_type == PNG_COLOR_TYPE_RGB) {
-                        trans_color.red = _transparency[1];
-                        trans_color.green = _transparency[3];
-                        trans_color.blue = _transparency[5];
+                        trans_color.red = m_transparency[1];
+                        trans_color.green = m_transparency[3];
+                        trans_color.blue = m_transparency[5];
                         png_set_tRNS(png_ptr, info_ptr, NULL, 0, &trans_color);
                     }
                     else if (m_color_type == PNG_COLOR_TYPE_PALETTE)
                         png_set_tRNS(png_ptr, info_ptr,
-                            const_cast<uchar*>(_transparency),
-                            _transparencySize, NULL);
+                            const_cast<uchar*>(m_transparency),
+                            m_transparencySize, NULL);
                 }
                 png_write_info(png_ptr, info_ptr);
                 png_set_bgr(png_ptr);
-                png_write_image(png_ptr, _rows);
+                png_write_image(png_ptr, m_rows);
                 png_write_end(png_ptr, info_ptr);
             }
             else

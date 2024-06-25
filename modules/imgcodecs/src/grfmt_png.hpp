@@ -52,7 +52,7 @@
 #ifdef HAVE_PNG
 
 #include "grfmt_base.hpp"
-#include "grfmt_apng.hpp"
+#include "apngframe.hpp"
 #include "bitstrm.hpp"
 #include <png.h>
 #include <zlib.h>

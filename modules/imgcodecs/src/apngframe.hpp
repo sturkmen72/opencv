@@ -42,7 +42,7 @@
 
 #include <string>
 
-namespace apngasm {
+namespace cv {
 
 const unsigned DEFAULT_FRAME_NUMERATOR =
     100; //!< @brief The default numerator for the frame delay fraction.

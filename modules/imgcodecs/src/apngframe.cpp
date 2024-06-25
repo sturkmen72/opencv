@@ -43,7 +43,7 @@
 #include <cstring>
 #include <png.h>
 
-namespace apngasm {
+namespace cv {
 
 unsigned char *APNGFrame::pixels(unsigned char *setPixels) {
   if (setPixels != NULL)

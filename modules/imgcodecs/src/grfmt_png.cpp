@@ -970,8 +970,8 @@ void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint first)
         i--;
         delete[] frames[i].pixels();
         delete[] frames[i].rows();
-        int num = frames[i].delayNum();
-        int den = frames[i].delayDen();
+        uint num = frames[i].delayNum();
+        uint den = frames[i].delayDen();
         frames.erase(frames.begin() + i);
 
         if (frames[i].delayDen() == den)

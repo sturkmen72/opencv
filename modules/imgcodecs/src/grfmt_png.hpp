@@ -77,13 +77,13 @@ public:
     ImageDecoder newDecoder() const CV_OVERRIDE;
 
 protected:
-    uint read_chunk(FILE* f, CHUNK* pChunk);
     int          processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
     int          processing_data(png_structp png_ptr, png_infop info_ptr, uchar* p, uint size);
     int          processing_finish(png_structp png_ptr, png_infop info_ptr);
     void         compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h);
     int          load_apng(std::string inputFileName, std::vector<APNGFrame>& frames, uint& first, uint& loops);
     static void  readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
+    static uint  read_chunk(FILE* f, CHUNK* pChunk);
 
     int    m_bit_depth;
     void*  m_png_ptr;  // pointer to decompression structure

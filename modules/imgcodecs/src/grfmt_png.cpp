@@ -252,15 +252,6 @@ bool  PngDecoder::readHeader()
                                         int delay_den = png_get_uint_16(chunkfcTL.p + 30);
                                         char dop = chunkfcTL.p[32];
                                         char bop = chunkfcTL.p[33];
-                                        printf("**frame props\n-------------------\n");
-                                        printf("w0 : %d\n", w0);
-                                        printf("h0 : %d\n", h0);
-                                        printf("x0 : %d\n", x0);
-                                        printf("y0 : %d\n", y0);
-                                        printf("delay_num : %d\n", delay_num);
-                                        printf("delay_den : %d\n", delay_den);
-                                        printf("dop : %d\n", dop);
-                                        printf("bop : %d\n-------------------\n", bop);
                                     }
                                 }
                             }
@@ -374,6 +365,7 @@ bool  PngDecoder::readData( Mat& img )
 
             if (m_is_animated)
             {
+
                 return true;
             }
             png_read_end( png_ptr, end_info );
@@ -419,15 +411,6 @@ bool PngDecoder::nextPage() {
             int delay_den = png_get_uint_16(chunkfcTL.p + 30);
             char dop = chunkfcTL.p[32];
             char bop = chunkfcTL.p[33];
-            printf("**frame props\n-------------------\n");
-            printf("w0 : %d\n", w0);
-            printf("h0 : %d\n", h0);
-            printf("x0 : %d\n", x0);
-            printf("y0 : %d\n", y0);
-            printf("delay_num : %d\n", delay_num);
-            printf("delay_den : %d\n", delay_den);
-            printf("dop : %d\n", dop);
-            printf("bop : %d\n-------------------\n", bop);
 
             uchar sig[8];
             if (fread(sig, 1, 8, m_f))
@@ -1481,27 +1464,21 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
     }
 
     std::vector<APNGFrame> frames;
-    for (size_t i = 0; i < img_vec.size(); i++)
-    {
-        rgba* pixels = (rgba*)img_vec[i].data;
-        frames.push_back(APNGFrame(pixels, img_vec[i].cols, img_vec[i].rows));
-    }
-
 
     for (size_t i = 0; i < img_vec.size(); i++)
     {
-        Mat dst;
-        cvtColor(img_vec[i],dst,COLOR_BGRA2RGBA);
-        rgba* pixels = (rgba*)dst.data;
-        frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
-    }
+        Mat frame = img_vec[i];
+        if (frame.type() == CV_8UC3)
+        {
+            cvtColor(frame, frame, COLOR_BGR2RGBA);
+        }
+        else
+        {
+            cvtColor(frame, frame, COLOR_BGRA2RGBA);
+        }
 
-    for (size_t i = 0; i < img_vec.size(); i++)
-    {
-        Mat dst;
-        cvtColor(img_vec[i], dst, COLOR_BGRA2RGBA);
-        rgba* pixels = (rgba*)dst.data;
-        frames.push_back(APNGFrame(pixels, dst.cols, dst.rows));
+        rgba* pixels = (rgba*)frame.data;
+        frames.push_back(APNGFrame(pixels, frame.cols, frame.rows));
     }
 
     CV_UNUSED(isBilevel);

@@ -273,7 +273,7 @@ APNGFrame::APNGFrame(rgba *pixels, unsigned int width, unsigned int height,
 
     _width = width;
     _height = height;
-    _colorType = 6;
+    _colorType = PNG_COLOR_TYPE_RGB_ALPHA;
 
     _pixels = new unsigned char[_height * rowbytes];
     _rows = new png_bytep[_height * sizeof(png_bytep)];

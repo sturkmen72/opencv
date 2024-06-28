@@ -95,8 +95,6 @@
 #define __builtin_frame_address(...) 0
 
 
-#define notabc(c) ((c) < 65 || (c) > 122 || ((c) > 90 && (c) < 97))
-
 #define id_IHDR 0x52444849
 #define id_acTL 0x4C546361
 #define id_fcTL 0x4C546366
@@ -735,7 +733,7 @@ int PngDecoder::load_apng(std::string inputFileName, std::vector<APNGFrame>& fra
                             delete[] chunk.p;
                             break;
                         }
-                        else if (notabc(chunk.p[4]) || notabc(chunk.p[5]) || notabc(chunk.p[6]) || notabc(chunk.p[7]))
+                        else if (!isalpha(chunk.p[4]) || !isalpha(chunk.p[5]) || !isalpha(chunk.p[6]) || !isalpha(chunk.p[7]))
                         {
                             delete[] chunk.p;
                             break;

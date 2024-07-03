@@ -89,6 +89,14 @@ bool WebPDecoder::readHeader()
         m_has_animation = features.has_animation > 0;
         if (m_has_animation)
         {
+            fs.seekg(0, std::ios::beg); CV_Assert(fs && "File stream error");
+            data.create(1, validateToInt(fs_size), CV_8UC1);
+            fs.read((char*)data.ptr(), fs_size);
+            CV_Assert(fs && "Can't read file data");
+            fs.close();
+
+            CV_Assert(data.type() == CV_8UC1); CV_Assert(data.rows == 1);
+
             WebPData webp_data;
             webp_data.bytes = (const uint8_t*)data.ptr();
             webp_data.size = data.total();
@@ -141,79 +149,72 @@ bool WebPDecoder::readData(Mat &img)
     }
     CV_Assert(data.type() == CV_8UC1); CV_Assert(data.rows == 1);
 
+    Mat read_img;
+    CV_CheckType(img.type(), img.type() == CV_8UC1 || img.type() == CV_8UC3 || img.type() == CV_8UC4, "");
+    if (img.type() != m_type || img.cols != m_width || img.rows != m_height)
     {
-        Mat read_img;
-        CV_CheckType(img.type(), img.type() == CV_8UC1 || img.type() == CV_8UC3 || img.type() == CV_8UC4, "");
-        if (img.type() != m_type || img.cols != m_width || img.rows != m_height)
-        {
-            read_img.create(m_height, m_width, m_type);
-        }
+        read_img.create(m_height, m_width, m_type);
+    }
+    else
+    {
+        read_img = img;  // copy header
+    }
+
+    uchar* out_data = read_img.ptr();
+    size_t out_data_size = read_img.dataend - out_data;
+
+    uchar* res_ptr = NULL;
+
+    if (m_has_animation)
+    {
+        int timestamp;
+        WebPAnimDecoderGetNext(anim_decoder, (uint8_t**)read_img.ptr(), &timestamp);
+        return true;
+    }
+
+    if (channels == 3)
+    {
+        CV_CheckTypeEQ(read_img.type(), CV_8UC3, "");
+        if (m_use_rgb)
+            res_ptr = WebPDecodeRGBInto(data.ptr(), data.total(), out_data,
+                (int)out_data_size, (int)read_img.step);
         else
-        {
-            read_img = img;  // copy header
-        }
-
-        uchar* out_data = read_img.ptr();
-        size_t out_data_size = read_img.dataend - out_data;
-
-        uchar *res_ptr = NULL;
- 
-        if (m_has_animation)
-        {
-            uint8_t* buf;
-            int timestamp;
-
-            WebPAnimDecoderGetNext(anim_decoder, &buf, &timestamp);
-            Mat tmp(Size(m_width, m_height), CV_8UC4, buf);
-            tmp.copyTo(img);
-
-            return true;
-        }
-
-        if (channels == 3)
-        {
-            CV_CheckTypeEQ(read_img.type(), CV_8UC3, "");
-            if (m_use_rgb)
-                res_ptr = WebPDecodeRGBInto(data.ptr(), data.total(), out_data,
-                                            (int)out_data_size, (int)read_img.step);
-            else
-                res_ptr = WebPDecodeBGRInto(data.ptr(), data.total(), out_data,
-                                            (int)out_data_size, (int)read_img.step);
-        }
-        else if (channels == 4)
-        {
-            CV_CheckTypeEQ(read_img.type(), CV_8UC4, "");
-            if (m_use_rgb)
-                res_ptr = WebPDecodeRGBAInto(data.ptr(), data.total(), out_data,
-                                             (int)out_data_size, (int)read_img.step);
-            else
-                res_ptr = WebPDecodeBGRAInto(data.ptr(), data.total(), out_data,
-                                             (int)out_data_size, (int)read_img.step);
-        }
-
-        if (res_ptr != out_data)
-            return false;
-
-        if (read_img.data == img.data && img.type() == m_type)
-        {
-            // nothing
-        }
-        else if (img.type() == CV_8UC1)
-        {
-            cvtColor(read_img, img, COLOR_BGR2GRAY);
-        }
-        else if (img.type() == CV_8UC3 && m_type == CV_8UC4)
-        {
-            cvtColor(read_img, img, COLOR_BGRA2BGR);
-        }
-        else if (img.type() == CV_8UC4 && m_type == CV_8UC3)
-        {
-            cvtColor(read_img, img, COLOR_BGR2BGRA);
-        }
+            res_ptr = WebPDecodeBGRInto(data.ptr(), data.total(), out_data,
+                (int)out_data_size, (int)read_img.step);
+    }
+    else if (channels == 4)
+    {
+        CV_CheckTypeEQ(read_img.type(), CV_8UC4, "");
+        if (m_use_rgb)
+            res_ptr = WebPDecodeRGBAInto(data.ptr(), data.total(), out_data,
+                (int)out_data_size, (int)read_img.step);
         else
-        {
-            CV_Error(Error::StsInternal, "");
-        }
+            res_ptr = WebPDecodeBGRAInto(data.ptr(), data.total(), out_data,
+                (int)out_data_size, (int)read_img.step);
+    }
+
+    if (res_ptr != out_data)
+        return false;
+
+    if (read_img.data == img.data && img.type() == m_type)
+    {
+        // nothing
+    }
+    else if (img.type() == CV_8UC1)
+    {
+        cvtColor(read_img, img, COLOR_BGR2GRAY);
+    }
+    else if (img.type() == CV_8UC3 && m_type == CV_8UC4)
+    {
+        cvtColor(read_img, img, COLOR_BGRA2BGR);
+    }
+    else if (img.type() == CV_8UC4 && m_type == CV_8UC3)
+    {
+        cvtColor(read_img, img, COLOR_BGR2BGRA);
+    }
+    else
+    {
+        CV_Error(Error::StsInternal, "");
     }
     return true;
 }

@@ -628,7 +628,7 @@ imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int star
 }
 
 static bool
-imreadanimation_(const String& filename, int flags, int start, int count, AnimationInfo& animinfo)
+imreadanimation_(const String& filename, int flags, int start, int count, Animation& animation)
 {
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
@@ -722,19 +722,19 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
             ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
         }
 
-        animinfo.frames.push_back(mat);
+        animation.frames.push_back(mat);
         if (!decoder->nextPage())
         {
             break;
         }
         ++current;
     }
-    animinfo.bgcolor = decoder->getAnimationInfo().bgcolor;
-    animinfo.frame_count = decoder->getAnimationInfo().frame_count;
-    animinfo.loop_count = decoder->getAnimationInfo().loop_count;
-    animinfo.timestamps = decoder->getAnimationInfo().timestamps;
+    animation.bgcolor = decoder->animation().bgcolor;
+    animation.frame_count = decoder->animation().frame_count;
+    animation.loop_count = decoder->animation().loop_count;
+    animation.timestamps = decoder->animation().timestamps;
 
-    return !animinfo.frames.empty();
+    return !animation.frames.empty();
 }
 
 /**
@@ -799,11 +799,11 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int start, int 
     return imreadmulti_(filename, IMREAD_UNCHANGED, mats, 0, -1, animinfo);
 }
 */
-bool imreadanimation(const String& filename, CV_OUT AnimationInfo& animinfo)
+bool imreadanimation(const String& filename, CV_OUT Animation& animation)
 {
     CV_TRACE_FUNCTION();
 
-    return imreadanimation_(filename, IMREAD_UNCHANGED, 0, -1, animinfo);
+    return imreadanimation_(filename, IMREAD_UNCHANGED, 0, -1, animation);
 }
 
 static

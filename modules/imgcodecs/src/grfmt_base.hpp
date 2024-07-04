@@ -66,7 +66,7 @@ public:
     int height() const { return m_height; }
     virtual int type() const { return m_type; }
 
-    AnimationInfo getAnimationInfo() const { return m_animinfo; };
+    Animation animation() const { return m_animation; };
     ExifEntry_t getExifTag(const ExifTagName tag) const;
     virtual bool setSource( const String& filename );
     virtual bool setSource( const Mat& buf );
@@ -94,7 +94,7 @@ protected:
     bool m_buf_supported;
     bool m_use_rgb;       // flag of decode image as RGB order instead of BGR.
     ExifReader m_exif;
-    AnimationInfo m_animinfo;
+    Animation m_animation;
 };
 
 

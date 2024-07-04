@@ -114,9 +114,9 @@ bool WebPDecoder::readHeader()
 
             WebPAnimInfo anim_info;
             WebPAnimDecoderGetInfo(anim_decoder, &anim_info);
-            m_animinfo.loop_count = anim_info.loop_count;
-            m_animinfo.bgcolor = anim_info.bgcolor;
-            m_animinfo.frame_count = anim_info.frame_count;
+            m_animation.loop_count = anim_info.loop_count;
+            m_animation.bgcolor = anim_info.bgcolor;
+            m_animation.frame_count = anim_info.frame_count;
         }
         m_width  = features.width;
         m_height = features.height;
@@ -179,7 +179,7 @@ bool WebPDecoder::readData(Mat &img)
         WebPAnimDecoderGetNext(anim_decoder, &buf, &timestamp);
         Mat tmp(Size(m_width, m_height), CV_8UC4, buf);
         tmp.copyTo(img);
-        m_animinfo.timestamps.push_back(timestamp);
+        m_animation.timestamps.push_back(timestamp);
         return true;
     }
 
@@ -340,14 +340,14 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
-    AnimationInfo animinfo;
-    animinfo.frames = img_vec;
-    return writeanimation(animinfo, params);
+    Animation animation;
+    animation.frames = img_vec;
+    return writeanimation(animation, params);
 }
 
-bool WebPEncoder::writeanimation(const AnimationInfo& animinfo, const std::vector<int>& params)
+bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
-    std::vector<Mat> img_vec = animinfo.frames;
+    std::vector<Mat> img_vec = animation.frames;
     int ok =0;
     int duration = 100;
     int timestamp_ms = 0;

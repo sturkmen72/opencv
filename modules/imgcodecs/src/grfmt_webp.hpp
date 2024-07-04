@@ -26,7 +26,7 @@ public:
 
     bool readData( Mat& img ) CV_OVERRIDE;
     bool readHeader() CV_OVERRIDE;
-    bool  nextPage() CV_OVERRIDE;
+    bool nextPage() CV_OVERRIDE;
 
     size_t signatureLength() const CV_OVERRIDE;
     bool checkSignature( const String& signature) const CV_OVERRIDE;
@@ -50,7 +50,7 @@ public:
 
     bool write(const Mat& img, const std::vector<int>& params) CV_OVERRIDE;
     bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) CV_OVERRIDE;
-    bool writeanimation(const AnimationInfo& animinfo, const std::vector<int>& params);
+    bool writeanimation(const Animation& animinfo, const std::vector<int>& params);
 
     ImageEncoder newEncoder() const CV_OVERRIDE;
 

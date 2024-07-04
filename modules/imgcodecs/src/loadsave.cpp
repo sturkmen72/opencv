@@ -521,7 +521,7 @@ imread_( const String& filename, int flags, OutputArray mat )
 
 
 static bool
-imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int start, int count, AnimationInfo& animinfo)
+imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int start, int count)
 {
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
@@ -624,8 +624,117 @@ imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int star
         ++current;
     }
 
-    animinfo = decoder->getAnimationInfo();
     return !mats.empty();
+}
+
+static bool
+imreadanimation_(const String& filename, int flags, int start, int count, AnimationInfo& animinfo)
+{
+    /// Search for the relevant decoder to handle the imagery
+    ImageDecoder decoder;
+
+    CV_CheckGE(start, 0, "Start index cannont be < 0");
+
+#ifdef HAVE_GDAL
+    if (flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL) {
+        decoder = GdalDecoder().newDecoder();
+    }
+    else {
+#endif
+        decoder = findDecoder(filename);
+#ifdef HAVE_GDAL
+    }
+#endif
+
+    /// if no decoder was found, return nothing.
+    if (!decoder) {
+        return 0;
+    }
+
+    if (count < 0) {
+        count = std::numeric_limits<int>::max();
+    }
+
+    if (flags & IMREAD_COLOR_RGB && flags != IMREAD_UNCHANGED)
+        decoder->setRGB(true);
+
+    /// set the filename in the driver
+    decoder->setSource(filename);
+    // read the header to make sure it succeeds
+    try
+    {
+        // read the header to make sure it succeeds
+        if (!decoder->readHeader())
+            return 0;
+    }
+    catch (const cv::Exception& e)
+    {
+        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: " << e.what());
+        return 0;
+    }
+    catch (...)
+    {
+        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: unknown exception");
+        return 0;
+    }
+
+    int current = start;
+
+    while (current > 0)
+    {
+        if (!decoder->nextPage())
+        {
+            return false;
+        }
+        --current;
+    }
+
+    while (current < count)
+    {
+        // grab the decoded type
+        const int type = calcType(decoder->type(), flags);
+
+        // established the required input image size
+        Size size = validateInputImageSize(Size(decoder->width(), decoder->height()));
+
+        // read the image data
+        Mat mat(size.height, size.width, type);
+        bool success = false;
+        try
+        {
+            if (decoder->readData(mat))
+                success = true;
+        }
+        catch (const cv::Exception& e)
+        {
+            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: " << e.what());
+        }
+        catch (...)
+        {
+            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: unknown exception");
+        }
+        if (!success)
+            break;
+
+        // optionally rotate the data if EXIF' orientation flag says so
+        if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
+        {
+            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+        }
+
+        animinfo.frames.push_back(mat);
+        if (!decoder->nextPage())
+        {
+            break;
+        }
+        ++current;
+    }
+    animinfo.bgcolor = decoder->getAnimationInfo().bgcolor;
+    animinfo.frame_count = decoder->getAnimationInfo().frame_count;
+    animinfo.loop_count = decoder->getAnimationInfo().loop_count;
+    animinfo.timestamps = decoder->getAnimationInfo().timestamps;
+
+    return !animinfo.frames.empty();
 }
 
 /**
@@ -672,8 +781,7 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int flags)
 {
     CV_TRACE_FUNCTION();
 
-    AnimationInfo animinfo;
-    return imreadmulti_(filename, flags, mats, 0, -1, animinfo);
+    return imreadmulti_(filename, flags, mats, 0, -1);
 }
 
 
@@ -681,15 +789,21 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int start, int 
 {
     CV_TRACE_FUNCTION();
 
-    AnimationInfo animinfo;
-    return imreadmulti_(filename, flags, mats, start, count, animinfo);
+    return imreadmulti_(filename, flags, mats, start, count);
 }
 
-bool imreadanimation(const String& filename, CV_OUT std::vector<Mat>& mats, CV_OUT AnimationInfo& animinfo)
+/*bool imreadanimation(const String& filename, CV_OUT std::vector<Mat>& mats, CV_OUT AnimationInfo& animinfo)
 {
     CV_TRACE_FUNCTION();
 
     return imreadmulti_(filename, IMREAD_UNCHANGED, mats, 0, -1, animinfo);
+}
+*/
+bool imreadanimation(const String& filename, CV_OUT AnimationInfo& animinfo)
+{
+    CV_TRACE_FUNCTION();
+
+    return imreadanimation_(filename, IMREAD_UNCHANGED, 0, -1, animinfo);
 }
 
 static

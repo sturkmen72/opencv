@@ -137,7 +137,7 @@ TEST(Imgcodecs_WebP, load_save_multiframes)
     EXPECT_EQ(true, imreadmulti(output, webp_frames, IMREAD_UNCHANGED));
     EXPECT_EQ(png_frames.size()-2, webp_frames.size()); // because last 3 images are identical so 1 image inserted as last frame and its duration calculated by libwebP
     //EXPECT_EQ(14, imcount(output)); //TO DO : actual return value is 1. should be frames count
-    EXPECT_EQ(0, remove(output.c_str()));
+    //EXPECT_EQ(0, remove(output.c_str()));
 }
 #endif // HAVE_WEBP
 

@@ -340,6 +340,14 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
+    AnimationInfo animinfo;
+    animinfo.frames = img_vec;
+    return writeanimation(animinfo, params);
+}
+
+bool WebPEncoder::writeanimation(const AnimationInfo& animinfo, const std::vector<int>& params)
+{
+    std::vector<Mat> img_vec = animinfo.frames;
     int ok =0;
     int duration = 100;
     int timestamp_ms = 0;

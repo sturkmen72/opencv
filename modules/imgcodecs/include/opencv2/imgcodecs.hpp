@@ -311,10 +311,12 @@ struct CV_EXPORTS_W_SIMPLE AnimationInfo
     CV_PROP_RW uint32_t bgcolor;
     CV_PROP_RW int frame_count;
     CV_PROP_RW std::vector<int> timestamps;
+    CV_PROP_RW std::vector<Mat> frames;
 };
 
-CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT std::vector<Mat>& mats, CV_OUT AnimationInfo& animinfo);
+//CV_EXPORTS_W bool imreadanimation(const String& filename, InputArrayOfArrays mats, CV_OUT AnimationInfo& animinfo);
 
+CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT AnimationInfo& animinfo);
 /** @brief Returns the number of images inside the give file
 
 The function imcount will return the number of pages in a multi-page image, or 1 for single-page images

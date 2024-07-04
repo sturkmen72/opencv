@@ -222,14 +222,14 @@ int main( int argc, const char** argv )
     AnimationInfo animinfo;
     std::vector<Mat> mats;
 
-    imreadanimation(filename, mats, animinfo);
+    imreadanimation(filename, animinfo);
     cout << "animinfo.bgcolor : " << animinfo.bgcolor << endl;
     cout << "animinfo.loop_count : " << animinfo.loop_count << endl;
 
     for (int i = 0; i < animinfo.frame_count; i++)
     {
         cout << "animinfo.timestamp" << i << " : " << animinfo.timestamps[i] << endl;
-        imshow("frames", mats[i]);
+        imshow("frames", animinfo.frames[i]);
         waitKey();
     }
 

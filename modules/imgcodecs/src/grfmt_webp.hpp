@@ -50,6 +50,7 @@ public:
 
     bool write(const Mat& img, const std::vector<int>& params) CV_OVERRIDE;
     bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) CV_OVERRIDE;
+    bool writeanimation(const AnimationInfo& animinfo, const std::vector<int>& params);
 
     ImageEncoder newEncoder() const CV_OVERRIDE;
 

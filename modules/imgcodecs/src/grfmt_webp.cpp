@@ -114,9 +114,9 @@ bool WebPDecoder::readHeader()
 
             WebPAnimInfo anim_info;
             WebPAnimDecoderGetInfo(anim_decoder, &anim_info);
-            m_loop_count = anim_info.loop_count;
-            m_bgcolor = anim_info.bgcolor;
-            m_frame_count = anim_info.frame_count;
+            m_animinfo.loop_count = anim_info.loop_count;
+            m_animinfo.bgcolor = anim_info.bgcolor;
+            m_animinfo.frame_count = anim_info.frame_count;
         }
         m_width  = features.width;
         m_height = features.height;
@@ -173,8 +173,13 @@ bool WebPDecoder::readData(Mat &img)
 
     if (m_has_animation)
     {
+        uint8_t* buf;
         int timestamp;
-        WebPAnimDecoderGetNext(anim_decoder, (uint8_t**)read_img.ptr(), &timestamp);
+
+        WebPAnimDecoderGetNext(anim_decoder, &buf, &timestamp);
+        Mat tmp(Size(m_width, m_height), CV_8UC4, buf);
+        tmp.copyTo(img);
+        m_animinfo.timestamps.push_back(timestamp);
         return true;
     }
 

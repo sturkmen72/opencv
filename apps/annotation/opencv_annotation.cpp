@@ -218,6 +218,21 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
+    String filename = "test.webp";
+    AnimationInfo animinfo;
+    std::vector<Mat> mats;
+
+    imreadanimation(filename, mats, animinfo);
+    cout << "animinfo.bgcolor : " << animinfo.bgcolor << endl;
+    cout << "animinfo.loop_count : " << animinfo.loop_count << endl;
+
+    for (int i = 0; i < animinfo.frame_count; i++)
+    {
+        cout << "animinfo.timestamp" << i << " : " << animinfo.timestamps[i] << endl;
+        imshow("frames", mats[i]);
+        waitKey();
+    }
+
     // Use the cmdlineparser to process input arguments
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"

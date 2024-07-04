@@ -521,7 +521,7 @@ imread_( const String& filename, int flags, OutputArray mat )
 
 
 static bool
-imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int start, int count)
+imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int start, int count, AnimationInfo& animinfo)
 {
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
@@ -624,6 +624,7 @@ imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int star
         ++current;
     }
 
+    animinfo = decoder->getAnimationInfo();
     return !mats.empty();
 }
 
@@ -671,7 +672,8 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int flags)
 {
     CV_TRACE_FUNCTION();
 
-    return imreadmulti_(filename, flags, mats, 0, -1);
+    AnimationInfo animinfo;
+    return imreadmulti_(filename, flags, mats, 0, -1, animinfo);
 }
 
 
@@ -679,7 +681,15 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int start, int 
 {
     CV_TRACE_FUNCTION();
 
-    return imreadmulti_(filename, flags, mats, start, count);
+    AnimationInfo animinfo;
+    return imreadmulti_(filename, flags, mats, start, count, animinfo);
+}
+
+bool imreadanimation(const String& filename, CV_OUT std::vector<Mat>& mats, CV_OUT AnimationInfo& animinfo)
+{
+    CV_TRACE_FUNCTION();
+
+    return imreadmulti_(filename, IMREAD_UNCHANGED, mats, 0, -1, animinfo);
 }
 
 static

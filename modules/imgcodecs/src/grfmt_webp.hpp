@@ -40,6 +40,9 @@ protected:
     int channels;
     WebPAnimDecoder* anim_decoder;
     bool m_has_animation;
+    uint32_t m_loop_count;
+    uint32_t m_bgcolor;
+    uint32_t m_frame_count;
 };
 
 class WebPEncoder CV_FINAL : public BaseImageEncoder

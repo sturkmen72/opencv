@@ -111,6 +111,12 @@ bool WebPDecoder::readHeader()
                 fprintf(stderr, "Error parsing image");
                 return false;
             }
+
+            WebPAnimInfo anim_info;
+            WebPAnimDecoderGetInfo(anim_decoder, &anim_info);
+            m_loop_count = anim_info.loop_count;
+            m_bgcolor = anim_info.bgcolor;
+            m_frame_count = anim_info.frame_count;
         }
         m_width  = features.width;
         m_height = features.height;

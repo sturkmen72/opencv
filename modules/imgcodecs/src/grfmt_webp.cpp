@@ -221,6 +221,7 @@ bool WebPDecoder::readData(Mat &img)
     }
     else if (img.type() == CV_8UC4 && m_type == CV_8UC3)
     {
+        CV_Error(Error::StsInternal, "tests could not catch this. or there is no possibility to occur");
         cvtColor(read_img, img, COLOR_BGR2BGRA);
     }
     else
@@ -353,7 +354,8 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
 
 bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
-    int ok =0;
+    int ok = 0;
+    int timestamp = 0;
     const int width = animation.frames[0].cols, height = animation.frames[0].rows;
 
     WebPAnimEncoderOptions anim_config;
@@ -396,7 +398,7 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     pic.use_argb = 1;
     pic.argb_stride = width;
     WebPEncode(&config, &pic);
-    int timestamp = 0;
+
     for (size_t i = 0; i < animation.frames.size(); i++)
     {
         timestamp = animation.timestamps[i];

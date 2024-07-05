@@ -981,8 +981,9 @@ static bool imwriteanimation_(const String& filename, Animation& animation)
 }
 
 bool imwriteanimation(const String& filename, Animation& animation)
-{    
+{
     CV_Assert(!animation.frames.empty());
+    CV_Assert(animation.frames.size() == animation.timestamps.size());
     return imwriteanimation_(filename, animation);
 }
 

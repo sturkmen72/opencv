@@ -368,7 +368,8 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
         !WebPConfigInit(&config) ||
         !WebPPictureInit(&pic)) {
         fprintf(stderr, "Library version mismatch!\n");
-        goto End;
+        WebPDataClear(&webp_data);
+        return false;
     }
 
     config.lossless = 1;
@@ -389,6 +390,7 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
                 config.lossless = 1;
             }
         }
+        anim_config.minimize_size = 0;
     }
 
     anim_encoder = WebPAnimEncoderNew(width, height, &anim_config);
@@ -407,10 +409,9 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     }
 
     // add a last fake frame to signal the last duration
-    ok = ok && WebPAnimEncoderAdd(anim_encoder, NULL, timestamp, NULL);
-    ok = ok && WebPAnimEncoderAssemble(anim_encoder, &webp_data);
+    ok = ok & WebPAnimEncoderAdd(anim_encoder, NULL, timestamp, NULL);
+    ok = ok & WebPAnimEncoderAssemble(anim_encoder, &webp_data);
 
-End:
     if (ok)
     {
         if (m_buf)

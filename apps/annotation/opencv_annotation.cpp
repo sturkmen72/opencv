@@ -224,7 +224,7 @@ int main( int argc, const char** argv )
     imreadanimation(filename, animation);
     cout << "animinfo.bgcolor : " << animation.bgcolor << endl;
     cout << "animinfo.loop_count : " << animation.loop_count << endl;
-
+    imwriteanimation(filename+".webp", animation, {IMWRITE_WEBP_QUALITY, 1});
     while (true)
         for (int i = 0; i < animation.frame_count; i++)
         {

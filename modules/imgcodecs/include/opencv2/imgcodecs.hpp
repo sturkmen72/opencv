@@ -316,7 +316,7 @@ CV_EXPORTS_W bool imreadmulti(const String& filename, CV_OUT std::vector<Mat>& m
 
 CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT Animation& animation);
 
-CV_EXPORTS_W bool imwriteanimation(const String& filename, Animation& animation);
+CV_EXPORTS_W bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params = std::vector<int>());
 
 /** @brief Returns the number of images inside the give file
 

@@ -938,7 +938,7 @@ bool imwrite( const String& filename, InputArray _img,
 }
 
 
-static bool imwriteanimation_(const String& filename, Animation& animation)
+static bool imwriteanimation_(const String& filename, Animation& animation, const std::vector<int>& params)
 {
     ImageEncoder encoder = findEncoder(filename);
     if (!encoder)
@@ -949,7 +949,7 @@ static bool imwriteanimation_(const String& filename, Animation& animation)
     bool code = false;
     try
     {
-        code = encoder->writeanimation(animation, std::vector<int>());
+        code = encoder->writeanimation(animation, params);
 
         if (!code)
         {
@@ -980,11 +980,11 @@ static bool imwriteanimation_(const String& filename, Animation& animation)
     return code;
 }
 
-bool imwriteanimation(const String& filename, Animation& animation)
+bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params)
 {
     CV_Assert(!animation.frames.empty());
     CV_Assert(animation.frames.size() == animation.timestamps.size());
-    return imwriteanimation_(filename, animation);
+    return imwriteanimation_(filename, animation, params);
 }
 
 static bool

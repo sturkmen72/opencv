@@ -937,6 +937,55 @@ bool imwrite( const String& filename, InputArray _img,
     return imwrite_(filename, img_vec, params, false);
 }
 
+
+static bool imwriteanimation_(const String& filename, Animation& animation)
+{
+    ImageEncoder encoder = findEncoder(filename);
+    if (!encoder)
+        CV_Error(Error::StsError, "could not find a writer for the specified extension");
+
+    encoder->setDestination(filename);
+
+    bool code = false;
+    try
+    {
+        code = encoder->writeanimation(animation, std::vector<int>());
+
+        if (!code)
+        {
+            FILE* f = fopen(filename.c_str(), "wb");
+            if (!f)
+            {
+                if (errno == EACCES)
+                {
+                    CV_LOG_WARNING(NULL, "imwrite_('" << filename << "'): can't open file for writing: permission denied");
+                }
+            }
+            else
+            {
+                fclose(f);
+                remove(filename.c_str());
+            }
+        }
+    }
+    catch (const cv::Exception& e)
+    {
+        CV_LOG_ERROR(NULL, "imwrite_('" << filename << "'): can't write data: " << e.what());
+    }
+    catch (...)
+    {
+        CV_LOG_ERROR(NULL, "imwrite_('" << filename << "'): can't write data: unknown exception");
+    }
+
+    return code;
+}
+
+bool imwriteanimation(const String& filename, Animation& animation)
+{    
+    CV_Assert(!animation.frames.empty());
+    return imwriteanimation_(filename, animation);
+}
+
 static bool
 imdecode_( const Mat& buf, int flags, Mat& mat )
 {

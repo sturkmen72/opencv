@@ -143,6 +143,11 @@ bool BaseImageEncoder::writemulti(const std::vector<Mat>&, const std::vector<int
     return false;
 }
 
+bool BaseImageEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
+{
+    return false;
+}
+
 ImageEncoder BaseImageEncoder::newEncoder() const
 {
     return ImageEncoder();

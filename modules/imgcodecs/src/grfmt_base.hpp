@@ -110,6 +110,7 @@ public:
     virtual bool setDestination( std::vector<uchar>& buf );
     virtual bool write( const Mat& img, const std::vector<int>& params ) = 0;
     virtual bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params);
+    virtual bool writeanimation(const Animation& animation, const std::vector<int>& params);
 
     virtual String getDescription() const;
     virtual ImageEncoder newEncoder() const;

@@ -342,16 +342,19 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
 {
     Animation animation;
     animation.frames = img_vec;
+    int timestamp = 0;
+    for (size_t i = 0; i < animation.frames.size(); i++)
+    {
+        animation.timestamps.push_back(timestamp);
+        timestamp += 10;
+    }
     return writeanimation(animation, params);
 }
 
 bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
-    std::vector<Mat> img_vec = animation.frames;
     int ok =0;
-    int duration = 100;
-    int timestamp_ms = 0;
-    const int width = img_vec[0].cols, height = img_vec[0].rows;
+    const int width = animation.frames[0].cols, height = animation.frames[0].rows;
 
     WebPAnimEncoderOptions anim_config;
     WebPConfig config;
@@ -393,16 +396,16 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     pic.use_argb = 1;
     pic.argb_stride = width;
     WebPEncode(&config, &pic);
-
-    for (size_t i = 0; i < img_vec.size(); i++)
+    int timestamp = 0;
+    for (size_t i = 0; i < animation.frames.size(); i++)
     {
-        pic.argb = (uint32_t*)img_vec[i].data;
-        ok = WebPAnimEncoderAdd(anim_encoder, &pic, timestamp_ms, &config);
-        timestamp_ms += duration;
+        timestamp = animation.timestamps[i];
+        pic.argb = (uint32_t*)animation.frames[i].data;
+        ok = WebPAnimEncoderAdd(anim_encoder, &pic, timestamp, &config);
     }
 
     // add a last fake frame to signal the last duration
-    ok = ok && WebPAnimEncoderAdd(anim_encoder, NULL, timestamp_ms, NULL);
+    ok = ok && WebPAnimEncoderAdd(anim_encoder, NULL, timestamp, NULL);
     ok = ok && WebPAnimEncoderAssemble(anim_encoder, &webp_data);
 
 End:

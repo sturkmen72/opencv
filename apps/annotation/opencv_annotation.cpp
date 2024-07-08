@@ -218,13 +218,17 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
+#if 1  // test code for imreadanimation and imwriteanimation
     String filename = "animated-webp-supported.webp";
+    if (argc > 1)
+        filename = argv[1];
     Animation animation;
 
     imreadanimation(filename, animation);
     cout << "animinfo.bgcolor : " << animation.bgcolor << endl;
     cout << "animinfo.loop_count : " << animation.loop_count << endl;
-    imwriteanimation(filename+".webp", animation, {IMWRITE_WEBP_QUALITY, 1});
+    imwriteanimation(filename+".webp", animation, {IMWRITE_WEBP_QUALITY, 50});
+
     while (true)
         for (int i = 0; i < animation.frame_count; i++)
         {
@@ -237,7 +241,8 @@ int main( int argc, const char** argv )
             imshow("frames", animation.frames[i]);
             waitKey(delay);
         }
-
+    return 0;
+#endif
     // Use the cmdlineparser to process input arguments
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"

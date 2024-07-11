@@ -271,7 +271,6 @@ bool  PngDecoder::readData( Mat& img )
 {
     if (m_is_animated)
     {
-        uchar sig[8];
         CHUNK chunkIHDR;
 
         bool hasInfo = false;
@@ -287,7 +286,6 @@ bool  PngDecoder::readData( Mat& img )
         APNGFrame frameNext(frameNext_pixels, m_width, m_height);
 
         uint id = 0;
-        uint i = 0;
         uint j = 0;
         uint w = 0;
         uint h = 0;
@@ -296,7 +294,7 @@ bool  PngDecoder::readData( Mat& img )
         uint x0 = 0;
         uint y0 = 0;
 
-        if (!processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
+        if (!processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, achunksInfo))
         {
             while (!feof(m_f))
             {
@@ -316,7 +314,7 @@ bool  PngDecoder::readData( Mat& img )
                             compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
                             frameCur.delayNum(delay_num);
                             frameCur.delayDen(delay_den);
-                            frames.push_back(frameCur);
+                            aframes.push_back(frameCur);
 
                             if (dop != 2)
                             {
@@ -358,7 +356,7 @@ bool  PngDecoder::readData( Mat& img )
                     if (hasInfo)
                     {
                         memcpy(chunkIHDR.p + 8, chunk.p + 12, 8);
-                        if (processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
+                        if (processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, achunksInfo))
                         {
                             delete[] frameCur.rows();
                             delete[] frameCur.pixels();
@@ -369,7 +367,7 @@ bool  PngDecoder::readData( Mat& img )
                     else
                         first = 0;
 
-                    if (frames.size() == first)
+                    if ((int)aframes.size() == first)
                     {
                         bop = 0;
                         if (dop == 2)
@@ -406,7 +404,7 @@ bool  PngDecoder::readData( Mat& img )
                         compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
                         frameCur.delayNum(delay_num);
                         frameCur.delayDen(delay_den);
-                        frames.push_back(frameCur);
+                        aframes.push_back(frameCur);
                     }
                     else
                     {
@@ -430,7 +428,7 @@ bool  PngDecoder::readData( Mat& img )
                         delete[] chunk.p;
                         break;
                     }
-                    chunksInfo.push_back(chunk);
+                    achunksInfo.push_back(chunk);
                     continue;
                 }
                 delete[] chunk.p;
@@ -451,7 +449,7 @@ bool  PngDecoder::readData( Mat& img )
             delete[] frameRaw.rows();
             delete[] frameRaw.pixels();
 
-            if (!frames.empty())
+            if (!aframes.empty())
             {
                 result = 0;
             }
@@ -558,7 +556,7 @@ bool PngDecoder::nextPage() {
     return false;
 }
 
-void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h)
+void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, uint x, uint y, uint w, uint h)
 {
     uint  i, j;
     int u, v, al;
@@ -568,7 +566,7 @@ void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, ui
         uchar* sp = rows_src[j];
         uchar* dp = rows_dst[j + y] + x * 4;
 
-        if (bop == 0)
+        if (_bop == 0)
             memcpy(dp, sp, w * 4);
         else
             for (i = 0; i < w; i++, sp += 4, dp += 4)

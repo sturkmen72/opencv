@@ -55,8 +55,8 @@ protected:
     png_structp apng_ptr;
     png_infop ainfo_ptr;
     uint delay_num, delay_den, dop, bop, rowbytes, imagesize;
-    std::vector<CHUNK> chunksInfo;
-    std::vector<APNGFrame> frames;
+    std::vector<CHUNK> achunksInfo;
+    std::vector<APNGFrame> aframes;
     int first;
 };
 

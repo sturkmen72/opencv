@@ -208,6 +208,7 @@ bool  PngDecoder::readHeader()
                                     id = read_chunk(m_f, &chunkfcTL);
                                     if (id == id_fcTL && chunkfcTL.size == 38)
                                     {
+#if 0 
                                         uint w0 = png_get_uint_32(chunkfcTL.p + 12);
                                         uint h0 = png_get_uint_32(chunkfcTL.p + 16);
                                         uint x0 = png_get_uint_32(chunkfcTL.p + 20);
@@ -216,6 +217,7 @@ bool  PngDecoder::readHeader()
                                         int delay_den = png_get_uint_16(chunkfcTL.p + 30);
                                         char dop = chunkfcTL.p[32];
                                         char bop = chunkfcTL.p[33];
+#endif
                                     }
                                 }
                             }
@@ -284,7 +286,17 @@ bool  PngDecoder::readData( Mat& img )
         APNGFrame frameCur(frameCur_pixels, m_width, m_height);
         APNGFrame frameNext(frameNext_pixels, m_width, m_height);
 
-        if (!processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
+        uint id = 0;
+        uint i = 0;
+        uint j = 0;
+        uint w = 0;
+        uint h = 0;
+        uint w0 = 0;
+        uint h0 = 0;
+        uint x0 = 0;
+        uint y0 = 0;
+
+        if (!processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
         {
             while (!feof(m_f))
             {
@@ -296,7 +308,7 @@ bool  PngDecoder::readData( Mat& img )
                 {
                     if (hasInfo)
                     {
-                        if (!processing_finish(png_ptr, info_ptr))
+                        if (!processing_finish(apng_ptr, ainfo_ptr))
                         {
                             if (dop == 2)
                                 memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
@@ -346,7 +358,7 @@ bool  PngDecoder::readData( Mat& img )
                     if (hasInfo)
                     {
                         memcpy(chunkIHDR.p + 8, chunk.p + 12, 8);
-                        if (processing_start(png_ptr, info_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
+                        if (processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, chunksInfo))
                         {
                             delete[] frameCur.rows();
                             delete[] frameCur.pixels();
@@ -367,7 +379,7 @@ bool  PngDecoder::readData( Mat& img )
                 else if (id == id_IDAT)
                 {
                     hasInfo = true;
-                    if (processing_data(png_ptr, info_ptr, chunk.p, chunk.size))
+                    if (processing_data(apng_ptr, ainfo_ptr, chunk.p, chunk.size))
                     {
                         delete[] frameCur.rows();
                         delete[] frameCur.pixels();
@@ -379,7 +391,7 @@ bool  PngDecoder::readData( Mat& img )
                 {
                     png_save_uint_32(chunk.p + 4, chunk.size - 16);
                     memcpy(chunk.p + 8, "IDAT", 4);
-                    if (processing_data(png_ptr, info_ptr, chunk.p + 4, chunk.size - 4))
+                    if (processing_data(apng_ptr, ainfo_ptr, chunk.p + 4, chunk.size - 4))
                     {
                         delete[] frameCur.rows();
                         delete[] frameCur.pixels();
@@ -389,7 +401,7 @@ bool  PngDecoder::readData( Mat& img )
                 }
                 else if (id == id_IEND)
                 {
-                    if (hasInfo && !processing_finish(png_ptr, info_ptr))
+                    if (hasInfo && !processing_finish(apng_ptr, ainfo_ptr))
                     {
                         compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
                         frameCur.delayNum(delay_num);
@@ -411,7 +423,7 @@ bool  PngDecoder::readData( Mat& img )
                 }
                 else if (!hasInfo)
                 {
-                    if (processing_data(png_ptr, info_ptr, chunk.p, chunk.size))
+                    if (processing_data(apng_ptr, ainfo_ptr, chunk.p, chunk.size))
                     {
                         delete[] frameCur.rows();
                         delete[] frameCur.pixels();

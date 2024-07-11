@@ -52,9 +52,8 @@ protected:
     bool   m_is_animated;
     int    m_loops;
     CHUNK chunk;
-    png_structp png_ptr;
-    png_infop info_ptr;
-    uint id, i, j, w, h, w0, h0, x0, y0;
+    png_structp apng_ptr;
+    png_infop ainfo_ptr;
     uint delay_num, delay_den, dop, bop, rowbytes, imagesize;
     std::vector<CHUNK> chunksInfo;
     std::vector<APNGFrame> frames;

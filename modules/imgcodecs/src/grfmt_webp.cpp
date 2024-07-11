@@ -30,7 +30,10 @@ WebPDecoder::WebPDecoder()
     fs_size = 0;
 }
 
-WebPDecoder::~WebPDecoder() {}
+WebPDecoder::~WebPDecoder()
+{
+    WebPAnimDecoderDelete(anim_decoder);
+}
 
 size_t WebPDecoder::signatureLength() const
 {

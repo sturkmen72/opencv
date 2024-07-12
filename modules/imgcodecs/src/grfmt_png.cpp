@@ -182,16 +182,11 @@ bool  PngDecoder::readHeader()
 
                 if( !m_buf.empty() || m_f )
                 {
-                    png_uint_32 wdth, hght;
-                    int bit_depth, color_type, num_trans=0;
-                    png_bytep trans;
-                    png_color_16p trans_values;
-
                     if (m_f)
                     {
                         uchar sig[8];
                         uint id;
-                        CHUNK chunkIHDR, chunkacTL, chunkfcTL;
+                        CHUNK chunkacTL, chunkfcTL;
 
                         if (fread(sig, 1, 8, m_f))
                         {
@@ -204,7 +199,6 @@ bool  PngDecoder::readHeader()
                                 {
                                     m_is_animated = true;
                                     m_loops = png_get_uint_32(chunkacTL.p + 12);
-
                                     id = read_chunk(m_f, &chunkfcTL);
                                     if (id == id_fcTL && chunkfcTL.size == 38)
                                     {
@@ -218,12 +212,17 @@ bool  PngDecoder::readHeader()
                                         char dop = chunkfcTL.p[32];
                                         char bop = chunkfcTL.p[33];
 #endif
-                                    }
-                                }
                             }
                         }
-                        fseek(m_f, 0, SEEK_SET);
                     }
+                }
+                        fseek(m_f, 0, SEEK_SET);
+            }
+
+                    png_uint_32 wdth, hght;
+                    int bit_depth, color_type, num_trans=0;
+                    png_bytep trans;
+                    png_color_16p trans_values;
 
                     png_read_info( png_ptr, info_ptr );
 
@@ -269,194 +268,6 @@ bool  PngDecoder::readHeader()
 
 bool  PngDecoder::readData( Mat& img )
 {
-    if (m_is_animated)
-    {
-        CHUNK chunkIHDR;
-
-        bool hasInfo = false;
-        int result = -1;
-        const unsigned long cMaxPNGSize = 1000000UL;
-
-        rgba* frameRaw_pixels = new rgba[m_width * m_height];
-        rgba* frameCur_pixels = new rgba[m_width * m_height];
-        rgba* frameNext_pixels = new rgba[m_width * m_height];
-
-        APNGFrame frameRaw(frameRaw_pixels, m_width, m_height);
-        APNGFrame frameCur(frameCur_pixels, m_width, m_height);
-        APNGFrame frameNext(frameNext_pixels, m_width, m_height);
-
-        uint id = 0;
-        uint j = 0;
-        uint w = 0;
-        uint h = 0;
-        uint w0 = 0;
-        uint h0 = 0;
-        uint x0 = 0;
-        uint y0 = 0;
-
-        if (!processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, achunksInfo))
-        {
-            while (!feof(m_f))
-            {
-                id = read_chunk(m_f, &chunk);
-                if (!id)
-                    break;
-
-                if (id == id_fcTL && (!hasInfo || m_is_animated))
-                {
-                    if (hasInfo)
-                    {
-                        if (!processing_finish(apng_ptr, ainfo_ptr))
-                        {
-                            if (dop == 2)
-                                memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
-
-                            compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
-                            frameCur.delayNum(delay_num);
-                            frameCur.delayDen(delay_den);
-                            aframes.push_back(frameCur);
-
-                            if (dop != 2)
-                            {
-                                memcpy(frameNext.pixels(), frameCur.pixels(), imagesize);
-                                if (dop == 1)
-                                    for (j = 0; j < h0; j++)
-                                        memset(frameNext.rows()[y0 + j] + x0 * 4, 0, w0 * 4);
-                            }
-                            frameCur.pixels(frameNext.pixels());
-                            frameCur.rows(frameNext.rows());
-                        }
-                        else
-                        {
-                            delete[] frameCur.rows();
-                            delete[] frameCur.pixels();
-                            delete[] chunk.p;
-                            break;
-                        }
-                    }
-
-                    // At this point the old frame is done. Let's start a new one.
-                    w0 = png_get_uint_32(chunk.p + 12);
-                    h0 = png_get_uint_32(chunk.p + 16);
-                    x0 = png_get_uint_32(chunk.p + 20);
-                    y0 = png_get_uint_32(chunk.p + 24);
-                    delay_num = png_get_uint_16(chunk.p + 28);
-                    delay_den = png_get_uint_16(chunk.p + 30);
-                    dop = chunk.p[32];
-                    bop = chunk.p[33];
-
-                    if (w0 > cMaxPNGSize || h0 > cMaxPNGSize || x0 > cMaxPNGSize || y0 > cMaxPNGSize || x0 + w0 > w || y0 + h0 > h || dop > 2 || bop > 1)
-                    {
-                        delete[] frameCur.rows();
-                        delete[] frameCur.pixels();
-                        delete[] chunk.p;
-                        break;
-                    }
-
-                    if (hasInfo)
-                    {
-                        memcpy(chunkIHDR.p + 8, chunk.p + 12, 8);
-                        if (processing_start(apng_ptr, ainfo_ptr, (void*)&frameRaw, hasInfo, chunkIHDR, achunksInfo))
-                        {
-                            delete[] frameCur.rows();
-                            delete[] frameCur.pixels();
-                            delete[] chunk.p;
-                            break;
-                        }
-                    }
-                    else
-                        first = 0;
-
-                    if ((int)aframes.size() == first)
-                    {
-                        bop = 0;
-                        if (dop == 2)
-                            dop = 1;
-                    }
-                }
-                else if (id == id_IDAT)
-                {
-                    hasInfo = true;
-                    if (processing_data(apng_ptr, ainfo_ptr, chunk.p, chunk.size))
-                    {
-                        delete[] frameCur.rows();
-                        delete[] frameCur.pixels();
-                        delete[] chunk.p;
-                        break;
-                    }
-                }
-                else if (id == id_fdAT && m_is_animated)
-                {
-                    png_save_uint_32(chunk.p + 4, chunk.size - 16);
-                    memcpy(chunk.p + 8, "IDAT", 4);
-                    if (processing_data(apng_ptr, ainfo_ptr, chunk.p + 4, chunk.size - 4))
-                    {
-                        delete[] frameCur.rows();
-                        delete[] frameCur.pixels();
-                        delete[] chunk.p;
-                        break;
-                    }
-                }
-                else if (id == id_IEND)
-                {
-                    if (hasInfo && !processing_finish(apng_ptr, ainfo_ptr))
-                    {
-                        compose_frame(frameCur.rows(), frameRaw.rows(), bop, x0, y0, w0, h0);
-                        frameCur.delayNum(delay_num);
-                        frameCur.delayDen(delay_den);
-                        aframes.push_back(frameCur);
-                    }
-                    else
-                    {
-                        delete[] frameCur.rows();
-                        delete[] frameCur.pixels();
-                    }
-                    delete[] chunk.p;
-                    break;
-                }
-                else if (!isalpha(chunk.p[4]) || !isalpha(chunk.p[5]) || !isalpha(chunk.p[6]) || !isalpha(chunk.p[7]))
-                {
-                    delete[] chunk.p;
-                    break;
-                }
-                else if (!hasInfo)
-                {
-                    if (processing_data(apng_ptr, ainfo_ptr, chunk.p, chunk.size))
-                    {
-                        delete[] frameCur.rows();
-                        delete[] frameCur.pixels();
-                        delete[] chunk.p;
-                        break;
-                    }
-                    achunksInfo.push_back(chunk);
-                    continue;
-                }
-                delete[] chunk.p;
-            }
-        }
-
-        if (id == id_IHDR && chunkIHDR.size == 25)
-        {
-            w0 = w = png_get_uint_32(chunkIHDR.p + 8);
-            h0 = h = png_get_uint_32(chunkIHDR.p + 12);
-
-            if (w > cMaxPNGSize || h > cMaxPNGSize)
-            {
-                fclose(m_f);
-                return result;
-            }
-
-            delete[] frameRaw.rows();
-            delete[] frameRaw.pixels();
-
-            if (!aframes.empty())
-            {
-                result = 0;
-            }
-        }
-        return result;
-    }
-
     volatile bool result = false;
     AutoBuffer<uchar*> _buffer(m_height);
     uchar** buffer = _buffer.data();
@@ -1417,7 +1228,7 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
 
     CV_UNUSED(isBilevel);
     uint first =0;
-    uint loops=10;
+    uint loops=3;
     uint coltype=6;
     int deflate_method=0;
     int iter=0;

@@ -40,14 +40,7 @@
 #ifndef _APNGFRAME_H_
 #define _APNGFRAME_H_
 
-#include <string>
-
 namespace cv {
-
-const unsigned DEFAULT_FRAME_NUMERATOR =
-    100; //!< @brief The default numerator for the frame delay fraction.
-const unsigned DEFAULT_FRAME_DENOMINATOR =
-    1000; //!< @brief The default denominator for the frame delay fraction.
 
 typedef struct {
   unsigned char r, g, b;
@@ -56,117 +49,124 @@ typedef struct {
   unsigned char r, g, b, a;
 } rgba;
 
-// Individual APNG frame
+// Default values for delay numerator and denominator
+constexpr unsigned DEFAULT_FRAME_NUMERATOR = 1;
+constexpr unsigned DEFAULT_FRAME_DENOMINATOR = 100;
+
 class APNGFrame {
 public:
-  // Raw pixel data
-  unsigned char *pixels(unsigned char *setPixels = NULL);
-  unsigned char *_pixels;
+    // Constructor for an empty APNGFrame
+    APNGFrame();
 
-  // Width and Height
-  unsigned int width(unsigned int setWidth = 0);
-  unsigned int height(unsigned int setHeight = 0);
-  unsigned int _width;
-  unsigned int _height;
+    /** Constructor from a PNG file
+    * @brief Creates an APNGFrame from a PNG file.
+    * @param filePath The relative or absolute path to an image file.
+    * @param delayNum The delay numerator for this frame (defaults to
+    * DEFAULT_FRAME_NUMERATOR).
+    * @param delayDen The delay denominator for this frame (defaults to
+    * DEFAULT_FRAME_DENOMINATOR).
+    */
+    APNGFrame(const std::string& filePath, unsigned delayNum = DEFAULT_FRAME_NUMERATOR, unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
 
-  // PNG color type
-  unsigned char colorType(unsigned char setColorType = 255);
-  unsigned char _colorType;
+    /** Constructor from RGB pixel data
+     * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
+     * @param pixels The RGB pixel data.
+     * @param width The width of the pixel data.
+     * @param height The height of the pixel data.
+     * @param delayNum The delay numerator for this frame (defaults to
+     * DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to
+     * DEFAULT_FRAME_DENOMINATOR).
+     */
+    APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
+        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
+        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
 
-  // Palette into
-  rgb *palette(rgb *setPalette = NULL);
-  rgb _palette[256];
+    /** Constructor from RGB pixel data with transparency
+     * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
+     * @param pixels The RGB pixel data.
+     * @param width The width of the pixel data.
+     * @param height The height of the pixel data.
+     * @param trns_color An array of transparency data.
+     * @param delayNum The delay numerator for this frame (defaults to
+     * DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to
+     * DEFAULT_FRAME_DENOMINATOR).
+     */
+    APNGFrame(rgb* pixels, unsigned int width, unsigned int height, rgb* trns_color = NULL, unsigned delayNum = DEFAULT_FRAME_NUMERATOR, unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
 
-  // Transparency info
-  unsigned char *transparency(unsigned char *setTransparency = NULL);
-  unsigned char _transparency[256];
+    /** Constructor from RGBA pixel data
+    * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
+    * @param pixels The RGBA pixel data.
+    * @param width The width of the pixel data.
+    * @param height The height of the pixel data.
+    * @param delayNum The delay numerator for this frame (defaults to
+    * DEFAULT_FRAME_NUMERATOR).
+    * @param delayDen The delay denominator for this frame (defaults to
+    * DEFAULT_FRAME_DENOMINATOR).
+    */
+    APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
+        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
+        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
 
-  // Sizes for palette and transparency records
-  int paletteSize(int setPaletteSize = 0);
-  int _paletteSize;
+    // Destructor
+    ~APNGFrame();
 
-  int transparencySize(int setTransparencySize = 0);
-  int _transparencySize;
+    /**
+    * @brief Saves this frame as a single PNG file.
+    * @param outPath The relative or absolute path to save the image file to.
+    * @return Returns true if save was successful.
+    */
+    bool save(const std::string& outPath) const;
 
-  // Delay is numerator/denominator ratio, in seconds
-  unsigned int delayNum(unsigned int setDelayNum = 0);
-  unsigned int _delayNum;
+    // Getters and Setters
+    unsigned char* getPixels() const { return _pixels; }
+    void setPixels(unsigned char* setPixels);
 
-  unsigned int delayDen(unsigned int setDelayDen = 0);
-  unsigned int _delayDen;
+    unsigned int getWidth() const { return _width; }
+    void setWidth(unsigned int setWidth);
 
-  unsigned char **rows(unsigned char **setRows = NULL);
-  unsigned char **_rows;
+    unsigned int getHeight() const { return _height; }
+    void setHeight(unsigned int setHeight);
 
-  /**
-   * @brief Creates an empty APNGFrame.
-   */
-  APNGFrame();
+    unsigned char getColorType() const { return _colorType; }
+    void setColorType(unsigned char setColorType);
 
-  /**
-   * @brief Creates an APNGFrame from a PNG file.
-   * @param filePath The relative or absolute path to an image file.
-   * @param delayNum The delay numerator for this frame (defaults to
-   * DEFAULT_FRAME_NUMERATOR).
-   * @param delayDen The delay denominator for this frame (defaults to
-   * DEFAULT_FRAME_DENMINATOR).
-   */
-  APNGFrame(const std::string &filePath,
-            unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-            unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    rgb* getPalette() { return _palette; }
+    void setPalette(const rgb* setPalette);
 
-  /**
-   * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
-   * @param pixels The RGB pixel data.
-   * @param width The width of the pixel data.
-   * @param height The height of the pixel data.
-   * @param delayNum The delay numerator for this frame (defaults to
-   * DEFAULT_FRAME_NUMERATOR).
-   * @param delayDen The delay denominator for this frame (defaults to
-   * DEFAULT_FRAME_DENMINATOR).
-   */
-  APNGFrame(rgb *pixels, unsigned int width, unsigned int height,
-            unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-            unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    unsigned char* getTransparency() { return _transparency; }
+    void setTransparency(const unsigned char* setTransparency);
 
-  /**
-   * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
-   * @param pixels The RGB pixel data.
-   * @param width The width of the pixel data.
-   * @param height The height of the pixel data.
-   * @param trns_color An array of transparency data.
-   * @param delayNum The delay numerator for this frame (defaults to
-   * DEFAULT_FRAME_NUMERATOR).
-   * @param delayDen The delay denominator for this frame (defaults to
-   * DEFAULT_FRAME_DENMINATOR).
-   */
-  APNGFrame(rgb *pixels, unsigned int width, unsigned int height,
-            rgb *trns_color = NULL, unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-            unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    int getPaletteSize() const { return _paletteSize; }
+    void setPaletteSize(int setPaletteSize);
 
-  /**
-   * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
-   * @param pixels The RGBA pixel data.
-   * @param width The width of the pixel data.
-   * @param height The height of the pixel data.
-   * @param delayNum The delay numerator for this frame (defaults to
-   * DEFAULT_FRAME_NUMERATOR).
-   * @param delayDen The delay denominator for this frame (defaults to
-   * DEFAULT_FRAME_DENMINATOR).
-   */
-  APNGFrame(rgba *pixels, unsigned int width, unsigned int height,
-            unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-            unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
+    int getTransparencySize() const { return _transparencySize; }
+    void setTransparencySize(int setTransparencySize);
 
-  /**
-   * @brief Saves this frame as a single PNG file.
-   * @param outPath The relative or absolute path to save the image file to.
-   * @return Returns true if save was successful.
-   */
-  bool save(const std::string &outPath) const;
+    unsigned int getDelayNum() const { return _delayNum; }
+    void setDelayNum(unsigned int setDelayNum);
+
+    unsigned int getDelayDen() const { return _delayDen; }
+    void setDelayDen(unsigned int setDelayDen);
+
+    unsigned char** getRows() const { return _rows; }
+    void setRows(unsigned char** setRows);
 
 private:
-}; // class APNGFrame
+    unsigned char* _pixels;
+    unsigned int _width;
+    unsigned int _height;
+    unsigned char _colorType;
+    rgb _palette[256];
+    unsigned char _transparency[256];
+    int _paletteSize;
+    int _transparencySize;
+    unsigned int _delayNum;
+    unsigned int _delayDen;
+    unsigned char** _rows;
+
+};
 
 } // namespace apngasm
 

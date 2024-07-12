@@ -500,7 +500,7 @@ void PngDecoder::row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_
 {
     CV_UNUSED(pass);
     APNGFrame* frame = (APNGFrame*)png_get_progressive_ptr(png_ptr);
-    png_progressive_combine_row(png_ptr, frame->rows()[row_num], new_row);
+    png_progressive_combine_row(png_ptr, frame->getRows()[row_num], new_row);
 }
 
 /////////////////////// PngEncoder ///////////////////
@@ -671,11 +671,11 @@ void PngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
 {
     uint i, j;
     uchar* sp;
-    uint size = frames[0].width() * frames[0].height();
+    uint size = frames[0].getWidth() * frames[0].getHeight();
 
     for (i = 0; i < frames.size(); i++)
     {
-        sp = frames[i].pixels();
+        sp = frames[i].getPixels();
         for (j = 0; j < size; j++, sp += 4)
             if (sp[3] == 0)
                 sp[0] = sp[1] = sp[2] = 0;
@@ -685,27 +685,27 @@ void PngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
 
 void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint first)
 {
-    uint imagesize = frames[0].width() * frames[0].height() * 4;
+    uint imagesize = frames[0].getWidth() * frames[0].getHeight() * 4;
     uint i = first;
 
     while (++i < frames.size())
     {
-        if (memcmp(frames[i - 1].pixels(), frames[i].pixels(), imagesize) != 0)
+        if (memcmp(frames[i - 1].getPixels(), frames[i].getPixels(), imagesize) != 0)
             continue;
 
         i--;
-        delete[] frames[i].pixels();
-        delete[] frames[i].rows();
-        uint num = frames[i].delayNum();
-        uint den = frames[i].delayDen();
+        delete[] frames[i].getPixels();
+        delete[] frames[i].getRows();
+        uint num = frames[i].getDelayNum();
+        uint den = frames[i].getDelayDen();
         frames.erase(frames.begin() + i);
 
-        if (frames[i].delayDen() == den)
-            frames[i].delayNum(frames[i].delayNum()+num);
+        if (frames[i].getDelayDen() == den)
+            frames[i].setDelayNum(frames[i].getDelayNum()+num);
         else
         {
-            frames[i].delayNum(num * frames[i].delayDen() + den * frames[i].delayNum());
-            frames[i].delayDen(den * frames[i].delayDen());
+            frames[i].setDelayNum(num * frames[i].getDelayDen() + den * frames[i].getDelayNum());
+            frames[i].setDelayDen(den * frames[i].getDelayDen());
             while (num && den)
             {
                 if (num > den)
@@ -714,8 +714,8 @@ void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint first)
                     den = den % num;
             }
             num += den;
-            frames[i].delayNum(frames[i].delayNum() / num);
-            frames[i].delayDen(frames[i].delayDen() / num);
+            frames[i].setDelayNum(frames[i].getDelayNum() / num);
+            frames[i].setDelayDen(frames[i].getDelayDen() / num);
         }
     }
 }
@@ -1253,8 +1253,8 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
     uchar* zbuf;
     uchar header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
     uint num_frames = (int)frames.size();
-    uint width = frames[0].width();
-    uint height = frames[0].height();
+    uint width = frames[0].getWidth();
+    uint height = frames[0].getHeight();
     uint bpp = (coltype == 6) ? 4 : (coltype == 2) ? 3
         : (coltype == 4) ? 2
         : 1;
@@ -1359,7 +1359,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
         for (j = 0; j < 6; j++)
             op[j].valid = 0;
-        deflate_rect_op(frames[0].pixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
+        deflate_rect_op(frames[0].getPixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
         deflate_rect_fin(deflate_method, iter, zbuf, &zsize, bpp, rowbytes, rows, zbuf_size, 0);
 
         if (first)
@@ -1367,7 +1367,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
             write_IDATs(f, 0, zbuf, zsize, idat_size);
             for (j = 0; j < 6; j++)
                 op[j].valid = 0;
-            deflate_rect_op(frames[1].pixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
+            deflate_rect_op(frames[1].getPixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
             deflate_rect_fin(deflate_method, iter, zbuf, &zsize, bpp, rowbytes, rows, zbuf_size, 0);
         }
 
@@ -1380,12 +1380,12 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
                 op[j].valid = 0;
 
             /* dispose = none */
-            get_rect(width, height, frames[i].pixels(), frames[i + 1].pixels(), over1, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 0);
+            get_rect(width, height, frames[i].getPixels(), frames[i + 1].getPixels(), over1, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 0);
 
             /* dispose = background */
             if (has_tcolor)
             {
-                memcpy(temp, frames[i].pixels(), imagesize);
+                memcpy(temp, frames[i].getPixels(), imagesize);
                 if (coltype == 2)
                     for (j = 0; j < h0; j++)
                         for (k = 0; k < w0; k++)
@@ -1394,12 +1394,12 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
                     for (j = 0; j < h0; j++)
                         memset(temp + ((j + y0) * width + x0) * bpp, tcolor, w0 * bpp);
 
-                get_rect(width, height, temp, frames[i + 1].pixels(), over2, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 1);
+                get_rect(width, height, temp, frames[i + 1].getPixels(), over2, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 1);
             }
 
             /* dispose = previous */
             if (i > first)
-                get_rect(width, height, rest, frames[i + 1].pixels(), over3, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 2);
+                get_rect(width, height, rest, frames[i + 1].getPixels(), over3, bpp, rowbytes, zbuf_size, has_tcolor, tcolor, 2);
 
             op_min = op[0].size;
             op_best = 0;
@@ -1420,8 +1420,8 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
             png_save_uint_32(buf_fcTL + 8, h0);
             png_save_uint_32(buf_fcTL + 12, x0);
             png_save_uint_32(buf_fcTL + 16, y0);
-            png_save_uint_16(buf_fcTL + 20, frames[i].delayNum());
-            png_save_uint_16(buf_fcTL + 22, frames[i].delayDen());
+            png_save_uint_16(buf_fcTL + 20, frames[i].getDelayNum());
+            png_save_uint_16(buf_fcTL + 22, frames[i].getDelayDen());
             buf_fcTL[24] = dop;
             buf_fcTL[25] = bop;
             write_chunk(f, "fcTL", buf_fcTL, 26);
@@ -1430,7 +1430,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
             /* process apng dispose - begin */
             if (dop != 2)
-                memcpy(rest, frames[i].pixels(), imagesize);
+                memcpy(rest, frames[i].getPixels(), imagesize);
 
             if (dop == 1)
             {
@@ -1460,8 +1460,8 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
             png_save_uint_32(buf_fcTL + 8, h0);
             png_save_uint_32(buf_fcTL + 12, x0);
             png_save_uint_32(buf_fcTL + 16, y0);
-            png_save_uint_16(buf_fcTL + 20, frames[num_frames - 1].delayNum());
-            png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].delayDen());
+            png_save_uint_16(buf_fcTL + 20, frames[num_frames - 1].getDelayNum());
+            png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].getDelayDen());
             buf_fcTL[24] = 0;
             buf_fcTL[25] = bop;
             write_chunk(f, "fcTL", buf_fcTL, 26);

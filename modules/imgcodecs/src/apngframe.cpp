@@ -56,81 +56,59 @@
 
 namespace cv {
 
-unsigned char *APNGFrame::pixels(unsigned char *setPixels) {
-  if (setPixels != NULL)
-    _pixels = setPixels;
-  return _pixels;
-}
+    APNGFrame::APNGFrame()
+        : _pixels(nullptr), _width(0), _height(0), _colorType(255),
+        _paletteSize(0), _transparencySize(0), _delayNum(DEFAULT_FRAME_NUMERATOR),
+        _delayDen(DEFAULT_FRAME_DENOMINATOR), _rows(nullptr) {
+        std::fill(std::begin(_palette), std::end(_palette), rgb{});
+        std::fill(std::begin(_transparency), std::end(_transparency), 0);
+    }
 
-unsigned int APNGFrame::width(unsigned int setWidth) {
-  if (setWidth != 0)
-    _width = setWidth;
-  return _width;
-}
+    APNGFrame::~APNGFrame() {}
 
-unsigned int APNGFrame::height(unsigned int setHeight) {
-  if (setHeight != 0)
-    _height = setHeight;
-  return _height;
-}
+    void APNGFrame::setPixels(unsigned char* setPixels) {
+        _pixels = setPixels;
+    }
 
-unsigned char APNGFrame::colorType(unsigned char setColorType) {
-  if (setColorType != 255)
+    void APNGFrame::setWidth(unsigned int setWidth) {
+        _width = setWidth;
+    }
 
-    _colorType = setColorType;
-  return _colorType;
-}
+    void APNGFrame::setHeight(unsigned int setHeight) {
+        _height = setHeight;
+    }
 
-rgb *APNGFrame::palette(rgb *setPalette) {
-  if (setPalette != NULL)
-    memcpy(_palette, setPalette,
-           std::min(sizeof(_palette), sizeof(setPalette)));
-  return _palette;
-}
+    void APNGFrame::setColorType(unsigned char setColorType) {
+        _colorType = setColorType;
+    }
 
-unsigned char *APNGFrame::transparency(unsigned char *setTransparency) {
-  if (setTransparency != NULL)
-    memcpy(_transparency, setTransparency,
-           std::min(sizeof(_transparency), sizeof(setTransparency)));
-  return _transparency;
-}
+    void APNGFrame::setPalette(const rgb* setPalette) {
+        std::copy(setPalette, setPalette + 256, _palette);
+    }
 
-int APNGFrame::paletteSize(int setPaletteSize) {
-  if (setPaletteSize != 0)
-    _paletteSize = setPaletteSize;
-  return _paletteSize;
-}
+    void APNGFrame::setTransparency(const unsigned char* setTransparency) {
+        std::copy(setTransparency, setTransparency + 256, _transparency);
+    }
 
-int APNGFrame::transparencySize(int setTransparencySize) {
-  if (setTransparencySize != 0)
-    _transparencySize = setTransparencySize;
-  return _transparencySize;
-}
+    void APNGFrame::setPaletteSize(int setPaletteSize) {
+        _paletteSize = setPaletteSize;
+    }
 
-unsigned int APNGFrame::delayNum(unsigned int setDelayNum) {
-  if (setDelayNum != 0)
-    _delayNum = setDelayNum;
-  return _delayNum;
-}
+    void APNGFrame::setTransparencySize(int setTransparencySize) {
+        _transparencySize = setTransparencySize;
+    }
 
-unsigned int APNGFrame::delayDen(unsigned int setDelayDen) {
-  if (setDelayDen != 0)
-    _delayDen = setDelayDen;
-  return _delayDen;
-}
+    void APNGFrame::setDelayNum(unsigned int setDelayNum) {
+        _delayNum = setDelayNum;
+    }
 
-unsigned char **APNGFrame::rows(unsigned char **setRows) {
-  if (setRows != NULL)
-    _rows = setRows;
-  return _rows;
-}
+    void APNGFrame::setDelayDen(unsigned int setDelayDen) {
+        _delayDen = setDelayDen;
+    }
 
-APNGFrame::APNGFrame()
-    : _pixels(NULL), _width(0), _height(0), _colorType(0), _paletteSize(0),
-      _transparencySize(0), _delayNum(0), _delayDen(0), _rows(NULL) {
-  memset(_palette, 0, sizeof(_palette));
-  memset(_transparency, 0, sizeof(_transparency));
-}
+    void APNGFrame::setRows(unsigned char** setRows) {
+        _rows = setRows;
+    }
 
 APNGFrame::APNGFrame(const std::string &filePath, unsigned delayNum,
                      unsigned delayDen)

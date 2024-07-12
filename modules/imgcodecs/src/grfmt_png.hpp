@@ -33,11 +33,11 @@ public:
     ImageDecoder newDecoder() const CV_OVERRIDE;
 
 protected:
+    bool readAnimation(Mat& img);
     static void info_fn(png_structp png_ptr, png_infop info_ptr);
     static void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
-    int  processing_start(png_structp& png_ptr, png_infop& info_ptr, void* frame_ptr, bool hasInfo, CHUNK& chunkIHDR, std::vector<CHUNK>& chunksInfo);
-    int  processing_data(png_structp png_ptr, png_infop info_ptr, uchar* p, uint size);
-    int  processing_finish(png_structp png_ptr, png_infop info_ptr);
+    int  processing_start(void* frame_ptr);
+    int  processing_finish();
     void compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h);
     static void  readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
     static uint  read_chunk(FILE* f, CHUNK* pChunk);
@@ -55,6 +55,7 @@ protected:
     CHUNK  m_chunkIHDR;
     std::vector<CHUNK> m_chunksInfo;
     std::vector<APNGFrame> m_frames;
+    bool m_first_frame_decoded;
 };
 
 

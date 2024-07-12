@@ -40,6 +40,8 @@
 #ifndef _APNGFRAME_H_
 #define _APNGFRAME_H_
 
+#include <string>
+
 namespace cv {
 
 typedef struct {

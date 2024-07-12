@@ -792,13 +792,6 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int start, int 
     return imreadmulti_(filename, flags, mats, start, count);
 }
 
-/*bool imreadanimation(const String& filename, CV_OUT std::vector<Mat>& mats, CV_OUT AnimationInfo& animinfo)
-{
-    CV_TRACE_FUNCTION();
-
-    return imreadmulti_(filename, IMREAD_UNCHANGED, mats, 0, -1, animinfo);
-}
-*/
 bool imreadanimation(const String& filename, CV_OUT Animation& animation)
 {
     CV_TRACE_FUNCTION();

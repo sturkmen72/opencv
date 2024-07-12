@@ -318,7 +318,7 @@ CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT Animation& anim
 
 CV_EXPORTS_W bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params = std::vector<int>());
 
-/** @brief Returns the number of images inside the give file
+/** @brief Returns the number of images inside the given file
 
 The function imcount will return the number of pages in a multi-page image, or 1 for single-page images
 @param filename Name of file to be loaded.

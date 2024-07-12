@@ -67,6 +67,7 @@ public:
     bool  isFormatSupported( int depth ) const CV_OVERRIDE;
     bool  write( const Mat& img, const std::vector<int>& params ) CV_OVERRIDE;
     bool  writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) CV_OVERRIDE;
+    bool  writeanimation(const Animation& animinfo, const std::vector<int>& params) CV_OVERRIDE;
     size_t save_apng(std::string inputFileName, std::vector<APNGFrame>& frames, uint first, uint loops, uint coltype, int deflate_method, int iter);
     void  optim_dirty(std::vector<APNGFrame>& frames);
     void  optim_duplicates(std::vector<APNGFrame>& frames, uint first);

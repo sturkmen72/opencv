@@ -1184,6 +1184,19 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
 
 bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
+    Animation animation;
+    animation.frames = img_vec;
+    int timestamp = 0;
+    for (size_t i = 0; i < animation.frames.size(); i++)
+    {
+        animation.timestamps.push_back(timestamp);
+        timestamp += 10;
+    }
+    return writeanimation(animation, params);
+}
+
+bool PngEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
+{
 
     int compression_level = 6;
     int compression_strategy = IMWRITE_PNG_STRATEGY_RLE; // Default strategy
@@ -1210,9 +1223,9 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
 
     std::vector<APNGFrame> frames;
 
-    for (size_t i = 0; i < img_vec.size(); i++)
+    for (size_t i = 0; i < animation.frames.size(); i++)
     {
-        Mat frame = img_vec[i];
+        Mat frame = animation.frames[i];
         if (frame.type() == CV_8UC3)
         {
             cvtColor(frame, frame, COLOR_BGR2RGBA);

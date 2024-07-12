@@ -261,7 +261,7 @@ OCV_OPTION(WITH_CAP_IOS "Enable iOS video capture" ON
   VERIFY HAVE_CAP_IOS)
 OCV_OPTION(WITH_CAROTENE "Use NVidia carotene acceleration library for ARM platform" (NOT CV_DISABLE_OPTIMIZATION)
   VISIBLE_IF (ARM OR AARCH64) AND NOT IOS AND NOT XROS)
-OCV_OPTION(WITH_KLEIDICV "Use KleidiCV library for ARM platforms" OFF
+OCV_OPTION(WITH_KLEIDICV "Use KleidiCV library for ARM platforms" (ANDROID AND AARCH64 AND NOT CV_DISABLE_OPTIMIZATION)
   VISIBLE_IF (AARCH64 AND (ANDROID OR UNIX AND NOT IOS AND NOT XROS)))
 OCV_OPTION(WITH_NDSRVP "Use Andes RVP extension" (NOT CV_DISABLE_OPTIMIZATION)
   VISIBLE_IF RISCV)
@@ -1258,7 +1258,11 @@ if(CMAKE_GENERATOR MATCHES "Xcode|Visual Studio|Multi-Config")
 else()
   status("    Configuration:"  ${CMAKE_BUILD_TYPE})
 endif()
-
+if(DEFINED OPENCV_ALGO_HINT_DEFAULT)
+  status("    Algorithm Hint:"  ${OPENCV_ALGO_HINT_DEFAULT})
+else()
+  status("    Algorithm Hint:" " ALGO_ACCURATE")
+endif()
 
 # ========================= CPU code generation mode =========================
 status("")

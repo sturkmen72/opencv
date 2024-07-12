@@ -202,7 +202,7 @@ bool  PngDecoder::readHeader()
                                     id = read_chunk(m_f, &chunkfcTL);
                                     if (id == id_fcTL && chunkfcTL.size == 38)
                                     {
-#if 0 
+#if 0
                                         uint w0 = png_get_uint_32(chunkfcTL.p + 12);
                                         uint h0 = png_get_uint_32(chunkfcTL.p + 16);
                                         uint x0 = png_get_uint_32(chunkfcTL.p + 20);
@@ -1139,7 +1139,7 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
     if (deflate_method == 2)
     {
         CV_UNUSED(iter);
-#if 0  // needs include "zopfli.h" 
+#if 0  // needs include "zopfli.h"
         ZopfliOptions opt_zopfli;
         uchar* data = 0;
         size_t size = 0;

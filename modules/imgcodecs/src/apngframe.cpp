@@ -178,7 +178,7 @@ APNGFrame::APNGFrame(const std::string &filePath, unsigned delayNum,
         (void)png_set_interlace_handling(png_ptr);
         png_read_update_info(png_ptr, info_ptr);
         _colorType = png_get_color_type(png_ptr, info_ptr);
-        rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+        rowbytes = (png_uint_32)png_get_rowbytes(png_ptr, info_ptr);
         memset(_palette, 255, sizeof(_palette));
         memset(_transparency, 255, sizeof(_transparency));
 

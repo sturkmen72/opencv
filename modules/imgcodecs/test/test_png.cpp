@@ -156,6 +156,34 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgb)
     //EXPECT_EQ(0, remove(output.c_str()));
 }
 
+TEST(Imgcodecs_Png, load_save_animation)
+{
+    const string root = cvtest::TS::ptr()->get_data_path();
+    const string filename = root + "readwrite/OpenCV_logo_white.png";
+    Animation l_animation, s_animation;
+
+    Mat image = imread(filename, IMREAD_UNCHANGED);
+    s_animation.frames.push_back(image.clone());
+    Mat roi = image(Rect(0, 680, 680, 220));
+    int timestamp = 0;
+    s_animation.timestamps.push_back(timestamp);
+
+    for (int i = 0; i < 15; i++)
+    {
+        roi = roi - Scalar(0, 0, 0, 20);
+        s_animation.frames.push_back(image.clone());
+        timestamp += 100;
+        s_animation.timestamps.push_back(timestamp);
+    }
+
+    string output = cv::tempfile(".png");
+
+    EXPECT_EQ(true, imwriteanimation(output, s_animation));
+    EXPECT_EQ(true, imreadanimation(output, l_animation));
+    EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size() - 2); // because last 3 images are identical so 1 image inserted as last frame and its duration calculated by libwebP
+    //EXPECT_EQ(0, remove(output.c_str()));
+}
+
 /**
  * Test for check whether reading exif orientation tag was processed successfully or not
  * The test info is the set of 8 images named testExifRotate_{1 to 8}.png

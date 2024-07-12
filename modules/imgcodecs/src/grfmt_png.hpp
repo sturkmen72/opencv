@@ -50,15 +50,11 @@ protected:
     int    m_color_type;
     size_t m_buf_pos;
     bool   m_is_animated;
-    int m_frame_count;
+    int    m_frame_count;
     int    m_loops;
-    CHUNK chunk;
-    CHUNK chunkIHDR;
-    uint delay_num, delay_den, dop, bop, rowbytes, imagesize;
-    std::vector<CHUNK> achunksInfo;
-    std::vector<APNGFrame> aframes;
-    int first;
-    bool hasInfo;
+    CHUNK  m_chunkIHDR;
+    std::vector<CHUNK> m_chunksInfo;
+    std::vector<APNGFrame> m_frames;
 };
 
 

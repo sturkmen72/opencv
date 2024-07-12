@@ -68,7 +68,8 @@ namespace cv
 enum ImreadModes {
        IMREAD_UNCHANGED            = -1, //!< If set, return the loaded image as is (with alpha channel, otherwise it gets cropped). Ignore EXIF orientation.
        IMREAD_GRAYSCALE            = 0,  //!< If set, always convert image to the single channel grayscale image (codec internal conversion).
-       IMREAD_COLOR                = 1,  //!< If set, always convert image to the 3 channel BGR color image.
+       IMREAD_COLOR_BGR            = 1,  //!< If set, always convert image to the 3 channel BGR color image.
+       IMREAD_COLOR                = 1,  //!< Same as IMREAD_COLOR_BGR.
        IMREAD_ANYDEPTH             = 2,  //!< If set, return 16-bit/32-bit image when the input has the corresponding depth, otherwise convert it to 8-bit.
        IMREAD_ANYCOLOR             = 4,  //!< If set, the image is read in any possible color format.
        IMREAD_LOAD_GDAL            = 8,  //!< If set, use the gdal driver for loading the image.
@@ -78,7 +79,8 @@ enum ImreadModes {
        IMREAD_REDUCED_COLOR_4      = 33, //!< If set, always convert image to the 3 channel BGR color image and the image size reduced 1/4.
        IMREAD_REDUCED_GRAYSCALE_8  = 64, //!< If set, always convert image to the single channel grayscale image and the image size reduced 1/8.
        IMREAD_REDUCED_COLOR_8      = 65, //!< If set, always convert image to the 3 channel BGR color image and the image size reduced 1/8.
-       IMREAD_IGNORE_ORIENTATION   = 128 //!< If set, do not rotate the image according to EXIF's orientation flag.
+       IMREAD_IGNORE_ORIENTATION   = 128, //!< If set, do not rotate the image according to EXIF's orientation flag.
+       IMREAD_COLOR_RGB            = 256, //!< If set, always convert image to the 3 channel RGB color image.
      };
 
 //! Imwrite flags
@@ -214,6 +216,15 @@ enum ImwriteHDRCompressionFlags {
     IMWRITE_HDR_COMPRESSION_RLE = 1
 };
 
+struct CV_EXPORTS_W_SIMPLE Animation
+{
+    CV_PROP_RW int loop_count;
+    CV_PROP_RW uint32_t bgcolor;
+    CV_PROP_RW int frame_count;
+    CV_PROP_RW std::vector<int> timestamps;
+    CV_PROP_RW std::vector<Mat> frames;
+};
+
 //! @} imgcodecs_flags
 
 /** @brief Loads an image from a file.
@@ -268,7 +279,7 @@ Currently, the following file formats are supported:
 @param filename Name of file to be loaded.
 @param flags Flag that can take values of cv::ImreadModes
 */
-CV_EXPORTS_W Mat imread( const String& filename, int flags = IMREAD_COLOR );
+CV_EXPORTS_W Mat imread( const String& filename, int flags = IMREAD_COLOR_BGR );
 
 /** @brief Loads an image from a file.
 
@@ -279,7 +290,7 @@ This is an overloaded member function, provided for convenience. It differs from
 @note
 The image passing through the img parameter can be pre-allocated. The memory is reused if the shape and the type match with the load image.
  */
-CV_EXPORTS_W void imread( const String& filename, OutputArray dst, int flags = IMREAD_COLOR );
+CV_EXPORTS_W void imread( const String& filename, OutputArray dst, int flags = IMREAD_COLOR_BGR );
 
 /** @brief Loads a multi-page image from a file.
 
@@ -302,6 +313,10 @@ The function imreadmulti loads a specified range from a multi-page image from th
 @sa cv::imread
 */
 CV_EXPORTS_W bool imreadmulti(const String& filename, CV_OUT std::vector<Mat>& mats, int start, int count, int flags = IMREAD_ANYCOLOR);
+
+CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT Animation& animation);
+
+CV_EXPORTS_W bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params = std::vector<int>());
 
 /** @brief Returns the number of images inside the give file
 

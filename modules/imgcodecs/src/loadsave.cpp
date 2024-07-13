@@ -628,7 +628,7 @@ imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int star
 }
 
 static bool
-imreadanimation_(const String& filename, int flags, int start, int count, Animation& animation)
+imreadanimation_(const String& filename, int flags, int start, int count, AnimationSequence& animation)
 {
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
@@ -799,7 +799,7 @@ bool imreadmulti(const String& filename, std::vector<Mat>& mats, int start, int 
     return imreadmulti_(filename, IMREAD_UNCHANGED, mats, 0, -1, animinfo);
 }
 */
-bool imreadanimation(const String& filename, CV_OUT Animation& animation)
+bool imreadanimation(const String& filename, CV_OUT AnimationSequence& animation)
 {
     CV_TRACE_FUNCTION();
 
@@ -938,7 +938,7 @@ bool imwrite( const String& filename, InputArray _img,
 }
 
 
-static bool imwriteanimation_(const String& filename, Animation& animation, const std::vector<int>& params)
+static bool imwriteanimation_(const String& filename, AnimationSequence& animation, const std::vector<int>& params)
 {
     ImageEncoder encoder = findEncoder(filename);
     if (!encoder)
@@ -980,7 +980,7 @@ static bool imwriteanimation_(const String& filename, Animation& animation, cons
     return code;
 }
 
-bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params)
+bool imwriteanimation(const String& filename, AnimationSequence& animation, const std::vector<int>& params)
 {
     CV_Assert(!animation.frames.empty());
     CV_Assert(animation.frames.size() == animation.timestamps.size());

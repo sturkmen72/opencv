@@ -6,10 +6,6 @@
 
 #include "precomp.hpp"
 
-#include <webp/decode.h>
-#include <webp/encode.h>
-#include <webp/demux.h>
-#include <webp/mux.h>
 #include <stdio.h>
 #include <limits.h>
 #include "grfmt_webp.hpp"
@@ -32,7 +28,6 @@ WebPDecoder::WebPDecoder()
 
 WebPDecoder::~WebPDecoder()
 {
-    WebPAnimDecoderDelete(anim_decoder);
 }
 
 size_t WebPDecoder::signatureLength() const
@@ -64,7 +59,6 @@ ImageDecoder WebPDecoder::newDecoder() const
 
 bool WebPDecoder::readHeader()
 {
-    anim_decoder = NULL;
     uint8_t header[WEBP_HEADER_SIZE] = { 0 };
     if (m_buf.empty())
     {
@@ -107,16 +101,17 @@ bool WebPDecoder::readHeader()
             WebPAnimDecoderOptions dec_options;
             WebPAnimDecoderOptionsInit(&dec_options);
             dec_options.color_mode = MODE_BGRA;
-            anim_decoder = WebPAnimDecoderNew(&webp_data, &dec_options);
 
-            if (anim_decoder == NULL)
+            anim_decoder.reset(WebPAnimDecoderNew(&webp_data, &dec_options));
+
+            if (!anim_decoder.get())
             {
                 fprintf(stderr, "Error parsing image");
                 return false;
             }
 
             WebPAnimInfo anim_info;
-            WebPAnimDecoderGetInfo(anim_decoder, &anim_info);
+            WebPAnimDecoderGetInfo(anim_decoder.get(), &anim_info);
             m_animation.loop_count = anim_info.loop_count;
             m_animation.bgcolor = anim_info.bgcolor;
             m_animation.frame_count = anim_info.frame_count;
@@ -179,7 +174,7 @@ bool WebPDecoder::readData(Mat &img)
         uint8_t* buf;
         int timestamp;
 
-        WebPAnimDecoderGetNext(anim_decoder, &buf, &timestamp);
+        WebPAnimDecoderGetNext(anim_decoder.get(), &buf, &timestamp);
         Mat tmp(Size(m_width, m_height), CV_8UC4, buf);
         tmp.copyTo(img);
         m_animation.timestamps.push_back(timestamp);
@@ -237,7 +232,7 @@ bool WebPDecoder::readData(Mat &img)
 bool WebPDecoder::nextPage()
 {
     // Prepare the next page, if any.
-    return WebPAnimDecoderHasMoreFrames(anim_decoder) > 0;
+    return WebPAnimDecoderHasMoreFrames(anim_decoder.get()) > 0;
 }
 
 WebPEncoder::WebPEncoder()
@@ -398,7 +393,8 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
         anim_config.minimize_size = 0;
     }
 
-    anim_encoder = WebPAnimEncoderNew(width, height, &anim_config);
+    std::unique_ptr<WebPAnimEncoder, void (*)(WebPAnimEncoder*)> anim_encoder(
+        WebPAnimEncoderNew(width, height, &anim_config), WebPAnimEncoderDelete);
 
     pic.width = width;
     pic.height = height;
@@ -410,12 +406,12 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     {
         timestamp = animation.timestamps[i];
         pic.argb = (uint32_t*)animation.frames[i].data;
-        ok = WebPAnimEncoderAdd(anim_encoder, &pic, timestamp, &config);
+        ok = WebPAnimEncoderAdd(anim_encoder.get(), &pic, timestamp, &config);
     }
 
     // add a last fake frame to signal the last duration
-    ok = ok & WebPAnimEncoderAdd(anim_encoder, NULL, timestamp, NULL);
-    ok = ok & WebPAnimEncoderAssemble(anim_encoder, &webp_data);
+    ok = ok & WebPAnimEncoderAdd(anim_encoder.get(), NULL, timestamp, NULL);
+    ok = ok & WebPAnimEncoderAssemble(anim_encoder.get(), &webp_data);
 
     if (ok)
     {
@@ -436,7 +432,6 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     }
 
     // free resources
-    WebPAnimEncoderDelete(anim_encoder);
     WebPDataClear(&webp_data);
     return ok > 0;
 }

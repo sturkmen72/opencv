@@ -10,9 +10,10 @@
 #ifdef HAVE_WEBP
 
 #include <fstream>
-
-struct WebPAnimDecoder;
-struct WebPAnimEncoder;
+#include <webp/decode.h>
+#include <webp/encode.h>
+#include <webp/demux.h>
+#include <webp/mux.h>
 
 namespace cv
 {
@@ -34,11 +35,15 @@ public:
     ImageDecoder newDecoder() const CV_OVERRIDE;
 
 protected:
+
+    struct UniquePtrDeleter {
+        void operator()(WebPAnimDecoder* decoder) const { WebPAnimDecoderDelete(decoder); }
+    };
     std::ifstream fs;
     size_t fs_size;
     Mat data;
     int channels;
-    WebPAnimDecoder* anim_decoder;
+    std::unique_ptr<WebPAnimDecoder, UniquePtrDeleter> anim_decoder;
     bool m_has_animation;
 };
 
@@ -53,9 +58,6 @@ public:
     bool writeanimation(const Animation& animinfo, const std::vector<int>& params) CV_OVERRIDE;
 
     ImageEncoder newEncoder() const CV_OVERRIDE;
-
-protected:
-    WebPAnimEncoder* anim_encoder;
 };
 
 }

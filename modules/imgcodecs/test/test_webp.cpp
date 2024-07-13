@@ -151,6 +151,8 @@ TEST(Imgcodecs_WebP, load_save_animation)
     Mat roi = image(Rect(0, 680, 680, 220));
     int timestamp = 0;
     s_animation.timestamps.push_back(timestamp);
+    s_animation.bgcolor = 0xff00ff;
+    s_animation.loop_count = 5;
 
     for (int i = 0; i < 15; i++)
     {
@@ -165,6 +167,8 @@ TEST(Imgcodecs_WebP, load_save_animation)
     EXPECT_EQ(true, imwriteanimation(output, s_animation));
     EXPECT_EQ(true, imreadanimation(output, l_animation));
     EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size() - 2); // because last 3 images are identical so 1 image inserted as last frame and its duration calculated by libwebP
+    EXPECT_EQ(l_animation.bgcolor, s_animation.bgcolor);
+    EXPECT_EQ(l_animation.loop_count, s_animation.loop_count);
     //EXPECT_EQ(0, remove(output.c_str()));
 }
 

@@ -377,6 +377,8 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
 
     config.lossless = 1;
     config.quality = 100.0f;
+    anim_config.anim_params.bgcolor = animation.bgcolor;
+    anim_config.anim_params.loop_count = animation.loop_count;
 
     if (params.size() > 1)
     {

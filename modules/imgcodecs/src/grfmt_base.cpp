@@ -145,6 +145,8 @@ bool BaseImageEncoder::writemulti(const std::vector<Mat>&, const std::vector<int
 
 bool BaseImageEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
+    CV_UNUSED(animation);
+    CV_UNUSED(params);
     return false;
 }
 

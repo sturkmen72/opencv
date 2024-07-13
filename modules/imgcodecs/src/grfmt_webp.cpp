@@ -24,6 +24,7 @@ WebPDecoder::WebPDecoder()
     m_buf_supported = true;
     channels = 0;
     fs_size = 0;
+    m_has_animation = false;
 }
 
 WebPDecoder::~WebPDecoder()

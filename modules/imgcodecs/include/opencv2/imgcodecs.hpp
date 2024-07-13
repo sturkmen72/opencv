@@ -216,24 +216,12 @@ enum ImwriteHDRCompressionFlags {
     IMWRITE_HDR_COMPRESSION_RLE = 1
 };
 
-struct CV_EXPORTS_W_SIMPLE AnimationSequence
+struct CV_EXPORTS_W_SIMPLE Animation
 {
-    // Number of times the animation should loop. A value of 0 means infinite looping.
     CV_PROP_RW int loop_count;
-
-    // Background color of the animation, stored as a 32-bit unsigned integer.
-    // The color format is assumed to be RGBA (Red, Green, Blue, Alpha).
     CV_PROP_RW uint32_t bgcolor;
-
-    // Total number of frames in the animation.
     CV_PROP_RW int frame_count;
-
-    // Timestamps for each frame, stored in a vector of integers.
-    // Each timestamp indicates the display duration of the corresponding frame in milliseconds.
     CV_PROP_RW std::vector<int> timestamps;
-
-    // Frames of the animation, stored in a vector of Mat objects.
-    // Each Mat object represents a single frame of the animation.
     CV_PROP_RW std::vector<Mat> frames;
 };
 
@@ -326,9 +314,9 @@ The function imreadmulti loads a specified range from a multi-page image from th
 */
 CV_EXPORTS_W bool imreadmulti(const String& filename, CV_OUT std::vector<Mat>& mats, int start, int count, int flags = IMREAD_ANYCOLOR);
 
-CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT AnimationSequence& animation);
+CV_EXPORTS_W bool imreadanimation(const String& filename, CV_OUT Animation& animation);
 
-CV_EXPORTS_W bool imwriteanimation(const String& filename, AnimationSequence& animation, const std::vector<int>& params = std::vector<int>());
+CV_EXPORTS_W bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params = std::vector<int>());
 
 /** @brief Returns the number of images inside the given file
 

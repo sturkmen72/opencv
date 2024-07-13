@@ -339,7 +339,7 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
-    AnimationSequence animation;
+    Animation animation;
     animation.frames = img_vec;
     int timestamp = 0;
     for (size_t i = 0; i < animation.frames.size(); i++)
@@ -350,7 +350,7 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
     return writeanimation(animation, params);
 }
 
-bool WebPEncoder::writeanimation(const AnimationSequence& animation, const std::vector<int>& params)
+bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
     int ok = 0;
     int timestamp = 0;

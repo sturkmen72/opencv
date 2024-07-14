@@ -369,13 +369,12 @@ bool  PngDecoder::readAnimation(Mat& img)
     //int result = -1;
     const unsigned long cMaxPNGSize = 1000000UL;
 
-    rgba* frameRaw_pixels = new rgba[m_width * m_height];
-    rgba* frameCur_pixels = new rgba[m_width * m_height];
-    rgba* frameNext_pixels = new rgba[m_width * m_height];
-
-    APNGFrame frameRaw(frameRaw_pixels, m_width, m_height);
-    APNGFrame frameCur(frameCur_pixels, m_width, m_height);
-    APNGFrame frameNext(frameNext_pixels, m_width, m_height);
+    APNGFrame frameRaw;
+    APNGFrame frameCur;
+    APNGFrame frameNext;
+    frameRaw.setMat(img, DEFAULT_FRAME_NUMERATOR, DEFAULT_FRAME_DENOMINATOR);
+    frameCur.setMat(img, DEFAULT_FRAME_NUMERATOR, DEFAULT_FRAME_DENOMINATOR);
+    frameNext.setMat(img, DEFAULT_FRAME_NUMERATOR, DEFAULT_FRAME_DENOMINATOR);
 
     processing_start((void*)&frameRaw);
     png_structp png_ptr = (png_structp)m_png_ptr;
@@ -396,16 +395,12 @@ bool  PngDecoder::readAnimation(Mat& img)
     uint delay_den = 0;
     uint dop = 0;
     uint bop = 0;
-    uint rowbytes;
     int first = 1;
-
-
 
     fseek(m_f, -8, SEEK_CUR);
 
     while (!feof(m_f))
     {
-        //printf("\n*ftell : %zd\n", ftell(m_f));
         CHUNK chunk;
 
         id = read_chunk(m_f, &chunk);
@@ -416,9 +411,6 @@ bool  PngDecoder::readAnimation(Mat& img)
         {
             hasInfo = true;
             png_process_data(png_ptr, info_ptr, chunk.p, chunk.size);
-    //printf("\n**ftell : %zd\n", ftell(m_f));
-    //printf(m_filename.c_str());
-
             return true;
         }
 
@@ -1401,24 +1393,15 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
     for (size_t i = 0; i < animation.frames.size(); i++)
     {
-        Mat frame = animation.frames[i];
-        if (frame.type() == CV_8UC3)
-        {
-            cvtColor(frame, frame, COLOR_BGR2RGBA);
-        }
-        else
-        {
-            cvtColor(frame, frame, COLOR_BGRA2RGBA);
-        }
-
-        rgba* pixels = (rgba*)frame.data;
-        frames.push_back(APNGFrame(pixels, frame.cols, frame.rows));
+        APNGFrame apngFrame;
+        apngFrame.setMat(animation.frames[i], DEFAULT_FRAME_NUMERATOR, DEFAULT_FRAME_DENOMINATOR);
+        frames.push_back(apngFrame);
     }
 
     CV_UNUSED(isBilevel);
     uint first =0;
     uint loops=3;
-    uint coltype=6;
+    uint coltype= animation.frames[0].channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
     int deflate_method=0;
     int iter=0;
 

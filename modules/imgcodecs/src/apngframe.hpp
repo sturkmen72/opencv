@@ -40,6 +40,7 @@
 #ifndef _APNGFRAME_H_
 #define _APNGFRAME_H_
 
+#include "precomp.hpp"
 #include <string>
 
 namespace cv {
@@ -57,8 +58,22 @@ constexpr unsigned DEFAULT_FRAME_DENOMINATOR = 100;
 
 class APNGFrame {
 public:
-    // Constructor for an empty APNGFrame
+
     APNGFrame();
+
+    // Destructor
+    ~APNGFrame();
+
+    /** Constructor from cv::Mat data with transparency
+     * @brief Creates an APNGFrame from a cv::Mat data.
+     * @param src The RGB pixel data.
+     * @param trns_color An array of transparency data.
+     * @param delayNum The delay numerator for this frame (defaults to
+     * DEFAULT_FRAME_NUMERATOR).
+     * @param delayDen The delay denominator for this frame (defaults to
+     * DEFAULT_FRAME_DENOMINATOR).
+     */
+    bool setMat(const cv::Mat& src, unsigned delayNum, unsigned delayDen);
 
     /** Constructor from a PNG file
     * @brief Creates an APNGFrame from a PNG file.
@@ -68,51 +83,7 @@ public:
     * @param delayDen The delay denominator for this frame (defaults to
     * DEFAULT_FRAME_DENOMINATOR).
     */
-    APNGFrame(const std::string& filePath, unsigned delayNum = DEFAULT_FRAME_NUMERATOR, unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
-
-    /** Constructor from RGB pixel data
-     * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
-     * @param pixels The RGB pixel data.
-     * @param width The width of the pixel data.
-     * @param height The height of the pixel data.
-     * @param delayNum The delay numerator for this frame (defaults to
-     * DEFAULT_FRAME_NUMERATOR).
-     * @param delayDen The delay denominator for this frame (defaults to
-     * DEFAULT_FRAME_DENOMINATOR).
-     */
-    APNGFrame(rgb* pixels, unsigned int width, unsigned int height,
-        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
-
-    /** Constructor from RGB pixel data with transparency
-     * @brief Creates an APNGFrame from a bitmapped array of RBG pixel data.
-     * @param pixels The RGB pixel data.
-     * @param width The width of the pixel data.
-     * @param height The height of the pixel data.
-     * @param trns_color An array of transparency data.
-     * @param delayNum The delay numerator for this frame (defaults to
-     * DEFAULT_FRAME_NUMERATOR).
-     * @param delayDen The delay denominator for this frame (defaults to
-     * DEFAULT_FRAME_DENOMINATOR).
-     */
-    APNGFrame(rgb* pixels, unsigned int width, unsigned int height, rgb* trns_color = NULL, unsigned delayNum = DEFAULT_FRAME_NUMERATOR, unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
-
-    /** Constructor from RGBA pixel data
-    * @brief Creates an APNGFrame from a bitmapped array of RBGA pixel data.
-    * @param pixels The RGBA pixel data.
-    * @param width The width of the pixel data.
-    * @param height The height of the pixel data.
-    * @param delayNum The delay numerator for this frame (defaults to
-    * DEFAULT_FRAME_NUMERATOR).
-    * @param delayDen The delay denominator for this frame (defaults to
-    * DEFAULT_FRAME_DENOMINATOR).
-    */
-    APNGFrame(rgba* pixels, unsigned int width, unsigned int height,
-        unsigned delayNum = DEFAULT_FRAME_NUMERATOR,
-        unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
-
-    // Destructor
-    ~APNGFrame();
+    bool loadFromFile(const std::string& filePath);
 
     /**
     * @brief Saves this frame as a single PNG file.

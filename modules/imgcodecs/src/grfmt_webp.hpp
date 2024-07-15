@@ -42,7 +42,6 @@ protected:
     std::ifstream fs;
     size_t fs_size;
     Mat data;
-    int channels;
     std::unique_ptr<WebPAnimDecoder, UniquePtrDeleter> anim_decoder;
     bool m_has_animation;
 };

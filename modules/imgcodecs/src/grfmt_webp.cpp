@@ -22,7 +22,6 @@ static const size_t WEBP_HEADER_SIZE = 32;
 WebPDecoder::WebPDecoder()
 {
     m_buf_supported = true;
-    channels = 0;
     fs_size = 0;
     m_has_animation = false;
 }
@@ -120,17 +119,7 @@ bool WebPDecoder::readHeader()
     }
     m_width = features.width;
     m_height = features.height;
-
-    if (features.has_alpha)
-    {
-        m_type = CV_8UC4;
-        channels = 4;
-    }
-    else
-    {
-        m_type = CV_8UC3;
-        channels = 3;
-    }
+    m_type = features.has_alpha ? CV_8UC4 : CV_8UC3;
 
     return true;
 }
@@ -180,7 +169,7 @@ bool WebPDecoder::readData(Mat &img)
         return true;
     }
 
-    if (channels == 3)
+    if (m_type == CV_8UC3)
     {
         CV_CheckTypeEQ(read_img.type(), CV_8UC3, "");
         if (m_use_rgb)
@@ -190,7 +179,7 @@ bool WebPDecoder::readData(Mat &img)
             res_ptr = WebPDecodeBGRInto(data.ptr(), data.total(), out_data,
                 (int)out_data_size, (int)read_img.step);
     }
-    else if (channels == 4)
+    else if (m_type == CV_8UC4)
     {
         CV_CheckTypeEQ(read_img.type(), CV_8UC4, "");
         if (m_use_rgb)

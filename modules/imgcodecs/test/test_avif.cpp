@@ -127,7 +127,7 @@ TEST_P(Imgcodecs_Avif_Image_WriteReadSuite, imwrite_imread) {
   ASSERT_FALSE(img_original.empty());
 
   // Encode.
-  const string output = cv::tempfile(".avif");
+  const string output = cv::tempfile(".webp");
   if (!IsBitDepthValid()) {
     EXPECT_NO_FATAL_FAILURE(
         cv::imwrite(output, img_original, encoding_params_));
@@ -162,13 +162,13 @@ TEST_P(Imgcodecs_Avif_Image_EncodeDecodeSuite, imencode_imdecode) {
   // Encode.
   std::vector<unsigned char> buf;
   if (!IsBitDepthValid()) {
-    EXPECT_THROW(cv::imencode(".avif", img_original, buf, encoding_params_),
+    EXPECT_THROW(cv::imencode(".webp", img_original, buf, encoding_params_),
                  cv::Exception);
     return;
   }
   bool result = true;
   EXPECT_NO_THROW(
-      result = cv::imencode(".avif", img_original, buf, encoding_params_););
+      result = cv::imencode(".webp", img_original, buf, encoding_params_););
   EXPECT_TRUE(result);
 
   // Read back.
@@ -288,7 +288,7 @@ TEST_P(Imgcodecs_Avif_Animation_WriteReadSuite, encode_decode) {
   ASSERT_FALSE(anim_original.empty());
 
   // Encode.
-  const string output = cv::tempfile(".avif");
+  const string output = cv::tempfile(".webp");
   if (!IsBitDepthValid()) {
     EXPECT_THROW(cv::imwritemulti(output, anim_original, encoding_params_),
                  cv::Exception);
@@ -320,7 +320,7 @@ TEST_P(Imgcodecs_Avif_Animation_WriteDecodeSuite, encode_decode) {
   ASSERT_FALSE(anim_original.empty());
 
   // Encode.
-  const string output = cv::tempfile(".avif");
+  const string output = cv::tempfile(".webp");
   if (!IsBitDepthValid()) {
     EXPECT_THROW(cv::imwritemulti(output, anim_original, encoding_params_),
                  cv::Exception);

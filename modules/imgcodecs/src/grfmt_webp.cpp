@@ -82,59 +82,57 @@ bool WebPDecoder::readHeader()
     }
 
     WebPBitstreamFeatures features;
-    if (VP8_STATUS_OK == WebPGetFeatures(header, sizeof(header), &features))
+    if (VP8_STATUS_OK < WebPGetFeatures(header, sizeof(header), &features)) return false;
+
+    m_has_animation = features.has_animation == 1;
+
+    if (m_has_animation)
     {
-        m_has_animation = features.has_animation > 0;
-        if (m_has_animation)
+        fs.seekg(0, std::ios::beg); CV_Assert(fs && "File stream error");
+        data.create(1, validateToInt(fs_size), CV_8UC1);
+        fs.read((char*)data.ptr(), fs_size);
+        CV_Assert(fs && "Can't read file data");
+        fs.close();
+
+        CV_Assert(data.type() == CV_8UC1); CV_Assert(data.rows == 1);
+
+        WebPData webp_data;
+        webp_data.bytes = (const uint8_t*)data.ptr();
+        webp_data.size = data.total();
+
+        WebPAnimDecoderOptions dec_options;
+        WebPAnimDecoderOptionsInit(&dec_options);
+        dec_options.color_mode = features.has_alpha ? MODE_BGRA : MODE_BGR;
+
+        anim_decoder.reset(WebPAnimDecoderNew(&webp_data, &dec_options));
+
+        if (!anim_decoder.get())
         {
-            fs.seekg(0, std::ios::beg); CV_Assert(fs && "File stream error");
-            data.create(1, validateToInt(fs_size), CV_8UC1);
-            fs.read((char*)data.ptr(), fs_size);
-            CV_Assert(fs && "Can't read file data");
-            fs.close();
-
-            CV_Assert(data.type() == CV_8UC1); CV_Assert(data.rows == 1);
-
-            WebPData webp_data;
-            webp_data.bytes = (const uint8_t*)data.ptr();
-            webp_data.size = data.total();
-
-            WebPAnimDecoderOptions dec_options;
-            WebPAnimDecoderOptionsInit(&dec_options);
-            dec_options.color_mode = features.has_alpha ? MODE_BGRA : MODE_BGR;
-
-            anim_decoder.reset(WebPAnimDecoderNew(&webp_data, &dec_options));
-
-            if (!anim_decoder.get())
-            {
-                fprintf(stderr, "Error parsing image");
-                return false;
-            }
-
-            WebPAnimInfo anim_info;
-            WebPAnimDecoderGetInfo(anim_decoder.get(), &anim_info);
-            m_animation.loop_count = anim_info.loop_count;
-            m_animation.bgcolor = anim_info.bgcolor;
-            m_animation.frame_count = anim_info.frame_count;
-        }
-        m_width  = features.width;
-        m_height = features.height;
-
-        if (features.has_alpha)
-        {
-            m_type = CV_8UC4;
-            channels = 4;
-        }
-        else
-        {
-            m_type = CV_8UC3;
-            channels = 3;
+            fprintf(stderr, "Error parsing image");
+            return false;
         }
 
-        return true;
+        WebPAnimInfo anim_info;
+        WebPAnimDecoderGetInfo(anim_decoder.get(), &anim_info);
+        m_animation.loop_count = anim_info.loop_count;
+        m_animation.bgcolor = anim_info.bgcolor;
+        m_animation.frame_count = anim_info.frame_count;
+    }
+    m_width = features.width;
+    m_height = features.height;
+
+    if (features.has_alpha)
+    {
+        m_type = CV_8UC4;
+        channels = 4;
+    }
+    else
+    {
+        m_type = CV_8UC3;
+        channels = 3;
     }
 
-    return false;
+    return true;
 }
 
 bool WebPDecoder::readData(Mat &img)

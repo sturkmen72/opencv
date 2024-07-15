@@ -87,6 +87,11 @@
 #define id_fdAT 0x54416466
 #define id_IEND 0x444E4549
 
+unsigned char* apng_load_from_memory(unsigned char const* buffer, int len, int* x, int* y, int* channels_in_file, int desired_channels)
+{
+    return new uchar[len];
+};
+
 namespace cv
 {
 /////////////////////// PngDecoder ///////////////////
@@ -199,25 +204,11 @@ bool  PngDecoder::readHeader()
                                 {
                                     m_is_animated = true;
                                     m_loops = png_get_uint_32(chunkacTL.p + 12);
-                                    id = read_chunk(m_f, &chunkfcTL);
-                                    if (id == id_fcTL && chunkfcTL.size == 38)
-                                    {
-#if 0
-                                        uint w0 = png_get_uint_32(chunkfcTL.p + 12);
-                                        uint h0 = png_get_uint_32(chunkfcTL.p + 16);
-                                        uint x0 = png_get_uint_32(chunkfcTL.p + 20);
-                                        uint y0 = png_get_uint_32(chunkfcTL.p + 24);
-                                        int delay_num = png_get_uint_16(chunkfcTL.p + 28);
-                                        int delay_den = png_get_uint_16(chunkfcTL.p + 30);
-                                        char dop = chunkfcTL.p[32];
-                                        char bop = chunkfcTL.p[33];
-#endif
+                                }
                             }
                         }
-                    }
-                }
                         fseek(m_f, 0, SEEK_SET);
-            }
+                     }
 
                     png_uint_32 wdth, hght;
                     int bit_depth, color_type, num_trans=0;
@@ -356,15 +347,19 @@ bool  PngDecoder::readData( Mat& img )
 }
 
 bool PngDecoder::nextPage() {
-    if (m_f)
-    {
-        return true;
-    }
-    return false;
+    return apngloader.has_frame();
 }
 
 bool  PngDecoder::readAnimation(Mat& img)
 {
+    close();
+    apngloader = uc::apng::create_file_loader(m_filename);
+    std::cout << "(" << apngloader.width() << "x" << apngloader.height() << "), "
+        << apngloader.num_frames() << "frames, "
+        << apngloader.num_plays() << " times to loop (0 indicates infinite looping).\n";
+    auto frame = apngloader.next_frame();
+    printf("frame.index %zd", frame.index);
+    return true;
     bool hasInfo = false;
     //int result = -1;
     const unsigned long cMaxPNGSize = 1000000UL;

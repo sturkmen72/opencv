@@ -54,6 +54,7 @@
 #define mingw_getsp(...) 0
 #define __builtin_frame_address(...) 0
 
+
 namespace cv {
 
     APNGFrame::APNGFrame()
@@ -142,6 +143,10 @@ namespace cv {
 
 bool APNGFrame::loadFromFile(const std::string &filePath)
 {
+    auto loader = uc::apng::create_file_loader(filePath);
+    std::cout << "(" << loader.width() << "x" << loader.height() << "), "
+        << loader.num_frames() << "frames, "
+        << loader.num_plays() << " times to loop (0 indicates infinite looping).\n";
     // TODO save extracted info to self
     FILE* f;
     if ((f = fopen(filePath.c_str(), "rb")) != 0)

@@ -52,6 +52,7 @@ protected:
     bool   m_is_animated;
     int    m_frame_count;
     int    m_loops;
+    uc::apng::loader<std::ifstream>  apngloader;
     CHUNK  m_chunkIHDR;
     std::vector<CHUNK> m_chunksInfo;
     std::vector<APNGFrame> m_frames;

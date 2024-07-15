@@ -1401,7 +1401,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
     CV_UNUSED(isBilevel);
     uint first =0;
     uint loops=3;
-    uint coltype= animation.frames[0].channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
+    uint coltype= animation.frames[0].channels() == 1 ? PNG_COLOR_TYPE_GRAY : animation.frames[0].channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
     int deflate_method=0;
     int iter=0;
 

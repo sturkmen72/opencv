@@ -218,14 +218,23 @@ enum ImwriteHDRCompressionFlags {
 
 struct CV_EXPORTS_W_SIMPLE Animation
 {
-    CV_PROP_RW int loop_count{ 0 };           // Number of times the animation should loop. 0 means infinite looping.
-    CV_PROP_RW uint32_t bgcolor{ 0 };         // Background color of the animation in RGBA format.
-    CV_PROP_RW int frame_count{ 0 };          // Total number of frames in the animation.
-    CV_PROP_RW std::vector<int> timestamps;   // Timestamps for each frame in milliseconds.
-    CV_PROP_RW std::vector<Mat> frames;       // Vector of frames, where each Mat represents a single frame.
+    CV_PROP_RW int loop_count;               // Number of times the animation should loop. 0 means infinite looping.
+    CV_PROP_RW uint32_t bgcolor;             // Background color of the animation in RGBA format.
+    CV_PROP_RW std::vector<int> timestamps;  // Timestamps for each frame in milliseconds.
+    CV_PROP_RW std::vector<Mat> frames;      // Vector of frames, where each Mat represents a single frame.
 
     // Default constructor
-    Animation() = default;
+    Animation()
+    {
+        loop_count = 0;
+        bgcolor = 0;
+    }
+
+    // Returns total number of frames in the animation.
+    CV_WRAP int getFrameCount()
+    {
+        return (int)frames.size();
+    }
 };
 
 //! @} imgcodecs_flags

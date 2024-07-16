@@ -730,7 +730,6 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
         ++current;
     }
     animation.bgcolor = decoder->animation().bgcolor;
-    animation.frame_count = decoder->animation().frame_count;
     animation.loop_count = decoder->animation().loop_count;
     animation.timestamps = decoder->animation().timestamps;
 

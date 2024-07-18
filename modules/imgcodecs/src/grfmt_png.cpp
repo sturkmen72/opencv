@@ -180,30 +180,45 @@ bool  PngDecoder::readHeader()
                         png_init_io( png_ptr, m_f );
                 }
 
-                if( !m_buf.empty() || m_f )
+                if (m_f)
                 {
-                    if (m_f)
-                    {
-                        uchar sig[8];
-                        uint id;
-                        CHUNK chunkacTL, chunkfcTL;
+                    uchar sig[8];
+                    uint id;
 
-                        if (fread(sig, 1, 8, m_f))
+                    if (fread(sig, 1, 8, m_f))
+                    {
+                        while (!feof(m_f))
                         {
-                            id = read_chunk(m_f, &m_chunkIHDR);
-                            if (id == id_IHDR && m_chunkIHDR.size == 25)
+                            CHUNK chunk;
+
+                            id = read_chunk(m_f, &chunk);
+
+                            if (id)
+                                m_chunksInfo.push_back(chunk);
+
+                            if (id == id_acTL && chunk.size == 20)
                             {
-                                id = read_chunk(m_f, &chunkacTL);
-                                if (id == id_acTL && chunkacTL.size == 20)
-                                {
-                                    m_is_animated = true;
-                                    m_loops = png_get_uint_32(chunkacTL.p + 12);
-                                }
+                                m_is_animated = true;
+                                m_loops = png_get_uint_32(chunk.p + 12);
                             }
                         }
-                        fseek(m_f, 0, SEEK_SET);
+#if 0
+                        if (m_chunksInfo.size() > 15)
+                        {
+                            printf("file:%s\n", m_filename.c_str());
+                            printf("time:%.2f ms.\n", tm.getTimeMilli());
+                            for (int i = 0; i < m_chunksInfo.size(); i++)
+                            {
+                                printf("chunk:%d\n", m_chunksInfo[i].size);
+                            }
+                        }
+#endif
                     }
+                    fseek(m_f, 0, SEEK_SET);
+                }
 
+                if (!m_buf.empty() || m_f)
+                {
                     png_uint_32 wdth, hght;
                     int bit_depth, color_type, num_trans=0;
                     png_bytep trans;
@@ -1383,7 +1398,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
     CV_UNUSED(isBilevel);
     uint first =0;
-    uint loops=3;
+    uint loops= animation.loop_count;
     uint coltype= animation.frames[0].channels() == 1 ? PNG_COLOR_TYPE_GRAY : animation.frames[0].channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
     int deflate_method=0;
     int iter=0;

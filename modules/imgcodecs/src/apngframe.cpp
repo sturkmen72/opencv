@@ -88,7 +88,17 @@ namespace cv {
             _pixels = new unsigned char[_height * rowbytes];
             _rows = new png_bytep[_height * sizeof(png_bytep)];
 
-            memcpy(_pixels, src.data, _height * rowbytes);
+            Mat tmp(src.rows, src.cols, src.type(), _pixels);
+            if (src.channels() == 4)
+            {
+                cvtColor(src, tmp, COLOR_BGRA2RGBA);
+            }
+            else if (src.channels() == 3)
+            {
+                cvtColor(src, tmp, COLOR_BGR2RGB);
+            }
+            else
+                src.copyTo(tmp);
 
             for (unsigned int i = 0; i < _height; ++i)
                 _rows[i] = _pixels + i * rowbytes;

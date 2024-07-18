@@ -42,6 +42,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <png.h>
+#include "opencv2/core/utils/logger.hpp"
 
 #if defined _MSC_VER && _MSC_VER >= 1200
  // interaction between '_setjmp' and C++ object destruction is non-portable
@@ -82,8 +83,8 @@ namespace cv {
 
             _width = src.cols;
             _height = src.rows;
-            _colorType = src.channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
-
+            _colorType = src.channels() == 1 ? PNG_COLOR_TYPE_GRAY : src.channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
+            CV_LOG_DEBUG(NULL, "_width:" << _width << "_height:" << _height << "_colorType:" << _colorType);
             _pixels = new unsigned char[_height * rowbytes];
             _rows = new png_bytep[_height * sizeof(png_bytep)];
 

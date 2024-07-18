@@ -194,30 +194,15 @@ bool  PngDecoder::readHeader()
                             if (id == id_IHDR && m_chunkIHDR.size == 25)
                             {
                                 id = read_chunk(m_f, &chunkacTL);
-
                                 if (id == id_acTL && chunkacTL.size == 20)
                                 {
                                     m_is_animated = true;
                                     m_loops = png_get_uint_32(chunkacTL.p + 12);
-                                    id = read_chunk(m_f, &chunkfcTL);
-                                    if (id == id_fcTL && chunkfcTL.size == 38)
-                                    {
-#if 0
-                                        uint w0 = png_get_uint_32(chunkfcTL.p + 12);
-                                        uint h0 = png_get_uint_32(chunkfcTL.p + 16);
-                                        uint x0 = png_get_uint_32(chunkfcTL.p + 20);
-                                        uint y0 = png_get_uint_32(chunkfcTL.p + 24);
-                                        int delay_num = png_get_uint_16(chunkfcTL.p + 28);
-                                        int delay_den = png_get_uint_16(chunkfcTL.p + 30);
-                                        char dop = chunkfcTL.p[32];
-                                        char bop = chunkfcTL.p[33];
-#endif
+                                }
                             }
                         }
-                    }
-                }
                         fseek(m_f, 0, SEEK_SET);
-            }
+                    }
 
                     png_uint_32 wdth, hght;
                     int bit_depth, color_type, num_trans=0;
@@ -366,7 +351,6 @@ bool PngDecoder::nextPage() {
 bool  PngDecoder::readAnimation(Mat& img)
 {
     bool hasInfo = false;
-    //int result = -1;
     const unsigned long cMaxPNGSize = 1000000UL;
 
     APNGFrame frameRaw;
@@ -380,7 +364,6 @@ bool  PngDecoder::readAnimation(Mat& img)
     png_structp png_ptr = (png_structp)m_png_ptr;
     png_infop info_ptr = (png_infop)m_info_ptr;
 
-
     uint id = 0;
     uint j = 0;
     uint w = 0;
@@ -389,7 +372,7 @@ bool  PngDecoder::readAnimation(Mat& img)
     uint h0 = 0;
     uint x0 = 0;
     uint y0 = 0;
-    uint imagesize = m_width * m_height * 4;
+    uint imagesize = m_width * m_height * img.channels();
 
     uint delay_num = 0;
     uint delay_den = 0;

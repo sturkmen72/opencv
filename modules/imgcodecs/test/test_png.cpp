@@ -230,8 +230,9 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray16u)
         png_frames.push_back(image.clone());
     }
 
-    string output = cv::tempfile(".png");
-    EXPECT_EQ(true, imwrite(output, png_frames));
+    string output = cv::tempfile("_16U.png");
+    EXPECT_EQ(true, imwrite(output, png_frames[0]));
+    EXPECT_THROW(imwrite(output, png_frames));
     vector<Mat> read_frames;
     //EXPECT_EQ(true, imreadmulti(output, read_frames));
     //EXPECT_EQ(1/*png_frames.size()*/, (int)read_frames.size()); // not implemented yet

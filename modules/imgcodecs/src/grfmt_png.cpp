@@ -1350,6 +1350,7 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
 
 bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
+    CV_Assert(img_vec[0].depth() == CV_8U);
     Animation animation;
     animation.frames = img_vec;
     int timestamp = 0;

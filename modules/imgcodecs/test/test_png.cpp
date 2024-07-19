@@ -232,7 +232,7 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray16u)
 
     string output = cv::tempfile("_16U.png");
     EXPECT_EQ(true, imwrite(output, png_frames[0]));
-    EXPECT_THROW(imwrite(output, png_frames));
+    EXPECT_THROW(imwrite(output, png_frames),cv::Exception);
     vector<Mat> read_frames;
     //EXPECT_EQ(true, imreadmulti(output, read_frames));
     //EXPECT_EQ(1/*png_frames.size()*/, (int)read_frames.size()); // not implemented yet

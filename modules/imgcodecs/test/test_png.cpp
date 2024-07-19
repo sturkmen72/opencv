@@ -238,7 +238,6 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray16u)
     //EXPECT_EQ(1/*png_frames.size()*/, (int)read_frames.size()); // not implemented yet
     //EXPECT_EQ(14, imcount(output)); //TO DO : actual return value is 1. should be frames count
     //EXPECT_EQ(0, remove(output.c_str()));
-    exit(0);
 }
 
 /**

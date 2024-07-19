@@ -85,30 +85,14 @@ namespace cv {
             _height = src.rows;
             _colorType = src.channels() == 1 ? PNG_COLOR_TYPE_GRAY : src.channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
             CV_LOG_DEBUG(NULL, "_width:" << _width << "_height:" << _height << "_colorType:" << _colorType);
-            _pixels = new unsigned char[_height * rowbytes];
+            _pixels = src.data;
             _rows = new png_bytep[_height * sizeof(png_bytep)];
-
-            Mat tmp(src.rows, src.cols, src.type(), _pixels);
-            if (src.channels() == 4)
-            {
-                cvtColor(src, tmp, COLOR_BGRA2RGBA);
-            }
-            else if (src.channels() == 3)
-            {
-                cvtColor(src, tmp, COLOR_BGR2RGB);
-            }
-            else
-                src.copyTo(tmp);
 
             for (unsigned int i = 0; i < _height; ++i)
                 _rows[i] = _pixels + i * rowbytes;
             return true;
         }
         return false;
-    }
-
-    void APNGFrame::setPixels(unsigned char* setPixels) {
-        _pixels = setPixels;
     }
 
     void APNGFrame::setWidth(unsigned int setWidth) {
@@ -145,10 +129,6 @@ namespace cv {
 
     void APNGFrame::setDelayDen(unsigned int setDelayDen) {
         _delayDen = setDelayDen;
-    }
-
-    void APNGFrame::setRows(unsigned char** setRows) {
-        _rows = setRows;
     }
 
 bool APNGFrame::loadFromFile(const std::string &filePath)

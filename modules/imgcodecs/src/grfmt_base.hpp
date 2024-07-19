@@ -64,6 +64,7 @@ public:
 
     int width() const { return m_width; }
     int height() const { return m_height; }
+    size_t getFrameCount() const { return m_frame_count; }
     virtual int type() const { return m_type; }
 
     Animation animation() const { return m_animation; };
@@ -94,6 +95,7 @@ protected:
     bool m_buf_supported;
     bool m_use_rgb;       // flag of decode image as RGB order instead of BGR.
     ExifReader m_exif;
+    size_t  m_frame_count;
     Animation m_animation;
 };
 

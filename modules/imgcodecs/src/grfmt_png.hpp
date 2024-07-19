@@ -37,11 +37,9 @@ protected:
     static void info_fn(png_structp png_ptr, png_infop info_ptr);
     static void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
     int  processing_start(void* frame_ptr);
-    int  processing_finish();
     void compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h);
     static void  readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
     static uint  read_chunk(FILE* f, CHUNK* pChunk);
-
     int    m_bit_depth;
     void*  m_png_ptr;  // pointer to decompression structure
     void*  m_info_ptr; // pointer to image information structure
@@ -50,12 +48,9 @@ protected:
     int    m_color_type;
     size_t m_buf_pos;
     bool   m_is_animated;
-    int    m_frame_count;
-    int    m_loops;
     CHUNK  m_chunkIHDR;
-    std::vector<CHUNK> m_chunksInfo;
-    std::vector<APNGFrame> m_frames;
-    bool m_first_frame_decoded;
+    CHUNK  m_chunkIDAT;
+    int    m_frame_no;
 };
 
 

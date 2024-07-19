@@ -722,16 +722,17 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
             ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
         }
 
-        animation.frames.push_back(mat);
         if (!decoder->nextPage())
         {
             break;
         }
         ++current;
     }
+
     animation.bgcolor = decoder->animation().bgcolor;
     animation.loop_count = decoder->animation().loop_count;
     animation.timestamps = decoder->animation().timestamps;
+    animation.frames = decoder->animation().frames;
 
     return !animation.frames.empty();
 }
@@ -1429,26 +1430,8 @@ void ImageCollection::Impl::init(String const& filename, int flags) {
     m_decoder->setSource(filename);
     CV_Assert(m_decoder->readHeader());
 
-    // count the pages of the image collection
-    size_t count = 1;
-    while(m_decoder->nextPage()) count++;
-
-    m_size = count;
+    m_size = m_decoder->getFrameCount();
     m_pages.resize(m_size);
-    // Reinitialize the decoder because we advanced to the last page while counting the pages of the image
-#ifdef HAVE_GDAL
-    if (m_flags != IMREAD_UNCHANGED && (m_flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL) {
-        m_decoder = GdalDecoder().newDecoder();
-    }
-    else {
-#endif
-    m_decoder = findDecoder(m_filename);
-#ifdef HAVE_GDAL
-    }
-#endif
-
-    m_decoder->setSource(m_filename);
-    m_decoder->readHeader();
 }
 
 size_t ImageCollection::Impl::size() const { return m_size; }

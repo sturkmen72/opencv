@@ -669,12 +669,12 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
     }
     catch (const cv::Exception& e)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: " << e.what());
+        CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read header: " << e.what());
         return 0;
     }
     catch (...)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: unknown exception");
+        CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read header: unknown exception");
         return 0;
     }
 
@@ -707,20 +707,14 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
         }
         catch (const cv::Exception& e)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: " << e.what());
+            CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read data: " << e.what());
         }
         catch (...)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: unknown exception");
+            CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read data: unknown exception");
         }
         if (!success)
             break;
-
-        // optionally rotate the data if EXIF' orientation flag says so
-        if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
-        {
-            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
-        }
 
         if (!decoder->nextPage())
         {
@@ -728,7 +722,6 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
         }
         ++current;
     }
-
     animation.bgcolor = decoder->animation().bgcolor;
     animation.loop_count = decoder->animation().loop_count;
     animation.timestamps = decoder->animation().timestamps;

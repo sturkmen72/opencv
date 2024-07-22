@@ -133,9 +133,8 @@ TEST(Imgcodecs_Png, load_save_animation)
 
     EXPECT_EQ(true, imwriteanimation(output, s_animation));
     EXPECT_EQ(s_animation.frames.size(), imcount(output));
-    EXPECT_EQ(false, imreadanimation(output, l_animation));
-    //EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size());
-    //EXPECT_EQ(true, imwrite(output, l_animation.frames[0]));
+    EXPECT_EQ(true, imreadanimation(output, l_animation));
+    EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size());
     //EXPECT_EQ(0, remove(output.c_str()));
 
 }
@@ -159,9 +158,9 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgba)
     string output = cv::tempfile(".png");
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> read_frames;
-    EXPECT_EQ(false, imreadmulti(output, read_frames, IMREAD_UNCHANGED));
-    //EXPECT_EQ(1/*png_frames.size()*/, (int)read_frames.size()); // not implemented yet
-    //EXPECT_EQ(14, imcount(output)); //TO DO : actual return value is 1. should be frames count
+    EXPECT_EQ(true, imreadmulti(output, read_frames, IMREAD_UNCHANGED));
+    EXPECT_EQ(png_frames.size(), (int)read_frames.size());
+    EXPECT_EQ(read_frames.size(), imcount(output));
     //EXPECT_EQ(0, remove(output.c_str()));
 }
 
@@ -184,9 +183,9 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgb)
     string output = cv::tempfile(".png");
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> read_frames;
-    EXPECT_EQ(false, imreadmulti(output, read_frames));
-    //EXPECT_EQ(1/*png_frames.size()*/, (int)read_frames.size()); // not implemented yet
-    //EXPECT_EQ(14, imcount(output)); //TO DO : actual return value is 1. should be frames count
+    EXPECT_EQ(true, imreadmulti(output, read_frames));
+    EXPECT_EQ(png_frames.size(), (int)read_frames.size());
+    EXPECT_EQ(read_frames.size(), imcount(output));
     //EXPECT_EQ(0, remove(output.c_str()));
 }
 
@@ -209,9 +208,9 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray)
     string output = cv::tempfile(".png");
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> read_frames;
-    EXPECT_EQ(false, imreadmulti(output, read_frames));
-    //EXPECT_EQ(1/*png_frames.size()*/, (int)read_frames.size()); // not implemented yet
-    //EXPECT_EQ(14, imcount(output)); //TO DO : actual return value is 1. should be frames count
+    //EXPECT_EQ(true, imreadmulti(output, read_frames));
+    //EXPECT_EQ(png_frames.size(), (int)read_frames.size());
+    //EXPECT_EQ(read_frames.size(), imcount(output));
     //EXPECT_EQ(0, remove(output.c_str()));
 }
 

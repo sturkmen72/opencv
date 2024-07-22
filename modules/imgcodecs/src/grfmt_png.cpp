@@ -183,17 +183,19 @@ bool  PngDecoder::readHeader()
                         uint id;
                         CHUNK chunk;
 
-                        fread(sig, 1, 8, m_f);
-                        id = read_chunk(m_f, &m_chunkIHDR);
-                        id = read_chunk(m_f, &chunk);
-
-                        if (id == id_acTL && chunk.size == 20)
+                        if (fread(sig, 1, 8, m_f))
                         {
-                            m_is_animated = true;
-                            m_frame_count = png_get_uint_32(chunk.p + 8);
-                            m_animation.loop_count = png_get_uint_32(chunk.p + 12);
+                            id = read_chunk(m_f, &m_chunkIHDR);
+                            id = read_chunk(m_f, &chunk);
+
+                            if (id == id_acTL && chunk.size == 20)
+                            {
+                                m_is_animated = true;
+                                m_frame_count = png_get_uint_32(chunk.p + 8);
+                                m_animation.loop_count = png_get_uint_32(chunk.p + 12);
+                            }
+                            fseek(m_f, 0, SEEK_SET);
                         }
-                        fseek(m_f, 0, SEEK_SET);
                     }
                 }
 
@@ -342,46 +344,78 @@ bool PngDecoder::nextPage() {
     return false;
 }
 
-bool  PngDecoder::readAnimation(Mat& img)
+bool PngDecoder::readAnimation(Mat& img)
 {
     bool result = false;
-    APNGFrame frameRaw;
+    uint w0 = 0;
+    uint h0 = 0;
+    uint x0 = 0;
+    uint y0 = 0;
+    uint delay_num = 0;
+    uint delay_den = 0;
+    uint dop = 0;
+    uint bop = 0;
     APNGFrame frameCur;
-    APNGFrame frameNext;
+    APNGFrame frameRaw;
 
     if (m_frame_no == 0)
     {
         fseek(m_f, -8, SEEK_CUR);
         read_chunk(m_f, &m_chunkIDAT);
+        frameRaw.setMat(img, delay_num, delay_den);
+        if (!processing_start((void*)&frameRaw))
+        {
+            m_frame_no++;
+            m_animation.frames.push_back(img);
+            m_animation.timestamps.push_back(1);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {
-#if 0
-        printf("frame:%d %d\n", m_frame_no, ftell(m_f));
+        CHUNK chunk;
+        read_chunk(m_f, &chunk);
+
+        w0 = png_get_uint_32(chunk.p + 12);
+        h0 = png_get_uint_32(chunk.p + 16);
+        x0 = png_get_uint_32(chunk.p + 20);
+        y0 = png_get_uint_32(chunk.p + 24);
+        delay_num = png_get_uint_16(chunk.p + 28);
+        delay_den = png_get_uint_16(chunk.p + 30);
+        dop = chunk.p[32];
+        bop = chunk.p[33];
+
+        memcpy(m_chunkIHDR.p + 8, chunk.p + 12, 8);
+
         read_chunk(m_f, &m_chunkIDAT);
-        read_chunk(m_f, &m_chunkIDAT);
-        m_chunkIDAT.p[4] = m_chunkIDAT.p[0];
-        m_chunkIDAT.p[5] = m_chunkIDAT.p[1];
-        m_chunkIDAT.p[6] = m_chunkIDAT.p[2];
-        m_chunkIDAT.p[7] = m_chunkIDAT.p[3];
-        m_chunkIDAT.p[8] = 'I';
-        m_chunkIDAT.p[9] = 'D';
-        m_chunkIDAT.p[10] = 'A';
-        m_chunkIDAT.p[11] = 'T';
-#endif
+        png_save_uint_32(m_chunkIDAT.p + 4, m_chunkIDAT.size - 16);
+        memcpy(m_chunkIDAT.p + 8, "IDAT", 4);
     }
 
-    frameCur.setMat(img, DEFAULT_FRAME_NUMERATOR, DEFAULT_FRAME_DENOMINATOR);
-    return result;
-    if (!processing_start((void*)&frameCur))
+    Mat tmp;
+    if (dop < 2)
+        tmp = Mat::zeros(img.rows, img.cols, img.type());
+    else
+        m_animation.frames[m_animation.frames.size() - 1].copyTo(tmp);
+
+    frameCur.setMat(tmp, delay_num, delay_den);
+
+    frameRaw.setMat(img, delay_num, delay_den);
+    if (!processing_start((void*)&frameRaw))
     {
+        compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0);
         m_frame_no++;
-        m_animation.frames.push_back(img);
+        m_animation.frames.push_back(tmp);
         m_animation.timestamps.push_back(1);
-        result = false;
+        result = true;
     }
     return result;
 }
+
 
 void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, uint x, uint y, uint w, uint h)
 {
@@ -440,9 +474,11 @@ int PngDecoder::processing_start(void* frame_ptr)
 
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_infop info_ptr = png_create_info_struct(png_ptr);
+    png_infop end_info = png_create_info_struct(png_ptr);
 
     m_png_ptr = png_ptr;
     m_info_ptr = info_ptr;
+    m_end_info = end_info;
 
     if (!png_ptr || !info_ptr)
         return 1;
@@ -460,17 +496,13 @@ int PngDecoder::processing_start(void* frame_ptr)
     png_process_data(png_ptr, info_ptr, header, 8);
     png_process_data(png_ptr, info_ptr, m_chunkIHDR.p, m_chunkIHDR.size);
 
-#if 0
-    for (int i = 0; i < 16; i++)
-    printf("%x ", m_chunkIDAT.p[i]);
-#endif
-    int trick = m_frame_no == 0 ? 0 : 0;
+    int trick = m_frame_no == 0 ? 0 : 4;
     png_process_data(png_ptr, info_ptr, m_chunkIDAT.p + trick, m_chunkIDAT.size - trick);
 
     uchar footer[12] = { 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130 };
-    png_process_data(png_ptr, info_ptr, footer, 12);
-    png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-
+    png_process_data(png_ptr, end_info, footer, 12);
+    png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+    m_png_ptr = m_info_ptr = m_end_info = 0;
     return 0;
 }
 

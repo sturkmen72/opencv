@@ -75,16 +75,6 @@ public:
      */
     bool setMat(const cv::Mat& src, unsigned delayNum, unsigned delayDen);
 
-    /** Constructor from a PNG file
-    * @brief Creates an APNGFrame from a PNG file.
-    * @param filePath The relative or absolute path to an image file.
-    * @param delayNum The delay numerator for this frame (defaults to
-    * DEFAULT_FRAME_NUMERATOR).
-    * @param delayDen The delay denominator for this frame (defaults to
-    * DEFAULT_FRAME_DENOMINATOR).
-    */
-    bool loadFromFile(const std::string& filePath);
-
     /**
     * @brief Saves this frame as a single PNG file.
     * @param outPath The relative or absolute path to save the image file to.

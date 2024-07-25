@@ -339,6 +339,7 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
 
 bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
+    CV_CheckDepthEQ(animation.frames[0].depth(), CV_8U, "WebP codec supports 8U images only");
     int ok = 0;
     int timestamp = 0;
     const int width = animation.frames[0].cols, height = animation.frames[0].rows;

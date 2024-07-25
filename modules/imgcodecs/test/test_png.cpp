@@ -224,6 +224,7 @@ TEST_P(Imgcodecs_Png_PngSuite, decode)
     src = imread(output, IMREAD_UNCHANGED);
 
     EXPECT_EQ(gt.cols, src.cols);
+    EXPECT_EQ(gt.channels() == 1 || gt.channels() == 3, src.channels() == 3);
     EXPECT_EQ(0, remove(output.c_str()));
 }
 

@@ -64,6 +64,7 @@ public:
 
     int width() const { return m_width; }
     int height() const { return m_height; }
+    size_t getFrameCount() const { return m_frame_count; }
     virtual int type() const { return m_type; }
 
     Animation animation() const { return m_animation; };

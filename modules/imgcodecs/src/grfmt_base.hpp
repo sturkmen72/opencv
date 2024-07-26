@@ -94,6 +94,7 @@ protected:
     bool m_buf_supported;
     bool m_use_rgb;       // flag of decode image as RGB order instead of BGR.
     ExifReader m_exif;
+    size_t  m_frame_count;
     Animation m_animation;
 };
 

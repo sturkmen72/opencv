@@ -590,88 +590,20 @@ bool SPngEncoder::write(const Mat &img, const std::vector<int> &params)
             }
             spng_set_option(ctx, SPNG_IMG_COMPRESSION_STRATEGY, compression_strategy);
 
-            int ret;
-            spng_encode_chunks(ctx);
-            ret = spng_encode_image(ctx, nullptr, 0, SPNG_FMT_PNG, SPNG_ENCODE_PROGRESSIVE);
-            if (channels > 1)
-            {
-                int error = SPNG_OK;
-                if (ret == SPNG_OK)
-                {
-                    if (depth == CV_16U)
-                    {
-                        AutoBuffer<ushort *> buff2;
-                        buff2.allocate(height);
-                        for (int y = 0; y < height; y++)
-                            buff2[y] = reinterpret_cast<unsigned short *>(img.data + y * img.step);
-
-                        AutoBuffer<ushort> _buffer;
-                        _buffer.allocate(width * channels * 2);
-                        for (int y = 0; y < height; y++)
-                        {
-                            if (channels == 3)
-                            {
-                                icvCvt_BGR2RGB_16u_C3R(buff2[y], 0,
-                                                       _buffer.data(), 0, Size(width, 1));
-                            }
-                            else if (channels == 4)
-                            {
-                                icvCvt_BGRA2RGBA_16u_C4R(buff2[y], 0,
-                                                         _buffer.data(), 0, Size(width, 1));
-                            }
-                            error = spng_encode_row(ctx, _buffer.data(), width * channels * 2);
-                            if (error)
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        AutoBuffer<uchar *> buff;
-                        buff.allocate(height);
-                        for (int y = 0; y < height; y++)
-                            buff[y] = img.data + y * img.step;
-
-                        AutoBuffer<uchar> _buffer;
-                        _buffer.allocate(width * channels);
-                        for (int y = 0; y < height; y++)
-                        {
-                            if (channels == 3)
-                            {
-                                icvCvt_BGR2RGB_8u_C3R(buff[y], 0, _buffer.data(), 0, Size(width, 1));
-                            }
-                            else if (channels == 4)
-                            {
-                                icvCvt_BGRA2RGBA_8u_C4R(buff[y], 0, _buffer.data(), 0, Size(width, 1));
-                            }
-                            error = spng_encode_row(ctx, _buffer.data(), width * channels);
-                            if (error)
-                                break;
-                        }
-                    }
-                    if (error == SPNG_EOI)
-                    { // success
-                        spng_encode_chunks(ctx);
-                        ret = SPNG_OK;
-                    }
-                }
-            }
+            Mat rgba;
+            if (channels == 3)
+                cvtColor(img, rgba, COLOR_BGR2RGB);
+            else if (channels == 4)
+                cvtColor(img, rgba, COLOR_BGRA2RGBA);
             else
             {
-                int error = SPNG_OK;
-                for (int y = 0; y < height; y++)
-                {
-                    error = spng_encode_row(ctx, img.data + y * img.step, width * channels * (depth == CV_16U ? 2 : 1));
-                    if (error)
-                        break;
-                }
-                if (error == SPNG_EOI)
-                { // success
-                    spng_encode_chunks(ctx);
-                    ret = SPNG_OK;
-                }
+                if (img.isContinuous())
+                    rgba = img;
+                else
+                    img.copyTo(rgba);
             }
-            if (ret == SPNG_OK)
-                result = true;
+            spng_encode_chunks(ctx);
+            result = SPNG_OK == spng_encode_image(ctx, rgba.data, rgba.channels() * rgba.total(), SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
         }
     }
 

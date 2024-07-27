@@ -73,7 +73,7 @@ public:
      * @param delayDen The delay denominator for this frame (defaults to
      * DEFAULT_FRAME_DENOMINATOR).
      */
-    bool setMat(const cv::Mat& src, unsigned delayNum, unsigned delayDen);
+    bool setMat(const cv::Mat& src, unsigned delayNum = DEFAULT_FRAME_NUMERATOR, unsigned delayDen = DEFAULT_FRAME_DENOMINATOR);
 
     /**
     * @brief Saves this frame as a single PNG file.

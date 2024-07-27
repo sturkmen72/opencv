@@ -508,10 +508,10 @@ int PngDecoder::processing_start(void* frame_ptr)
 
 void PngDecoder::info_fn(png_structp png_ptr, png_infop info_ptr)
 {
-    png_set_expand(png_ptr);
-    png_set_strip_16(png_ptr);
-    png_set_gray_to_rgb(png_ptr);
-    png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+    //png_set_expand(png_ptr);
+    //png_set_strip_16(png_ptr);
+    //png_set_gray_to_rgb(png_ptr);
+    //png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
     (void)png_set_interlace_handling(png_ptr);
     png_read_update_info(png_ptr, info_ptr);
 }
@@ -1247,7 +1247,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
     for (size_t i = 0; i < animation.frames.size(); i++)
     {
         APNGFrame apngFrame;
-        apngFrame.setMat(animation.frames[i], DEFAULT_FRAME_NUMERATOR, DEFAULT_FRAME_DENOMINATOR);
+        apngFrame.setMat(animation.frames[i]);
         frames.push_back(apngFrame);
     }
 

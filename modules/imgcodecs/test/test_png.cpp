@@ -208,9 +208,9 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray)
     string output = cv::tempfile(".png");
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> read_frames;
-    //EXPECT_EQ(true, imreadmulti(output, read_frames));
-    //EXPECT_EQ(png_frames.size(), (int)read_frames.size());
-    //EXPECT_EQ(read_frames.size(), imcount(output));
+    EXPECT_EQ(true, imreadmulti(output, read_frames));
+    EXPECT_EQ(png_frames.size(), (int)read_frames.size());
+    EXPECT_EQ(read_frames.size(), imcount(output));
     //EXPECT_EQ(0, remove(output.c_str()));
 }
 

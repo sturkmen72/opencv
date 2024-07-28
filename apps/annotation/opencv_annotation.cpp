@@ -64,254 +64,528 @@ Adapted by: Puttemans Steven - April 2016 - Vectorize the process to enable bett
 using namespace std;
 using namespace cv;
 
-// Function prototypes
-void on_mouse(int, int, int, int, void*);
-vector<Rect> get_annotations(Mat);
-
-// Public parameters
-Mat image;
-int roi_x0 = 0, roi_y0 = 0, roi_x1 = 0, roi_y1 = 0, num_of_rec = 0;
-bool start_draw = false, stop = false;
-
-// Window name for visualisation purposes
-const string window_name = "OpenCV Based Annotation Tool";
-
-// FUNCTION : Mouse response for selecting objects in images
-// If left button is clicked, start drawing a rectangle as long as mouse moves
-// Stop drawing once a new left click is detected by the on_mouse function
-void on_mouse(int event, int x, int y, int , void * )
+enum
 {
-    // Action when left button is clicked
-    if(event == EVENT_LBUTTONDOWN)
+    /** The power of the method is fully expressed when inserting objects with complex outlines into a new background*/
+    NORMAL_CLONE = 1,
+    /** The classic method, color-based selection and alpha masking might be time consuming and often leaves an undesirable
+    halo. Seamless cloning, even averaged with the original image, is not effective. Mixed seamless cloning based on a loose selection proves effective.*/
+    MIXED_CLONE  = 2,
+    /** Monochrome transfer allows the user to easily replace certain features of one object by alternative features.*/
+    MONOCHROME_TRANSFER = 3};
+    class Cloning
     {
-        if(!start_draw)
-        {
-            roi_x0 = x;
-            roi_y0 = y;
-            start_draw = true;
-        } else {
-            roi_x1 = x;
-            roi_y1 = y;
-            start_draw = false;
-        }
-    }
+        public:
+            void normalClone(const cv::Mat& destination, const cv::Mat &mask, cv::Mat &wmask, cv::Mat &cloned, int flag);
+            void illuminationChange(cv::Mat &I, cv::Mat &mask, cv::Mat &wmask, cv::Mat &cloned, float alpha, float beta);
+            void localColorChange(cv::Mat &I, cv::Mat &mask, cv::Mat &wmask, cv::Mat &cloned, float red_mul, float green_mul, float blue_mul);
+            void textureFlatten(cv::Mat &I, cv::Mat &mask, cv::Mat &wmask, float low_threshold, float high_threhold, int kernel_size, cv::Mat &cloned);
 
-    // Action when mouse is moving and drawing is enabled
-    if((event == EVENT_MOUSEMOVE) && start_draw)
+        protected:
+
+            void initVariables(const cv::Mat &destination, const cv::Mat &binaryMask);
+            void computeDerivatives(const cv::Mat &destination, const cv::Mat &patch, cv::Mat &binaryMask);
+            void scalarProduct(cv::Mat mat, float r, float g, float b);
+            void poisson(const cv::Mat &destination);
+            void evaluate(const cv::Mat &I, cv::Mat &wmask, const cv::Mat &cloned);
+            void dst(const Mat& src, Mat& dest, bool invert = false);
+            void solve(const Mat &img, Mat& mod_diff, Mat &result);
+
+            void poissonSolver(const cv::Mat &img, cv::Mat &gxx , cv::Mat &gyy, cv::Mat &result);
+
+            void arrayProduct(const cv::Mat& lhs, const cv::Mat& rhs, cv::Mat& result) const;
+
+            void computeGradientX(const cv::Mat &img, cv::Mat &gx);
+            void computeGradientY(const cv::Mat &img, cv::Mat &gy);
+            void computeLaplacianX(const cv::Mat &img, cv::Mat &gxx);
+            void computeLaplacianY(const cv::Mat &img, cv::Mat &gyy);
+
+        private:
+            std::vector <cv::Mat> rgbx_channel, rgby_channel, output;
+            cv::Mat destinationGradientX, destinationGradientY;
+            cv::Mat patchGradientX, patchGradientY;
+            cv::Mat binaryMaskFloat, binaryMaskFloatInverted;
+
+            std::vector<float> filter_X, filter_Y;
+    };
+
+void Cloning::computeGradientX( const Mat &img, Mat &gx)
+{
+    Mat kernel = Mat::zeros(1, 3, CV_8S);
+    kernel.at<char>(0,2) = 1;
+    kernel.at<char>(0,1) = -1;
+
+    if(img.channels() == 3)
     {
-        // Redraw bounding box for annotation
-        Mat current_view;
-        image.copyTo(current_view);
-        rectangle(current_view, Point(roi_x0,roi_y0), Point(x,y), Scalar(0,0,255));
-        imshow(window_name, current_view);
+        filter2D(img, gx, CV_32F, kernel);
+    }
+    else if (img.channels() == 1)
+    {
+        filter2D(img, gx, CV_32F, kernel);
+        cvtColor(gx, gx, COLOR_GRAY2BGR);
     }
 }
 
-// FUNCTION : returns a vector of Rect objects given an image containing positive object instances
-vector<Rect> get_annotations(Mat input_image)
+void Cloning::computeGradientY( const Mat &img, Mat &gy)
 {
-    vector<Rect> current_annotations;
+    Mat kernel = Mat::zeros(3, 1, CV_8S);
+    kernel.at<char>(2,0) = 1;
+    kernel.at<char>(1,0) = -1;
 
-    // Make it possible to exit the annotation process
-    stop = false;
-
-    // Init window interface and couple mouse actions
-    namedWindow(window_name, WINDOW_AUTOSIZE);
-    setMouseCallback(window_name, on_mouse);
-
-    image = input_image;
-    imshow(window_name, image);
-    int key_pressed = 0;
-
-    do
+    if(img.channels() == 3)
     {
-        // Get a temporary image clone
-        Mat temp_image = input_image.clone();
-        Rect currentRect(0, 0, 0, 0);
+        filter2D(img, gy, CV_32F, kernel);
+    }
+    else if (img.channels() == 1)
+    {
+        filter2D(img, gy, CV_32F, kernel);
+        cvtColor(gy, gy, COLOR_GRAY2BGR);
+    }
+}
 
-        // Keys for processing
-        // You need to select one for confirming a selection and one to continue to the next image
-        // Based on the universal ASCII code of the keystroke: http://www.asciitable.com/
-        //      c = 99		    add rectangle to current image
-        //	    n = 110		    save added rectangles and show next image
-        //      d = 100         delete the last annotation made
-        //	    <ESC> = 27      exit program
-        key_pressed = 0xFF & waitKey(0);
-        switch( key_pressed )
+void Cloning::computeLaplacianX( const Mat &img, Mat &laplacianX)
+{
+    Mat kernel = Mat::zeros(1, 3, CV_8S);
+    kernel.at<char>(0,0) = -1;
+    kernel.at<char>(0,1) = 1;
+    filter2D(img, laplacianX, CV_32F, kernel);
+}
+
+void Cloning::computeLaplacianY( const Mat &img, Mat &laplacianY)
+{
+    Mat kernel = Mat::zeros(3, 1, CV_8S);
+    kernel.at<char>(0,0) = -1;
+    kernel.at<char>(1,0) = 1;
+    filter2D(img, laplacianY, CV_32F, kernel);
+}
+
+void Cloning::dst(const Mat& src, Mat& dest, bool invert)
+{
+    Mat temp = Mat::zeros(src.rows, 2 * src.cols + 2, CV_32F);
+
+    int flag = invert ? DFT_ROWS + DFT_SCALE + DFT_INVERSE: DFT_ROWS;
+
+    src.copyTo(temp(Rect(1,0, src.cols, src.rows)));
+
+    for(int j = 0 ; j < src.rows ; ++j)
+    {
+        float * tempLinePtr = temp.ptr<float>(j);
+        const float * srcLinePtr = src.ptr<float>(j);
+        for(int i = 0 ; i < src.cols ; ++i)
         {
-        case 27:
-                stop = true;
-                break;
-        case 99:
-                // Draw initiated from top left corner
-                if(roi_x0<roi_x1 && roi_y0<roi_y1)
-                {
-                    currentRect.x = roi_x0;
-                    currentRect.y = roi_y0;
-                    currentRect.width = roi_x1-roi_x0;
-                    currentRect.height = roi_y1-roi_y0;
-                }
-                // Draw initiated from bottom right corner
-                if(roi_x0>roi_x1 && roi_y0>roi_y1)
-                {
-                    currentRect.x = roi_x1;
-                    currentRect.y = roi_y1;
-                    currentRect.width = roi_x0-roi_x1;
-                    currentRect.height = roi_y0-roi_y1;
-                }
-                // Draw initiated from top right corner
-                if(roi_x0>roi_x1 && roi_y0<roi_y1)
-                {
-                    currentRect.x = roi_x1;
-                    currentRect.y = roi_y0;
-                    currentRect.width = roi_x0-roi_x1;
-                    currentRect.height = roi_y1-roi_y0;
-                }
-                // Draw initiated from bottom left corner
-                if(roi_x0<roi_x1 && roi_y0>roi_y1)
-                {
-                    currentRect.x = roi_x0;
-                    currentRect.y = roi_y1;
-                    currentRect.width = roi_x1-roi_x0;
-                    currentRect.height = roi_y0-roi_y1;
-                }
-                // Draw the rectangle on the canvas
-                // Add the rectangle to the vector of annotations
-                current_annotations.push_back(currentRect);
-                break;
-        case 100:
-                // Remove the last annotation
-                if(current_annotations.size() > 0){
-                    current_annotations.pop_back();
-                }
-                break;
-        default:
-                // Default case --> do nothing at all
-                // Other keystrokes can simply be ignored
-                break;
+            tempLinePtr[src.cols + 2 + i] = - srcLinePtr[src.cols - 1 - i];
+        }
+    }
+
+    Mat planes[] = {temp, Mat::zeros(temp.size(), CV_32F)};
+    Mat complex;
+
+    merge(planes, 2, complex);
+    dft(complex, complex, flag);
+    split(complex, planes);
+    temp = Mat::zeros(src.cols, 2 * src.rows + 2, CV_32F);
+
+    for(int j = 0 ; j < src.cols ; ++j)
+    {
+        float * tempLinePtr = temp.ptr<float>(j);
+        for(int i = 0 ; i < src.rows ; ++i)
+        {
+            float val = planes[1].ptr<float>(i)[j + 1];
+            tempLinePtr[i + 1] = val;
+            tempLinePtr[temp.cols - 1 - i] = - val;
+        }
+    }
+
+    Mat planes2[] = {temp, Mat::zeros(temp.size(), CV_32F)};
+
+    merge(planes2, 2, complex);
+    dft(complex, complex, flag);
+    split(complex, planes2);
+
+    temp = planes2[1].t();
+    temp(Rect( 0, 1, src.cols, src.rows)).copyTo(dest);
+}
+
+void Cloning::solve(const Mat &img, Mat& mod_diff, Mat &result)
+{
+    const int w = img.cols;
+    const int h = img.rows;
+
+    Mat res;
+    dst(mod_diff, res);
+
+    for(int j = 0 ; j < h-2; j++)
+    {
+        float * resLinePtr = res.ptr<float>(j);
+        for(int i = 0 ; i < w-2; i++)
+        {
+            resLinePtr[i] /= (filter_X[i] + filter_Y[j] - 4);
+        }
+    }
+
+    dst(res, mod_diff, true);
+
+    unsigned char *  resLinePtr = result.ptr<unsigned char>(0);
+    const unsigned char * imgLinePtr = img.ptr<unsigned char>(0);
+    const float * interpLinePtr = NULL;
+
+     //first col
+    for(int i = 0 ; i < w ; ++i)
+        result.ptr<unsigned char>(0)[i] = img.ptr<unsigned char>(0)[i];
+
+    for(int j = 1 ; j < h-1 ; ++j)
+    {
+        resLinePtr = result.ptr<unsigned char>(j);
+        imgLinePtr  = img.ptr<unsigned char>(j);
+        interpLinePtr = mod_diff.ptr<float>(j-1);
+
+        //first row
+        resLinePtr[0] = imgLinePtr[0];
+
+        for(int i = 1 ; i < w-1 ; ++i)
+        {
+            //saturate cast is not used here, because it behaves differently from the previous implementation
+            //most notable, saturate_cast rounds before truncating, here it's the opposite.
+            float value = interpLinePtr[i-1];
+            if(value < 0.)
+                resLinePtr[i] = 0;
+            else if (value > 255.0)
+                resLinePtr[i] = 255;
+            else
+                resLinePtr[i] = static_cast<unsigned char>(value);
         }
 
-        // Check if escape has been pressed
-        if(stop)
-        {
+        //last row
+        resLinePtr[w-1] = imgLinePtr[w-1];
+    }
+
+    //last col
+    resLinePtr = result.ptr<unsigned char>(h-1);
+    imgLinePtr = img.ptr<unsigned char>(h-1);
+    for(int i = 0 ; i < w ; ++i)
+        resLinePtr[i] = imgLinePtr[i];
+}
+
+void Cloning::poissonSolver(const Mat &img, Mat &laplacianX , Mat &laplacianY, Mat &result)
+{
+    const int w = img.cols;
+    const int h = img.rows;
+
+    Mat lap = laplacianX + laplacianY;
+
+    Mat bound = img.clone();
+
+    rectangle(bound, Point(1, 1), Point(img.cols-2, img.rows-2), Scalar::all(0), -1);
+    Mat boundary_points;
+    Laplacian(bound, boundary_points, CV_32F);
+
+    boundary_points = lap - boundary_points;
+
+    Mat mod_diff = boundary_points(Rect(1, 1, w-2, h-2));
+
+    solve(img,mod_diff,result);
+}
+
+void Cloning::initVariables(const Mat &destination, const Mat &binaryMask)
+{
+    destinationGradientX = Mat(destination.size(),CV_32FC3);
+    destinationGradientY = Mat(destination.size(),CV_32FC3);
+    patchGradientX = Mat(destination.size(),CV_32FC3);
+    patchGradientY = Mat(destination.size(),CV_32FC3);
+
+    binaryMaskFloat = Mat(binaryMask.size(),CV_32FC1);
+    binaryMaskFloatInverted = Mat(binaryMask.size(),CV_32FC1);
+
+    //init of the filters used in the dst
+    const int w = destination.cols;
+    filter_X.resize(w - 2);
+    double scale = CV_PI / (w - 1);
+    for(int i = 0 ; i < w-2 ; ++i)
+        filter_X[i] = 2.0f * (float)std::cos(scale * (i + 1));
+
+    const int h  = destination.rows;
+    filter_Y.resize(h - 2);
+    scale = CV_PI / (h - 1);
+    for(int j = 0 ; j < h - 2 ; ++j)
+        filter_Y[j] = 2.0f * (float)std::cos(scale * (j + 1));
+}
+
+void Cloning::computeDerivatives(const Mat& destination, const Mat &patch, Mat &binaryMask)
+{
+    initVariables(destination, binaryMask);
+
+    computeGradientX(destination, destinationGradientX);
+    computeGradientY(destination, destinationGradientY);
+
+    computeGradientX(patch, patchGradientX);
+    computeGradientY(patch, patchGradientY);
+
+    Mat Kernel(Size(3, 3), CV_8UC1);
+    Kernel.setTo(Scalar(1));
+    erode(binaryMask, binaryMask, Kernel, Point(-1,-1), 3);
+
+    binaryMask.convertTo(binaryMaskFloat, CV_32FC1, 1.0/255.0);
+}
+
+void Cloning::scalarProduct(Mat mat, float r, float g, float b)
+{
+    vector <Mat> channels;
+    split(mat,channels);
+    multiply(channels[2],r,channels[2]);
+    multiply(channels[1],g,channels[1]);
+    multiply(channels[0],b,channels[0]);
+    merge(channels,mat);
+}
+
+void Cloning::arrayProduct(const cv::Mat& lhs, const cv::Mat& rhs, cv::Mat& result) const
+{
+    vector <Mat> lhs_channels;
+    vector <Mat> result_channels;
+
+    split(lhs,lhs_channels);
+    split(result,result_channels);
+
+    for(int chan = 0 ; chan < 3 ; ++chan)
+        multiply(lhs_channels[chan],rhs,result_channels[chan]);
+
+    merge(result_channels,result);
+}
+
+void Cloning::poisson(const Mat &destination)
+{
+    Mat laplacianX = destinationGradientX + patchGradientX;
+    Mat laplacianY = destinationGradientY + patchGradientY;
+
+    computeLaplacianX(laplacianX,laplacianX);
+    computeLaplacianY(laplacianY,laplacianY);
+
+    split(laplacianX,rgbx_channel);
+    split(laplacianY,rgby_channel);
+
+    split(destination,output);
+
+    for(int chan = 0 ; chan < 3 ; ++chan)
+    {
+        poissonSolver(output[chan], rgbx_channel[chan], rgby_channel[chan], output[chan]);
+    }
+}
+
+void Cloning::evaluate(const Mat &I, Mat &wmask, const Mat &cloned)
+{
+    bitwise_not(wmask,wmask);
+
+    wmask.convertTo(binaryMaskFloatInverted,CV_32FC1,1.0/255.0);
+
+    arrayProduct(destinationGradientX, binaryMaskFloatInverted, destinationGradientX);
+    arrayProduct(destinationGradientY, binaryMaskFloatInverted, destinationGradientY);
+
+    poisson(I);
+
+    merge(output,cloned);
+}
+
+void Cloning::normalClone(const Mat &destination, const Mat &patch, Mat &binaryMask, Mat &cloned, int flag)
+{
+    const int w = destination.cols;
+    const int h = destination.rows;
+    const int channel = destination.channels();
+    const int n_elem_in_line = w * channel;
+
+    computeDerivatives(destination,patch,binaryMask);
+
+    switch(flag)
+    {
+        case NORMAL_CLONE:
+            arrayProduct(patchGradientX, binaryMaskFloat, patchGradientX);
+            arrayProduct(patchGradientY, binaryMaskFloat, patchGradientY);
             break;
-        }
 
-        // Draw all the current rectangles onto the top image and make sure that the global image is linked
-        for(int i=0; i < (int)current_annotations.size(); i++){
-            rectangle(temp_image, current_annotations[i], Scalar(0,255,0), 1);
-        }
-        image = temp_image;
+        case MIXED_CLONE:
+        {
+            AutoBuffer<int> maskIndices(n_elem_in_line);
+            for (int i = 0; i < n_elem_in_line; ++i)
+                maskIndices[i] = i / channel;
 
-        // Force an explicit redraw of the canvas --> necessary to visualize delete correctly
-        imshow(window_name, image);
-    }
-    // Continue as long as the next image key has not been pressed
-    while(key_pressed != 110);
+            for(int i=0;i < h; i++)
+            {
+                float * patchXLinePtr = patchGradientX.ptr<float>(i);
+                float * patchYLinePtr = patchGradientY.ptr<float>(i);
+                const float * destinationXLinePtr = destinationGradientX.ptr<float>(i);
+                const float * destinationYLinePtr = destinationGradientY.ptr<float>(i);
+                const float * binaryMaskLinePtr = binaryMaskFloat.ptr<float>(i);
 
-    // Close down the window
-    destroyWindow(window_name);
+                for(int j=0; j < n_elem_in_line; j++)
+                {
+                    int maskIndex = maskIndices[j];
 
-    // Return the data
-    return current_annotations;
-}
-
-int main( int argc, const char** argv )
-{
-    // Use the cmdlineparser to process input arguments
-    CommandLineParser parser(argc, argv,
-        "{ help h usage ? |      | show this message }"
-        "{ images i       |      | (required) path to image folder [example - /data/testimages/] }"
-        "{ annotations a  |      | (required) path to annotations txt file [example - /data/annotations.txt] }"
-        "{ maxWindowHeight m  |  -1   | (optional) images larger in height than this value will be scaled down }"
-        "{ resizeFactor r  |  2  | (optional) factor for scaling down [default = half the size] }"
-    );
-    // Read in the input arguments
-    if (parser.has("help")){
-        parser.printMessage();
-        cerr << "TIP: Use absolute paths to avoid any problems with the software!" << endl;
-        return 0;
-    }
-    string image_folder(parser.get<string>("images"));
-    string annotations_file(parser.get<string>("annotations"));
-    if (image_folder.empty() || annotations_file.empty()){
-        parser.printMessage();
-        cerr << "TIP: Use absolute paths to avoid any problems with the software!" << endl;
-        return -1;
-    }
-
-    int resizeFactor = parser.get<int>("resizeFactor");
-    int const maxWindowHeight = parser.get<int>("maxWindowHeight") > 0 ? parser.get<int>("maxWindowHeight") : -1;
-
-    // Start by processing the data
-    // Return the image filenames inside the image folder
-    map< String, vector<Rect> > annotations;
-    vector<String> filenames;
-    String folder(image_folder);
-    glob(folder, filenames);
-
-    // Add key tips on how to use the software when running it
-    cout << "* mark rectangles with the left mouse button," << endl;
-    cout << "* press 'c' to accept a selection," << endl;
-    cout << "* press 'd' to delete the latest selection," << endl;
-    cout << "* press 'n' to proceed with next image," << endl;
-    cout << "* press 'esc' to stop." << endl;
-
-    // Loop through each image stored in the images folder
-    // Create and temporarily store the annotations
-    // At the end write everything to the annotations file
-    for (size_t i = 0; i < filenames.size(); i++){
-        // Read in an image
-        Mat current_image = imread(filenames[i]);
-        bool const resize_bool = (maxWindowHeight > 0) && (current_image.rows > maxWindowHeight);
-
-        // Check if the image is actually read - avoid other files in the folder, because glob() takes them all
-        // If not then simply skip this iteration
-        if(current_image.empty()){
-            continue;
-        }
-
-        if(resize_bool){
-            resize(current_image, current_image, Size(current_image.cols/resizeFactor, current_image.rows/resizeFactor), 0, 0, INTER_LINEAR_EXACT);
-        }
-
-        // Perform annotations & store the result inside the vectorized structure
-        // If the image was resized before, then resize the found annotations back to original dimensions
-        vector<Rect> current_annotations = get_annotations(current_image);
-        if(resize_bool){
-            for(int j =0; j < (int)current_annotations.size(); j++){
-                current_annotations[j].x = current_annotations[j].x * resizeFactor;
-                current_annotations[j].y = current_annotations[j].y * resizeFactor;
-                current_annotations[j].width = current_annotations[j].width * resizeFactor;
-                current_annotations[j].height = current_annotations[j].height * resizeFactor;
+                    if(abs(patchXLinePtr[j] - patchYLinePtr[j]) >
+                       abs(destinationXLinePtr[j] - destinationYLinePtr[j]))
+                    {
+                        patchXLinePtr[j] *= binaryMaskLinePtr[maskIndex];
+                        patchYLinePtr[j] *= binaryMaskLinePtr[maskIndex];
+                    }
+                    else
+                    {
+                        patchXLinePtr[j] = destinationXLinePtr[j]
+                            * binaryMaskLinePtr[maskIndex];
+                        patchYLinePtr[j] = destinationYLinePtr[j]
+                            * binaryMaskLinePtr[maskIndex];
+                    }
+                }
             }
         }
-        annotations[filenames[i]] = current_annotations;
+        break;
 
-        // Check if the ESC key was hit, then exit earlier then expected
-        if(stop){
-            break;
-        }
+        case MONOCHROME_TRANSFER:
+            Mat gray;
+            cvtColor(patch, gray, COLOR_BGR2GRAY );
+
+            computeGradientX(gray,patchGradientX);
+            computeGradientY(gray,patchGradientY);
+
+            arrayProduct(patchGradientX, binaryMaskFloat, patchGradientX);
+            arrayProduct(patchGradientY, binaryMaskFloat, patchGradientY);
+        break;
+
     }
 
-    // When all data is processed, store the data gathered inside the proper file
-    // This now even gets called when the ESC button was hit to store preliminary results
-    ofstream output(annotations_file.c_str());
-    if ( !output.is_open() ){
-        cerr << "The path for the output file contains an error and could not be opened. Please check again!" << endl;
-        return 0;
+    evaluate(destination,binaryMask,cloned);
+}
+
+void Cloning::localColorChange(Mat &I, Mat &mask, Mat &wmask, Mat &cloned, float red_mul=1.0,
+                                 float green_mul=1.0, float blue_mul=1.0)
+{
+    computeDerivatives(I,mask,wmask);
+
+    arrayProduct(patchGradientX,binaryMaskFloat, patchGradientX);
+    arrayProduct(patchGradientY,binaryMaskFloat, patchGradientY);
+    scalarProduct(patchGradientX,red_mul,green_mul,blue_mul);
+    scalarProduct(patchGradientY,red_mul,green_mul,blue_mul);
+
+    evaluate(I,wmask,cloned);
+}
+
+void Cloning::illuminationChange(Mat &I, Mat &mask, Mat &wmask, Mat &cloned, float alpha, float beta)
+{
+
+    computeDerivatives(I,mask,wmask);
+
+    arrayProduct(patchGradientX,binaryMaskFloat, patchGradientX);
+    arrayProduct(patchGradientY,binaryMaskFloat, patchGradientY);
+
+    Mat mag;
+    magnitude(patchGradientX,patchGradientY,mag);
+
+    Mat multX, multY, multx_temp, multy_temp;
+
+    multiply(patchGradientX,pow(alpha,beta),multX);
+    pow(mag,-1*beta, multx_temp);
+    multiply(multX,multx_temp, patchGradientX);
+    patchNaNs(patchGradientX);
+
+    multiply(patchGradientY,pow(alpha,beta),multY);
+    pow(mag,-1*beta, multy_temp);
+    multiply(multY,multy_temp,patchGradientY);
+    patchNaNs(patchGradientY);
+
+    Mat zeroMask = (patchGradientX != 0);
+
+    patchGradientX.copyTo(patchGradientX, zeroMask);
+    patchGradientY.copyTo(patchGradientY, zeroMask);
+
+    evaluate(I,wmask,cloned);
+}
+
+void Cloning::textureFlatten(Mat &I, Mat &mask, Mat &wmask, float low_threshold,
+        float high_threshold, int kernel_size, Mat &cloned)
+{
+    computeDerivatives(I,mask,wmask);
+
+    Mat out;
+    Canny(mask,out,low_threshold,high_threshold,kernel_size);
+
+    Mat zeros = Mat::zeros(patchGradientX.size(), CV_32FC3);
+    Mat zerosMask = (out != 255);
+    zeros.copyTo(patchGradientX, zerosMask);
+    zeros.copyTo(patchGradientY, zerosMask);
+
+    arrayProduct(patchGradientX,binaryMaskFloat, patchGradientX);
+    arrayProduct(patchGradientY,binaryMaskFloat, patchGradientY);
+
+    evaluate(I,wmask,cloned);
+}
+static Mat checkMask(InputArray _mask, Size size)
+{
+    Mat mask = _mask.getMat();
+    Mat gray;
+    if (mask.channels() > 1)
+        cvtColor(mask, gray, COLOR_BGRA2GRAY);
+    else
+    {
+        if (mask.empty())
+            gray = Mat(size.height, size.width, CV_8UC1, Scalar(255));
+        else
+            mask.copyTo(gray);
     }
 
-    // Store the annotations, write to the output file
-    for(map<String, vector<Rect> >::iterator it = annotations.begin(); it != annotations.end(); it++){
-        vector<Rect> &anno = it->second;
-        output << it->first << " " << anno.size();
-        for(size_t j=0; j < anno.size(); j++){
-            Rect temp = anno[j];
-            output << " " << temp.x << " " << temp.y << " " << temp.width << " " << temp.height;
-        }
-        output << endl;
-    }
+    return gray;
+}
 
+void seamlessClone(InputArray _src, InputArray _dst, InputArray _mask, Point p, OutputArray _blend, int flags)
+{
+    CV_Assert(!_src.empty());
+
+    const Mat src  = _src.getMat();
+    const Mat dest = _dst.getMat();
+    Mat mask = checkMask(_mask, src.size());
+    dest.copyTo(_blend);
+    Mat blend = _blend.getMat();
+
+    Mat mask_inner = mask(Rect(1, 1, mask.cols - 2, mask.rows - 2));
+    copyMakeBorder(mask_inner, mask, 1, 1, 1, 1, BORDER_ISOLATED | BORDER_CONSTANT, Scalar(0));
+
+    Rect roi_s = boundingRect(mask);
+    if (roi_s.empty()) return;
+    Rect roi_d(p.x - roi_s.width / 2, p.y - roi_s.height / 2, roi_s.width, roi_s.height);
+    Mat destinationROI = dest(roi_d).clone();
+
+    Mat sourceROI = Mat::zeros(roi_s.height, roi_s.width, src.type());
+    src(roi_s).copyTo(sourceROI,mask(roi_s));
+
+    Mat maskROI = mask(roi_s);
+    Mat recoveredROI = blend(roi_d);
+
+    Cloning obj;
+    obj.normalClone(destinationROI,sourceROI,maskROI,recoveredROI,flags);
+}
+int main( int argc, const char** argv )
+{
+    string folder = "c:/GitHub/opencv_extra/testdata/cv/cloning/Normal_Cloning/";
+    string original_path1 = folder + "source1.png";
+    string original_path2 = folder + "destination1.png";
+    string original_path3 = folder + "mask.png";
+    string reference_path = folder + "reference.png";
+
+    Mat source = imread(original_path1, IMREAD_COLOR);
+    Mat destination = imread(original_path2, IMREAD_COLOR);
+    Mat mask = imread(original_path3, IMREAD_COLOR);
+
+    Mat result;
+    Point p;
+    p.x = destination.size().width/2;
+    p.y = destination.size().height/2;
+
+    seamlessClone(source, destination, Mat(), p, result, NORMAL_CLONE);
+    putText(result, "NORMAL_CLONE with empty mask", Point(20, 50), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 255, 255));
+    imwrite("NORMAL_CLONE with empty mask.png",result);
+    seamlessClone(source, destination, mask, p, result, NORMAL_CLONE);
+    putText(result, "NORMAL_CLONE with mask", Point(20, 50), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 255, 255));
+    imwrite("NORMAL_CLONE with mask.png",result);
+    seamlessClone(source, destination, Mat(), p, result, MIXED_CLONE);
+    putText(result, "MIXED_CLONE with empty mask", Point(20, 50), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 255, 255));
+    imwrite("MIXED_CLONE with empty mask.png",result);
+    seamlessClone(source, destination, mask, p, result, MIXED_CLONE);
+    putText(result, "MIXED_CLONE with mask", Point(20, 50), FONT_HERSHEY_COMPLEX, 1, Scalar(255, 255, 255));
+    imwrite("MIXED_CLONE with mask.png",result);
     return 0;
 }

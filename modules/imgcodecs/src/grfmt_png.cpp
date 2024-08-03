@@ -388,7 +388,7 @@ bool PngDecoder::readAnimation(Mat& img)
         delay_den = png_get_uint_16(chunk.p + 30);
         dop = chunk.p[32];
         bop = chunk.p[33];
-
+        printf("frame: %d %d %d %d %d %d %d %d %d\n", m_frame_no, w0, h0, x0, y0, delay_num, delay_den, dop, bop);
         memcpy(m_chunkIHDR.p + 8, chunk.p + 12, 8);
 
         read_chunk(m_f, &m_chunkIDAT);

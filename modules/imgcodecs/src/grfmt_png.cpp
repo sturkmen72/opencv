@@ -407,7 +407,7 @@ bool PngDecoder::readAnimation(Mat& img)
     frameRaw.setMat(img, delay_num, delay_den);
     if (!processing_start((void*)&frameRaw))
     {
-        compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0);
+        //compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0);
         m_frame_no++;
         m_animation.frames.push_back(tmp);
         m_animation.timestamps.push_back(1);

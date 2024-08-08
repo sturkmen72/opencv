@@ -398,17 +398,18 @@ bool PngDecoder::readAnimation(Mat& img)
 
     Mat tmp;
     if (dop < 2)
-        tmp = Mat::zeros(img.rows, img.cols, img.type());
-    else
         m_animation.frames[m_animation.frames.size() - 1].copyTo(tmp);
+    else
+        tmp = Mat::zeros(img.rows, img.cols, img.type());
 
     frameCur.setMat(tmp, delay_num, delay_den);
 
     frameRaw.setMat(img, delay_num, delay_den);
     if (!processing_start((void*)&frameRaw))
     {
-        //compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0);
+        compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0);
         m_frame_no++;
+        tmp.copyTo(img);
         m_animation.frames.push_back(tmp);
         m_animation.timestamps.push_back(1);
         result = true;
@@ -495,6 +496,11 @@ int PngDecoder::processing_start(void* frame_ptr)
 
     png_process_data(png_ptr, info_ptr, header, 8);
     png_process_data(png_ptr, info_ptr, m_chunkIHDR.p, m_chunkIHDR.size);
+    png_uint_32 wdth, hght;
+    int bit_depth, color_type;
+    png_get_IHDR( png_ptr, info_ptr, &wdth, &hght,
+                                  &bit_depth, &color_type, 0, 0, 0 );
+    printf("%d %d %d %d\n", wdth, hght,bit_depth, color_type);
 
     int trick = m_frame_no == 0 ? 0 : 4;
     png_process_data(png_ptr, info_ptr, m_chunkIDAT.p + trick, m_chunkIDAT.size - trick);
@@ -508,8 +514,8 @@ int PngDecoder::processing_start(void* frame_ptr)
 
 void PngDecoder::info_fn(png_structp png_ptr, png_infop info_ptr)
 {
-    //png_set_expand(png_ptr);
-    //png_set_strip_16(png_ptr);
+    png_set_expand(png_ptr);
+    png_set_strip_16(png_ptr);
     //png_set_gray_to_rgb(png_ptr);
     //png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
     (void)png_set_interlace_handling(png_ptr);

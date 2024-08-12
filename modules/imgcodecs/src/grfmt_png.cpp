@@ -498,7 +498,7 @@ void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, u
 {
     uint  i, j;
     int u, v, al;
-
+    printf("_bop : %d x:%d y:%d w:%d h:%d \n", _bop, x, y, w, h);
     for (j = 0; j < h; j++)
     {
         uchar* sp = rows_src[j];

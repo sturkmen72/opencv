@@ -366,8 +366,9 @@ bool PngDecoder::readAnimation(Mat& img)
 
         fseek(m_f, -8, SEEK_CUR);
     }
+    else
+        m_animation.frames[m_animation.frames.size() - 1].copyTo(img);
 
-    img.setTo(Scalar::all(0));
     frameCur.setMat(img);
 
     processing_start((void*)&frameRaw);
@@ -427,8 +428,8 @@ bool PngDecoder::readAnimation(Mat& img)
             delay_den = png_get_uint_16(chunk.p + 30);
             dop = chunk.p[32];
             bop = chunk.p[33];
-             
-            if (w0 > cMaxPNGSize || h0 > cMaxPNGSize || x0 > cMaxPNGSize || y0 > cMaxPNGSize || x0 + w0 > img.cols || y0 + h0 > img.rows || dop > 2 || bop > 1)
+
+            if (w0 > cMaxPNGSize || h0 > cMaxPNGSize || x0 > cMaxPNGSize || y0 > cMaxPNGSize || int(x0 + w0) > img.cols || int(y0 + h0) > img.rows || dop > 2 || bop > 1)
             {
                 delete[] frameCur.getRows();
                 delete[] frameCur.getPixels();

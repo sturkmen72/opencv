@@ -439,12 +439,7 @@ bool PngDecoder::readAnimation(Mat& img)
 
             if (m_frame_no == 0)
                 m_mat_raw.copyTo(img);
-            if (m_frame_no < 466)
-            {
-            imwrite(format("raw%d.png",m_frame_no),m_mat_raw);
-            imwrite(format("next%d.png",m_frame_no),m_mat_next);
-            imwrite(format("cur%d.png",m_frame_no),img);
-            }
+
             m_animation.frames.push_back(img.clone());
             m_animation.timestamps.push_back(100);
             memcpy(m_chunkIHDR.p + 8, chunk.p + 12, 8);
@@ -602,8 +597,8 @@ void PngDecoder::info_fn(png_structp png_ptr, png_infop info_ptr)
 {
     png_set_expand(png_ptr);
     png_set_strip_16(png_ptr);
-    png_set_gray_to_rgb(png_ptr);
-    png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+    //png_set_gray_to_rgb(png_ptr);
+    //png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
     (void)png_set_interlace_handling(png_ptr);
     png_read_update_info(png_ptr, info_ptr);
 }
@@ -1341,8 +1336,10 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
     {
         APNGFrame apngFrame;
         tmpframes.push_back(animation.frames[i].clone());
-        if (animation.frames[i].channels() > 1)
+        if (animation.frames[i].channels() == 4)
             cvtColor(animation.frames[i], tmpframes[i], COLOR_BGRA2RGBA);
+        if (animation.frames[i].channels() == 3)
+            cvtColor(animation.frames[i], tmpframes[i], COLOR_BGR2RGB);
         apngFrame.setMat(tmpframes[i]);
         frames.push_back(apngFrame);
     }

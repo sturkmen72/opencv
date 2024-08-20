@@ -31,12 +31,13 @@ public:
     bool  nextPage() CV_OVERRIDE;
 
     ImageDecoder newDecoder() const CV_OVERRIDE;
+    APNGFrame frameCur;
 
 protected:
     bool readAnimation(Mat& img);
     static void info_fn(png_structp png_ptr, png_infop info_ptr);
     static void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
-    int  processing_start(void* frame_ptr);
+    bool  processing_start(void* frame_ptr);
     bool  processing_finish();
     void compose_frame(uchar** rows_dst, uchar** rows_src, uchar bop, uint x, uint y, uint w, uint h, int channels);
     static void  readDataFromBuf(void* png_ptr, uchar* dst, size_t size);
@@ -54,7 +55,6 @@ protected:
     int    m_frame_no;
     bool   m_hasInfo;
     APNGFrame frameRaw;
-    APNGFrame frameCur;
     APNGFrame frameNext;
     Mat m_mat_raw;
     Mat m_mat_next;
@@ -97,7 +97,6 @@ private:
     void deflate_rect_op(uchar* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
     void get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar* ptemp, uint bpp, uint stride, int zbuf_size, uint has_tcolor, uint tcolor, int n);
 
-    void (*process_callback)(float);
     uchar*         op_zbuf1;
     uchar*         op_zbuf2;
     z_stream       op_zstream1;

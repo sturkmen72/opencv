@@ -67,6 +67,7 @@
 #endif
 
 #include "grfmt_png.hpp"
+#include <opencv2/core/utils/logger.hpp>
 
 #if defined _MSC_VER && _MSC_VER >= 1200
     // interaction between '_setjmp' and C++ object destruction is non-portable
@@ -79,17 +80,17 @@
 #define mingw_getsp(...) 0
 #define __builtin_frame_address(...) 0
 
-
-#define id_IHDR 0x52444849
-#define id_acTL 0x4C546361
-#define id_fcTL 0x4C546366
-#define id_IDAT 0x54414449
-#define id_fdAT 0x54416466
-#define id_IEND 0x444E4549
-
 namespace cv
 {
-/////////////////////// PngDecoder ///////////////////
+
+const uint id_IHDR = 0x52444849; // PNG header
+const uint id_acTL = 0x4C546361; // Animation control chunk
+const uint id_fcTL = 0x4C546366; // Frame control chunk
+const uint id_IDAT = 0x54414449; // first frame and/or default image
+const uint id_fdAT = 0x54416466; // Frame data chunk
+const uint id_IEND = 0x444E4549; // end/footer chunk
+
+const unsigned long cMaxPNGSize = 1000000UL;
 
 PngDecoder::PngDecoder()
 {
@@ -113,7 +114,6 @@ PngDecoder::PngDecoder()
     dop = 0;
     bop = 0;
 }
-
 
 PngDecoder::~PngDecoder()
 {
@@ -142,7 +142,6 @@ void  PngDecoder::close()
         m_png_ptr = m_info_ptr = m_end_info = 0;
     }
 }
-
 
 void  PngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
 {
@@ -355,20 +354,16 @@ bool PngDecoder::nextPage() {
 
 bool PngDecoder::readAnimation(Mat& img)
 {
-    const unsigned long cMaxPNGSize = 1000000UL;
-
     if (m_frame_no == 0)
     {
         m_mat_raw = Mat::zeros(img.rows, img.cols, img.type());
-        m_mat_next = Mat::zeros(img.rows, img.cols, img.type());
         frameRaw.setMat(m_mat_raw);
-        frameNext.setMat(m_mat_next);
+
 
         fseek(m_f, -8, SEEK_CUR);
     }
-    else
-        m_animation.frames[m_animation.frames.size() - 1].copyTo(img);
 
+    img.setTo(0);
     frameCur.setMat(img);
 
     processing_start((void*)&frameRaw);
@@ -392,14 +387,19 @@ bool PngDecoder::readAnimation(Mat& img)
             {
                 if (processing_finish())
                 {
+                    m_mat_next = Mat::zeros(img.rows, img.cols, img.type());
+                    frameNext.setMat(m_mat_next);
+
                     if (dop == 2)
                         memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
 
                     compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0, img.channels());
                     frameCur.setDelayNum(delay_num);
                     frameCur.setDelayDen(delay_den);
-                    //m_animation.frames.push_back(img.clone());
-
+                    if (m_frame_no == 0)
+                        m_mat_raw.copyTo(img);
+                    m_animation.frames.push_back(img.clone());
+                    m_animation.timestamps.push_back(delay_den);
                     if (dop != 2)
                     {
                         memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
@@ -409,6 +409,8 @@ bool PngDecoder::readAnimation(Mat& img)
                     }
                     frameCur.setPixels(frameNext.getPixels());
                     frameCur.setRows(frameNext.getRows());
+                    //imwrite(format("frameCur%03d.png", m_frame_no), img);
+                    //printf("frame : %d dop : %d bop :%d\n", m_frame_no, dop);
                 }
                 else
                 {
@@ -419,7 +421,6 @@ bool PngDecoder::readAnimation(Mat& img)
                 }
             }
 
-            // At this point the old frame is done. Let's start a new one.
             w0 = png_get_uint_32(chunk.p + 12);
             h0 = png_get_uint_32(chunk.p + 16);
             x0 = png_get_uint_32(chunk.p + 20);
@@ -437,11 +438,6 @@ bool PngDecoder::readAnimation(Mat& img)
                 return false;
             }
 
-            if (m_frame_no == 0)
-                m_mat_raw.copyTo(img);
-
-            m_animation.frames.push_back(img.clone());
-            m_animation.timestamps.push_back(100);
             memcpy(m_chunkIHDR.p + 8, chunk.p + 12, 8);
             return true;
         }
@@ -450,7 +446,7 @@ bool PngDecoder::readAnimation(Mat& img)
             m_hasInfo = true;
             png_process_data(png_ptr, info_ptr, chunk.p, chunk.size);
         }
-        else if (id == id_fdAT && m_is_animated)
+        else if (id == id_fdAT)
         {
             png_save_uint_32(chunk.p + 4, chunk.size - 16);
             memcpy(chunk.p + 8, "IDAT", 4);
@@ -464,7 +460,7 @@ bool PngDecoder::readAnimation(Mat& img)
                 frameCur.setDelayNum(delay_num);
                 frameCur.setDelayDen(delay_den);
                 m_animation.frames.push_back(img.clone());
-                m_animation.timestamps.push_back(100);
+                m_animation.timestamps.push_back(delay_den);
             }
             else
                 return false;
@@ -487,7 +483,6 @@ bool PngDecoder::readAnimation(Mat& img)
     }
     return false;
 }
-
 
 void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, uint x, uint y, uint w, uint h, int channels)
 {
@@ -532,6 +527,10 @@ uint PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
     if (fread(&len, 4, 1, f) == 1)
     {
         pChunk->size = png_get_uint_32(len) + 12;
+        if (pChunk->size > PNG_USER_CHUNK_MALLOC_MAX)
+        {
+            CV_LOG_WARNING(NULL, "chunk data is too large");
+        }
         pChunk->p = new uchar[pChunk->size];
         memcpy(pChunk->p, len, 4);
         if (fread(pChunk->p + 4, pChunk->size - 4, 1, f) == 1)
@@ -540,9 +539,9 @@ uint PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
     return 0;
 }
 
-int PngDecoder::processing_start(void* frame_ptr)
+bool PngDecoder::processing_start(void* frame_ptr)
 {
-    uchar header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+    static uint8_t header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_infop info_ptr = png_create_info_struct(png_ptr);
@@ -551,12 +550,12 @@ int PngDecoder::processing_start(void* frame_ptr)
     m_info_ptr = info_ptr;
 
     if (!png_ptr || !info_ptr)
-        return 1;
+        return false;
 
     if (setjmp(png_jmpbuf(png_ptr)))
     {
         png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-        return 1;
+        return false;
     }
 
     png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
@@ -569,12 +568,12 @@ int PngDecoder::processing_start(void* frame_ptr)
     for (uint i = 0; i < m_chunksInfo.size(); i++)
         png_process_data(png_ptr, info_ptr, m_chunksInfo[i].p, m_chunksInfo[i].size);
 
-    return 0;
+    return true;
 }
 
 bool PngDecoder::processing_finish()
 {
-    uchar footer[12] = { 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130 };
+    static uint8_t footer[12] = { 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130 };
 
     png_structp png_ptr = (png_structp)m_png_ptr;
     png_infop info_ptr = (png_infop)m_info_ptr;
@@ -612,7 +611,6 @@ void PngDecoder::row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_
 
 /////////////////////// PngEncoder ///////////////////
 
-
 PngEncoder::PngEncoder()
 {
     m_description = "Portable Network Graphics files (*.png)";
@@ -632,14 +630,11 @@ PngEncoder::PngEncoder()
     memset(palette, 0, sizeof(palette));
     memset(trns, 0, sizeof(trns));
     memset(op, 0, sizeof(op));
-    process_callback = { 0 };
 }
-
 
 PngEncoder::~PngEncoder()
 {
 }
-
 
 bool  PngEncoder::isFormatSupported( int depth ) const
 {
@@ -650,7 +645,6 @@ ImageEncoder PngEncoder::newEncoder() const
 {
     return makePtr<PngEncoder>();
 }
-
 
 void PngEncoder::writeDataToBuf(void* _png_ptr, uchar* src, size_t size)
 {
@@ -663,7 +657,6 @@ void PngEncoder::writeDataToBuf(void* _png_ptr, uchar* src, size_t size)
     encoder->m_buf->resize(cursz + size);
     memcpy( &(*encoder->m_buf)[cursz], src, size );
 }
-
 
 void PngEncoder::flushBuf(void*)
 {
@@ -786,7 +779,6 @@ void PngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
         for (j = 0; j < size; j++, sp += 4)
             if (sp[3] == 0)
                 sp[0] = sp[1] = sp[2] = 0;
-        process_callback(0.1 + i / float(frames.size()) * 0.1);
     }
 }
 
@@ -1305,7 +1297,6 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
 
 bool PngEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
-
     int compression_level = 6;
     int compression_strategy = IMWRITE_PNG_STRATEGY_RLE; // Default strategy
     bool isBilevel = false;

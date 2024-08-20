@@ -79,17 +79,17 @@
 #define mingw_getsp(...) 0
 #define __builtin_frame_address(...) 0
 
-
-#define id_IHDR 0x52444849
-#define id_acTL 0x4C546361
-#define id_fcTL 0x4C546366
-#define id_IDAT 0x54414449
-#define id_fdAT 0x54416466
-#define id_IEND 0x444E4549
-
 namespace cv
 {
-/////////////////////// PngDecoder ///////////////////
+
+const uint id_IHDR = 0x52444849; // PNG header
+const uint id_acTL = 0x4C546361; // Animation control chunk
+const uint id_fcTL = 0x4C546366; // Frame control chunk
+const uint id_IDAT = 0x54414449; // first frame and/or default image
+const uint id_fdAT = 0x54416466; // Frame data chunk
+const uint id_IEND = 0x444E4549; // end/footer chunk
+
+const unsigned long cMaxPNGSize = 1000000UL;
 
 PngDecoder::PngDecoder()
 {
@@ -113,7 +113,6 @@ PngDecoder::PngDecoder()
     dop = 0;
     bop = 0;
 }
-
 
 PngDecoder::~PngDecoder()
 {
@@ -142,7 +141,6 @@ void  PngDecoder::close()
         m_png_ptr = m_info_ptr = m_end_info = 0;
     }
 }
-
 
 void  PngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
 {
@@ -355,8 +353,6 @@ bool PngDecoder::nextPage() {
 
 bool PngDecoder::readAnimation(Mat& img)
 {
-    const unsigned long cMaxPNGSize = 1000000UL;
-
     if (m_frame_no == 0)
     {
         m_mat_raw = Mat::zeros(img.rows, img.cols, img.type());
@@ -366,8 +362,11 @@ bool PngDecoder::readAnimation(Mat& img)
 
         fseek(m_f, -8, SEEK_CUR);
     }
-    else
+    else if(dop != 2)
+    {
         m_animation.frames[m_animation.frames.size() - 1].copyTo(img);
+    }
+
 
     frameCur.setMat(img);
 
@@ -419,7 +418,6 @@ bool PngDecoder::readAnimation(Mat& img)
                 }
             }
 
-            // At this point the old frame is done. Let's start a new one.
             w0 = png_get_uint_32(chunk.p + 12);
             h0 = png_get_uint_32(chunk.p + 16);
             x0 = png_get_uint_32(chunk.p + 20);
@@ -487,7 +485,6 @@ bool PngDecoder::readAnimation(Mat& img)
     }
     return false;
 }
-
 
 void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, uint x, uint y, uint w, uint h, int channels)
 {
@@ -612,7 +609,6 @@ void PngDecoder::row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_
 
 /////////////////////// PngEncoder ///////////////////
 
-
 PngEncoder::PngEncoder()
 {
     m_description = "Portable Network Graphics files (*.png)";
@@ -635,11 +631,9 @@ PngEncoder::PngEncoder()
     process_callback = { 0 };
 }
 
-
 PngEncoder::~PngEncoder()
 {
 }
-
 
 bool  PngEncoder::isFormatSupported( int depth ) const
 {
@@ -650,7 +644,6 @@ ImageEncoder PngEncoder::newEncoder() const
 {
     return makePtr<PngEncoder>();
 }
-
 
 void PngEncoder::writeDataToBuf(void* _png_ptr, uchar* src, size_t size)
 {
@@ -663,7 +656,6 @@ void PngEncoder::writeDataToBuf(void* _png_ptr, uchar* src, size_t size)
     encoder->m_buf->resize(cursz + size);
     memcpy( &(*encoder->m_buf)[cursz], src, size );
 }
-
 
 void PngEncoder::flushBuf(void*)
 {
@@ -1305,7 +1297,6 @@ bool PngEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<i
 
 bool PngEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
 {
-
     int compression_level = 6;
     int compression_strategy = IMWRITE_PNG_STRATEGY_RLE; // Default strategy
     bool isBilevel = false;

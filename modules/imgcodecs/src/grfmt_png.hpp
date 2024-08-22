@@ -97,7 +97,6 @@ private:
     void deflate_rect_op(uchar* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n);
     void get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar* ptemp, uint bpp, uint stride, int zbuf_size, uint has_tcolor, uint tcolor, int n);
 
-    void (*process_callback)(float);
     uchar*         op_zbuf1;
     uchar*         op_zbuf2;
     z_stream       op_zstream1;

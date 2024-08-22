@@ -628,7 +628,6 @@ PngEncoder::PngEncoder()
     memset(palette, 0, sizeof(palette));
     memset(trns, 0, sizeof(trns));
     memset(op, 0, sizeof(op));
-    process_callback = { 0 };
 }
 
 PngEncoder::~PngEncoder()
@@ -778,7 +777,6 @@ void PngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
         for (j = 0; j < size; j++, sp += 4)
             if (sp[3] == 0)
                 sp[0] = sp[1] = sp[2] = 0;
-        process_callback(0.1 + i / float(frames.size()) * 0.1);
     }
 }
 

@@ -16,6 +16,77 @@
 namespace cv
 {
 
+class ApngAnimation {
+public:
+    struct Frame {
+        std::vector<uint8_t> pixel_data;        // Holds the pixel data of the frame
+        std::vector<uint8_t*> rows;     // Pointers to the beginning of each row in the pixel data
+        float delay;                            // Delay before displaying the next frame
+    };
+
+    Frame                current_frame;
+    uint                 width;             // Width of the animation
+    uint                 height;            // Height of the animation
+    int                  bits_per_pixel;    // Bits per pixel (color depth)
+    uint                 num_frames;        // Number of frames
+    uint                 current_frame_index; // Index of the currently displayed frame
+    uint                 loop_count;        // Number of times the animation should loop
+    float                animation_time;    // Accumulated time for frame timing
+
+    ApngAnimation(const char* filename);
+    ~ApngAnimation();
+
+    int    loadHeader();
+    void   nextFrame();
+    void   rowCallback(png_bytep new_row, png_uint_32 row_num);
+    void   infoCallback();
+    size_t getImageSize();
+
+private:
+    struct Chunk {
+        uint              size;
+        std::vector<uint8_t> data;
+    };
+
+    std::vector<Frame>    frames;             // All frames in the animation
+    std::vector<int>      frame_offsets;      // Offsets for each frame within the file
+    std::vector<Chunk>    info_chunks;        // Chunks containing image metadata
+    std::string           file_name;          // Name of the APNG file
+    Frame                 next_frame_buffer;  // Buffer for the next frame
+    Frame                 raw_frame_buffer;   // Buffer for raw frame data
+    Chunk                 chunk_IHDR;         // Chunk containing the image header
+    Chunk                 current_chunk;      // Current chunk being processed
+    png_structp           png_ptr;            // libpng structure for PNG operations
+    png_infop             png_info_ptr;       // libpng info structure for PNG operations
+    FILE*                 file_ptr;           // Pointer to the open file for reading
+    size_t                file_offset;        // Current offset within the file
+    uint                  sequence_number;    // Sequence number for chunks
+    uint                  chunk_id;           // ID of the current chunk
+    uint                  row_length;         // Length of a row in bytes
+    uint                  image_size;         // Total size of the image data
+    uint                  frame_width;        // Width of the current frame
+    uint                  frame_height;       // Height of the current frame
+    uint                  x_offset;           // X offset of the frame within the image
+    uint                  y_offset;           // Y offset of the frame within the image
+    uint                  max_chunk_size;     // Maximum size of a chunk
+    ushort                delay_num;          // Numerator for frame delay calculation
+    ushort                delay_den;          // Denominator for frame delay calculation
+    uint8_t               dispose_op;         // Frame disposal operation type
+    uint8_t               blend_op;           // Frame blending operation type
+    bool                  is_reading;         // Flag indicating if the file is being read
+    bool                  has_acTL;     // Flag indicating if the acTL chunk was found
+    bool                  has_IDAT;     // Flag indicating if the IDAT chunk was found
+
+    uint  readChunk(Chunk& chunk);
+    void  processChunk();
+    int   startProcessing();
+    void  processData(uint8_t* data, uint size);
+    int   finishProcessing();
+    void  composeFrame();
+    void  handleError(const char* message);
+    void  cleanUpResources();
+};
+
 struct CHUNK { uchar* p; uint size; };
 struct OP { uchar* p; uint size; int x, y, w, h, valid, filters; };
 

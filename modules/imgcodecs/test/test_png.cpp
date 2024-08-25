@@ -133,13 +133,15 @@ TEST(Imgcodecs_Png, load_save_animation)
 
     EXPECT_EQ(true, imwriteanimation(output, s_animation));
     EXPECT_EQ(s_animation.frames.size(), imcount(output));
-    EXPECT_EQ(true, imreadanimation(output, l_animation));
+    EXPECT_EQ(true, imreadanimation("grace-hoppers-107th-birthday.png", l_animation));
     EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size());
     EXPECT_EQ(0, remove(output.c_str()));
 
-#if 0
-    for (int i = 0; i < s_animation.frames.size(); i++)
+#if 1
+    for (int i = 0; i < l_animation.frames.size(); i++)
     {
+        imshow("",l_animation.frames[i]);
+        waitKey();
         imwrite(output, s_animation.frames[i]);
         image = imread(output, IMREAD_UNCHANGED);
         EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[i], image);
@@ -167,7 +169,7 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgba)
     string output = cv::tempfile(".png");
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> read_frames;
-    EXPECT_EQ(true, imreadmulti(output, read_frames, IMREAD_UNCHANGED));
+    EXPECT_EQ(true, imreadmulti("elephant_apng_zopfli.png", read_frames, IMREAD_UNCHANGED));
     EXPECT_EQ(png_frames.size(), read_frames.size());
     EXPECT_EQ(read_frames.size(), imcount(output));
     EXPECT_EQ(0, remove(output.c_str()));

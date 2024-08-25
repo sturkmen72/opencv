@@ -82,6 +82,16 @@ static void printLimits(){
 
 int main( int argc, const char** argv )
 {
+
+    for (int i = 0; i < 61; i++)
+    {
+        vector<Mat> imgs;
+        bool imr = true;// imreadmulti(format("C:\\projects\\libspng\\tests\\apng_images/%03d.png", i), imgs, IMREAD_UNCHANGED);
+        size_t imc = imcount(format("C:\\projects\\libspng\\tests\\apng_images/%03d.png",i));
+        cout << i << ". " << imr << "  " << imc << endl;
+
+    }
+    return 0;
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"
         "{ image i        |      | (required) path to reference image }"

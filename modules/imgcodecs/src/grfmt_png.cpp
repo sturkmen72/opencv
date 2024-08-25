@@ -91,6 +91,395 @@ const uint id_IEND = 0x444E4549; // end/footer chunk
 
 const unsigned long cMaxPNGSize = 1000000UL;
 
+ApngAnimation::ApngAnimation(const char* filename)
+    : width(0)
+    , height(0)
+    , bits_per_pixel(32)       // Force all APNGs to use 32 bits per pixel
+    , num_frames(0)
+    , current_frame_index(0)
+    , loop_count(0)
+    , animation_time(0.0f)
+    , file_name(filename)
+    , png_ptr(nullptr)
+    , png_info_ptr(nullptr)
+    , file_ptr(nullptr)
+    , file_offset(0)
+    , sequence_number(0)
+    , chunk_id(0)
+    , row_length(0)
+    , image_size(0)
+    , frame_width(0)
+    , frame_height(0)
+    , x_offset(0)
+    , y_offset(0)
+    , max_chunk_size(25)       // IHDR must be the first and it must be this big
+    , delay_num(1)
+    , delay_den(100)
+    , dispose_op(0)
+    , blend_op(0)
+    , is_reading(true)
+    , has_acTL(false)
+    , has_IDAT(false)
+{
+    loadHeader();
+}
+
+ApngAnimation::~ApngAnimation() {
+    cleanUpResources();
+}
+
+unsigned int ApngAnimation::readChunk(Chunk& chunk) {
+    if (fread(&chunk.data[0], 4, 1, file_ptr) == 1) {
+        chunk.size = png_get_uint_32(&chunk.data[0]) + 12;
+        // Reduce the amount of vector resizing
+        if (chunk.size > max_chunk_size) {
+            max_chunk_size = chunk.size;
+            chunk.data.resize(chunk.size);
+        }
+        if (fread(&chunk.data[4], chunk.size - 4, 1, file_ptr) == 1) {
+            return *(uint*)(&chunk.data[4]);
+        }
+    }
+    return 0;
+}
+
+void ApngAnimation::processChunk() {
+    chunk_id = readChunk(current_chunk);
+    if (chunk_id == id_acTL && !has_IDAT && !has_acTL) {
+        // Animation control chunk
+        if (!is_reading) {
+            return;
+        }
+        num_frames = png_get_uint_32(&current_chunk.data[8]);
+        loop_count = png_get_uint_32(&current_chunk.data[12]);
+
+        if (!num_frames || num_frames > PNG_UINT_31_MAX || loop_count > PNG_UINT_31_MAX) {
+            handleError("Invalid APNG acTL data");
+        }
+
+        has_acTL = true;
+        frames.reserve(num_frames);
+        frame_offsets.reserve(num_frames + 1); // Extra 1 is for EOF offset
+    }
+    else if (chunk_id == id_fcTL && (!has_IDAT || has_acTL)) {
+        // Frame control chunk
+        if (is_reading) {
+            uint sequence_num = png_get_uint_32(&current_chunk.data[8]);
+            if (sequence_num != sequence_number++) {
+                handleError("Invalid APNG fcTL sequence number");
+            }
+        }
+
+        // Handle frame finish in next_frame
+        frame_width = png_get_uint_32(&current_chunk.data[12]);
+        frame_height = png_get_uint_32(&current_chunk.data[16]);
+        x_offset = png_get_uint_32(&current_chunk.data[20]);
+        y_offset = png_get_uint_32(&current_chunk.data[24]);
+        delay_num = png_get_uint_16(&current_chunk.data[28]);
+        delay_den = png_get_uint_16(&current_chunk.data[30]);
+        dispose_op = current_chunk.data[32];
+        blend_op = current_chunk.data[33];
+
+        if (is_reading &&
+            (frame_width > cMaxPNGSize || frame_height > cMaxPNGSize ||
+             x_offset > cMaxPNGSize || y_offset > cMaxPNGSize ||
+             x_offset + frame_width > width || y_offset + frame_height > height ||
+             dispose_op > 2 || blend_op > 1)) {
+            handleError("Invalid APNG fcTL data");
+        }
+
+        // According to spec...
+        if (current_frame_index == 0 && dispose_op == 2) {
+            dispose_op = 1;
+        }
+
+        if (delay_den == 0) delay_den = 100; // APNG spec
+        if (delay_num == 0) delay_num = 1;   // Arbitrary lower bound
+        float frame_delay = static_cast<float>(delay_num) / static_cast<float>(delay_den);
+        current_frame.delay = frame_delay;
+
+        if (is_reading) {
+            animation_time += frame_delay;
+            frame_offsets.push_back(static_cast<int>(file_offset));
+        }
+        else {
+            if (has_IDAT && startProcessing()) {
+                handleError("Couldn't start fdAT APNG frame");
+            }
+        }
+    }
+    else if (chunk_id == id_IDAT) {
+        has_IDAT = true;
+        processData(&current_chunk.data[0], current_chunk.size);
+    }
+    else if (chunk_id == id_fdAT && has_acTL) {
+        if (is_reading) {
+            uint sequence_num = png_get_uint_32(&current_chunk.data[8]);
+            if (sequence_num != sequence_number++) {
+                handleError("Invalid APNG fdAT sequence number");
+            }
+        }
+
+        if (is_reading) {
+            return;
+        }
+
+        png_save_uint_32(&current_chunk.data[4], current_chunk.size - 16);
+        memcpy(&current_chunk.data[8], "IDAT", 4);
+        processData(&current_chunk.data[4], current_chunk.size - 4);
+    }
+    else if (chunk_id == id_IEND) {
+        return;
+    }
+    else if (!isalpha(current_chunk.data[4]) || !isalpha(current_chunk.data[5]) ||
+             !isalpha(current_chunk.data[6]) || !isalpha(current_chunk.data[7])) {
+        handleError("Unknown chunk ID found");
+    }
+    else if (!has_IDAT) {
+        printf("--- %x %s ---\n", chunk_id,file_name.c_str());
+        processData(&current_chunk.data[0], current_chunk.size);
+        info_chunks.push_back(current_chunk);
+    }
+}
+
+void ApngAnimation::nextFrame() {
+    is_reading = false;
+
+    if ((frames.size() <= current_frame_index)) {
+        if (current_frame_index > 0) {
+            if (dispose_op == 1) {
+                // Clear previous frame region of output buffer to fully transparent black
+                for (uint row = 0; row < frame_height; ++row) {
+                    memset(&current_frame.pixel_data.at((y_offset + row) * row_length + x_offset * 4), 0, frame_width * 4);
+                }
+            } else if (dispose_op == 2) {
+                // Revert previous frames region of output buffer to previous contents
+                for (uint row = 0; row < frame_height; ++row) {
+                    uint position = (y_offset + row) * row_length + x_offset * 4;
+                    memcpy(&current_frame.pixel_data.at(position), &next_frame_buffer.pixel_data.at(position), frame_width * 4);
+                }
+            }
+            // Default is to do nothing with output buffer
+        }
+
+        while (ftell(file_ptr) < frame_offsets.at(current_frame_index + 1)) {
+            processChunk();
+        }
+
+        printf("apng next_frame; new (%03i/%03u/%03i) (%u) (%u) %03u|%03u %03u|%03u (%02u) (%04f)\n",
+                current_frame_index, static_cast<uint>(frames.size()), num_frames, dispose_op, blend_op,
+                frame_width, x_offset, frame_height, y_offset,
+                static_cast<uint>(frame_offsets.size()), current_frame.delay);
+
+        if (has_IDAT && finishProcessing()) {
+            handleError("couldn't finish fdat apng frame");
+        }
+
+        if (dispose_op == 2) {
+            // Revert to previous; so save the current frame region for later
+            for (uint row = 0; row < frame_height; ++row) {
+                uint position = (y_offset + row) * row_length + x_offset * 4;
+                memcpy(&next_frame_buffer.pixel_data.at(position), &current_frame.pixel_data.at(position), frame_width * 4);
+            }
+        }
+
+        composeFrame();
+        frames.push_back(current_frame);
+    } else {
+        if (current_frame_index < num_frames) {
+            printf("apng next_frame; used old (%03i/%03u)\n", current_frame_index, static_cast<uint>(frames.size()));
+            current_frame = frames.at(current_frame_index);
+        }
+    }
+    ++current_frame_index;
+}
+
+
+void ApngAnimation::handleError(const char* message) {
+    cleanUpResources();
+    CV_Error(Error::StsInternal, message);
+}
+
+void ApngAnimation::cleanUpResources() {
+
+}
+
+void ApngAnimation::rowCallback(png_bytep new_row, png_uint_32 row_num) {
+    png_progressive_combine_row(png_ptr, raw_frame_buffer.rows.at(row_num), new_row);
+}
+
+void ApngAnimation::infoCallback() {
+    png_set_expand(png_ptr);
+    png_set_strip_16(png_ptr);
+    png_set_gray_to_rgb(png_ptr);
+    png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+    png_set_interlace_handling(png_ptr);
+    png_set_bgr(png_ptr);
+
+    png_read_update_info(png_ptr, png_info_ptr);
+}
+
+void ApngAnimation::composeFrame() {
+    int u, v, alpha;
+
+    // Ensure our libpng transformations result in 4 bytes per pixel by this point
+    CV_Assert(bits_per_pixel == 32);
+
+    for (uint j = 0; j < frame_height; j++) {
+        uint8_t* sourcePtr = raw_frame_buffer.rows[j];
+        uint8_t* destPtr = current_frame.rows[j + y_offset] + x_offset * 4;
+
+        if (blend_op == 0) {
+            // Blend operation 0 (APNG_BLEND_OP_SOURCE) means ignore destination
+            memcpy(destPtr, sourcePtr, frame_width * 4);
+        } else {
+            for (uint i = 0; i < frame_width; i++, sourcePtr += 4, destPtr += 4) {
+                if (sourcePtr[3] == 255) {
+                    // If the source is fully opaque, just copy it
+                    memcpy(destPtr, sourcePtr, 4);
+                } else {
+                    if (sourcePtr[3] != 0) {
+                        if (destPtr[3] != 0) {
+                            u = sourcePtr[3] * 255;
+                            v = (255 - sourcePtr[3]) * destPtr[3];
+                            alpha = u + v;
+                            destPtr[0] = static_cast<uint8_t>((sourcePtr[0] * u + destPtr[0] * v) / alpha);
+                            destPtr[1] = static_cast<uint8_t>((sourcePtr[1] * u + destPtr[1] * v) / alpha);
+                            destPtr[2] = static_cast<uint8_t>((sourcePtr[2] * u + destPtr[2] * v) / alpha);
+                            destPtr[3] = static_cast<uint8_t>(alpha / 255);
+                        } else {
+                            // If the destination is transparent, overwrite it
+                            memcpy(destPtr, sourcePtr, 4);
+                        }
+                    }
+                    // If the source is fully transparent, ignore it
+                }
+            }
+        }
+    }
+}
+
+
+int ApngAnimation::startProcessing() {
+    static uint8_t png_signature[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    png_info_ptr = png_create_info_struct(png_ptr);
+    if (png_ptr == nullptr || png_info_ptr == nullptr) {
+        return 1;
+    }
+
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        png_destroy_read_struct(&png_ptr, &png_info_ptr, nullptr);
+        return 1;
+    }
+
+    png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
+    //png_set_progressive_read_fn(png_ptr, this, (png_progressive_info_ptr)infoCallback, rowCallback, nullptr);
+    png_process_data(png_ptr, png_info_ptr, png_signature, 8);
+    memcpy(&chunk_IHDR.data[8], &current_chunk.data[12], 8); // Use frame width & height from fcTL
+    png_process_data(png_ptr, png_info_ptr, &chunk_IHDR.data[0], chunk_IHDR.size);
+
+    for (size_t i = 0; i < info_chunks.size(); ++i) {
+        png_process_data(png_ptr, png_info_ptr, &info_chunks.at(i).data[0], info_chunks.at(i).size);
+    }
+    return 0;
+}
+
+void ApngAnimation::processData(uint8_t* data, uint size) {
+    png_process_data(png_ptr, png_info_ptr, data, size);
+}
+
+int ApngAnimation::finishProcessing() {
+    static uint8_t end_signature[12] = {0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130};
+    printf("%d",1);
+    if (png_ptr == nullptr || png_info_ptr == nullptr) {
+        return 1;
+    }
+
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        png_destroy_read_struct(&png_ptr, &png_info_ptr, nullptr);
+        return 1;
+    }
+
+    png_process_data(png_ptr, png_info_ptr, end_signature, 12);
+    png_destroy_read_struct(&png_ptr, &png_info_ptr, nullptr);
+    printf("%d\n",1);
+    return 0;
+}
+
+
+int ApngAnimation::loadHeader() {
+    file_ptr = fopen(file_name.c_str(), "rb");
+
+    if (file_ptr == nullptr) {
+        handleError("Couldn't open file");
+    }
+
+    is_reading = true;
+
+    uint8_t png_signature[8];
+    if (fread(png_signature, 8, 1, file_ptr) != 1) {
+        handleError("Failed to read PNG signature");
+    }
+    if (png_sig_cmp(png_signature, 0, 8) != 0) {
+        handleError("Invalid PNG signature");
+    }
+
+    // Setup chunk sizes before use
+    chunk_IHDR.data.resize(25);  // Fixed IHDR chunk size
+    current_chunk.data.resize(25); // Matches the other sizes, may waste up to 13 bytes
+
+    chunk_id = readChunk(chunk_IHDR);
+
+    if (chunk_id != id_IHDR || chunk_IHDR.size != 25) {
+        handleError("Failed to read IHDR chunk");
+    }
+
+    width = png_get_uint_32(&chunk_IHDR.data[8]);
+    height = png_get_uint_32(&chunk_IHDR.data[12]);
+    row_length = width * 4;
+
+    // Setup frames & ensure compatibility with bitmap creation
+    image_size = row_length * height;
+    current_frame.pixel_data.reserve(image_size); // Allocate only once
+    current_frame.pixel_data.assign(image_size, 0); // All transparent black as per spec
+    current_frame.rows.resize(height);
+    raw_frame_buffer.pixel_data.resize(image_size);
+    raw_frame_buffer.rows.resize(height);
+    next_frame_buffer.pixel_data.resize(image_size);
+    next_frame_buffer.rows.resize(height);
+
+    for (uint i = 0; i < height; ++i) {
+        // Avoid using .at() for performance
+        current_frame.rows[i] = &current_frame.pixel_data[i * row_length];
+        raw_frame_buffer.rows[i] = &raw_frame_buffer.pixel_data[i * row_length];
+        next_frame_buffer.rows[i] = &next_frame_buffer.pixel_data[i * row_length];
+    }
+
+    // Read all data
+    while (!feof(file_ptr)) {
+        processChunk();
+    }
+
+    // Should be at EOF; attach to frame_offsets to simplify next_frame logic
+    CV_Assert(feof(file_ptr) != 0, "APNG not at EOF, check coder!");
+
+    // Sanity checks
+    //if (animation_time <= 0.0f) {
+   //     handleError("Animation duration <= 0.0f, bad data?");
+    //}
+
+    //if (num_frames < 1) {
+    //    handleError("Animation didn't have any frames, is this a static PNG?");
+   // }
+
+    // Reset to start, including resetting file_ptr for use in the first frame
+    is_reading = false;
+
+    return 0;
+}
+
+
 PngDecoder::PngDecoder()
 {
     m_signature = "\x89\x50\x4e\x47\xd\xa\x1a\xa";
@@ -159,6 +548,16 @@ void  PngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
 
 bool  PngDecoder::readHeader()
 {
+    if (!m_filename.empty()) {
+    ApngAnimation apng(m_filename.c_str());
+    while ( apng.current_frame_index < apng.num_frames)
+    {
+    printf("***frame_count: %d %s %f***\n", apng.num_frames,m_filename.c_str(),apng.current_frame.delay);
+    apng.nextFrame();
+    }
+
+    }
+
     volatile bool result = false;
     close();
 
@@ -197,9 +596,11 @@ bool  PngDecoder::readHeader()
 
                             if (id == id_acTL && chunk.size == 20)
                             {
+                                
                                 m_is_animated = true;
                                 m_frame_count = png_get_uint_32(chunk.p + 8);
                                 m_animation.loop_count = png_get_uint_32(chunk.p + 12);
+                                printf("m_frame_count : %d loop_count : %d\n", m_frame_count, m_animation.loop_count);
                             }
                             fseek(m_f, 0, SEEK_SET);
                         }
@@ -346,6 +747,7 @@ bool  PngDecoder::readData( Mat& img )
 bool PngDecoder::nextPage() {
     if (m_f)
     {
+        printf("m_frame_no : %d\n", m_frame_no);
         return m_frame_no++ < (int)m_frame_count;
     }
     return false;

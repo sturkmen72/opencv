@@ -169,7 +169,9 @@ TEST(Imgcodecs_WebP, load_save_animation)
 
     EXPECT_EQ(true, imwriteanimation(output, s_animation));
     EXPECT_EQ(true, imreadanimation(output, l_animation));
-    EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size() - 2); // because last 3 images are identical so 1 image inserted as last frame and its duration calculated by libwebP
+    // Since the last three images are identical, only one image was inserted as the last frame,
+    // and its duration was calculated by libwebp.
+    EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size() - 2);
     EXPECT_EQ(l_animation.bgcolor, s_animation.bgcolor);
     EXPECT_EQ(l_animation.loop_count, s_animation.loop_count);
     EXPECT_EQ(0, remove(output.c_str()));

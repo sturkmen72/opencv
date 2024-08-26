@@ -115,6 +115,7 @@ bool WebPDecoder::readHeader()
         WebPAnimDecoderGetInfo(anim_decoder.get(), &anim_info);
         m_animation.loop_count = anim_info.loop_count;
         m_animation.bgcolor = anim_info.bgcolor;
+        m_frame_count = anim_info.frame_count;
     }
     m_width = features.width;
     m_height = features.height;

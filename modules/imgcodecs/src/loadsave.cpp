@@ -669,12 +669,12 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
     }
     catch (const cv::Exception& e)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: " << e.what());
+        CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read header: " << e.what());
         return 0;
     }
     catch (...)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: unknown exception");
+        CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read header: unknown exception");
         return 0;
     }
 
@@ -707,11 +707,11 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
         }
         catch (const cv::Exception& e)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: " << e.what());
+            CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read data: " << e.what());
         }
         catch (...)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: unknown exception");
+            CV_LOG_ERROR(NULL, "imreadanimation_('" << filename << "'): can't read data: unknown exception");
         }
         if (!success)
             break;
@@ -950,7 +950,7 @@ static bool imwriteanimation_(const String& filename, Animation& animation, cons
             {
                 if (errno == EACCES)
                 {
-                    CV_LOG_WARNING(NULL, "imwrite_('" << filename << "'): can't open file for writing: permission denied");
+                    CV_LOG_WARNING(NULL, "imwriteanimation_('" << filename << "'): can't open file for writing: permission denied");
                 }
             }
             else
@@ -962,11 +962,11 @@ static bool imwriteanimation_(const String& filename, Animation& animation, cons
     }
     catch (const cv::Exception& e)
     {
-        CV_LOG_ERROR(NULL, "imwrite_('" << filename << "'): can't write data: " << e.what());
+        CV_LOG_ERROR(NULL, "imwriteanimation_('" << filename << "'): can't write data: " << e.what());
     }
     catch (...)
     {
-        CV_LOG_ERROR(NULL, "imwrite_('" << filename << "'): can't write data: unknown exception");
+        CV_LOG_ERROR(NULL, "imwriteanimation_('" << filename << "'): can't write data: unknown exception");
     }
 
     return code;

@@ -164,7 +164,14 @@ bool WebPDecoder::readData(Mat &img)
 
         WebPAnimDecoderGetNext(anim_decoder.get(), &buf, &timestamp);
         Mat tmp(Size(m_width, m_height), CV_8UC4, buf);
-        tmp.copyTo(img);
+
+        if (img.type() == CV_8UC1)
+        {
+            cvtColor(tmp, img, COLOR_BGR2GRAY);
+        }
+        else
+            tmp.copyTo(img);
+
         m_animation.timestamps.push_back(timestamp);
         return true;
     }

@@ -972,7 +972,7 @@ static bool imwriteanimation_(const String& filename, Animation& animation, cons
     return code;
 }
 
-bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params)
+bool imwriteanimation(const String& filename, const Animation& animation, const std::vector<int>& params)
 {
     CV_Assert(!animation.frames.empty());
     CV_Assert(animation.frames.size() == animation.timestamps.size());

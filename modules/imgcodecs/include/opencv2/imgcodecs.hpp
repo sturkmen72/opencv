@@ -227,7 +227,7 @@ struct CV_EXPORTS_W_SIMPLE Animation
     CV_PROP_RW std::vector<Mat> frames;      // Vector of frames, where each Mat represents a single frame.
 
     // Default constructor
-    Animation() 
+    Animation()
         : loop_count(0), bgcolor(0) // Initialize loop_count and bgcolor to default values
     {
     }

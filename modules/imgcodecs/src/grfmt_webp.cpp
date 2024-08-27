@@ -102,10 +102,9 @@ bool WebPDecoder::readHeader()
         WebPAnimDecoderOptions dec_options;
         WebPAnimDecoderOptionsInit(&dec_options);
 
-        if(m_use_rgb)
-            dec_options.color_mode = features.has_alpha ? MODE_RGBA : MODE_RGB;
-        else
-            dec_options.color_mode = features.has_alpha ? MODE_BGRA : MODE_BGR;
+        dec_options.color_mode = m_use_rgb
+            ? (features.has_alpha ? MODE_RGBA : MODE_RGB)
+            : (features.has_alpha ? MODE_BGRA : MODE_BGR);
 
         anim_decoder.reset(WebPAnimDecoderNew(&webp_data, &dec_options));
 

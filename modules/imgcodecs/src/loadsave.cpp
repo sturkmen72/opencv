@@ -930,7 +930,7 @@ bool imwrite( const String& filename, InputArray _img,
 }
 
 
-static bool imwriteanimation_(const String& filename, Animation& animation, const std::vector<int>& params)
+static bool imwriteanimation_(const String& filename, const Animation& animation, const std::vector<int>& params)
 {
     ImageEncoder encoder = findEncoder(filename);
     if (!encoder)

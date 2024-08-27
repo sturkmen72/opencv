@@ -716,6 +716,13 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
         if (!success)
             break;
 
+        // optionally rotate the data if EXIF' orientation flag says so
+        if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
+        {
+            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+        }
+
+        animation.frames.push_back(mat);
         if (!decoder->nextPage())
         {
             break;
@@ -725,7 +732,6 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
     animation.bgcolor = decoder->animation().bgcolor;
     animation.loop_count = decoder->animation().loop_count;
     animation.timestamps = decoder->animation().timestamps;
-    animation.frames = decoder->animation().frames;
 
     return !animation.frames.empty();
 }
@@ -924,7 +930,7 @@ bool imwrite( const String& filename, InputArray _img,
 }
 
 
-static bool imwriteanimation_(const String& filename, Animation& animation, const std::vector<int>& params)
+static bool imwriteanimation_(const String& filename, const Animation& animation, const std::vector<int>& params)
 {
     ImageEncoder encoder = findEncoder(filename);
     if (!encoder)
@@ -944,7 +950,7 @@ static bool imwriteanimation_(const String& filename, Animation& animation, cons
             {
                 if (errno == EACCES)
                 {
-                    CV_LOG_WARNING(NULL, "imwrite_('" << filename << "'): can't open file for writing: permission denied");
+                    CV_LOG_WARNING(NULL, "imwriteanimation_('" << filename << "'): can't open file for writing: permission denied");
                 }
             }
             else
@@ -956,17 +962,17 @@ static bool imwriteanimation_(const String& filename, Animation& animation, cons
     }
     catch (const cv::Exception& e)
     {
-        CV_LOG_ERROR(NULL, "imwrite_('" << filename << "'): can't write data: " << e.what());
+        CV_LOG_ERROR(NULL, "imwriteanimation_('" << filename << "'): can't write data: " << e.what());
     }
     catch (...)
     {
-        CV_LOG_ERROR(NULL, "imwrite_('" << filename << "'): can't write data: unknown exception");
+        CV_LOG_ERROR(NULL, "imwriteanimation_('" << filename << "'): can't write data: unknown exception");
     }
 
     return code;
 }
 
-bool imwriteanimation(const String& filename, Animation& animation, const std::vector<int>& params)
+bool imwriteanimation(const String& filename, const Animation& animation, const std::vector<int>& params)
 {
     CV_Assert(!animation.frames.empty());
     CV_Assert(animation.frames.size() == animation.timestamps.size());

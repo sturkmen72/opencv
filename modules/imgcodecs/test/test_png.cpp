@@ -138,12 +138,19 @@ TEST(Imgcodecs_Png, load_save_animation)
     EXPECT_EQ(0, remove(output.c_str()));
 
 #if 0
-    for (int i = 0; i < s_animation.frames.size(); i++)
+    for (size_t i = 0; i < s_animation.frames.size(); i++)
     {
-        imwrite(output, s_animation.frames[i]);
-        image = imread(output, IMREAD_UNCHANGED);
-        EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[i], image);
         EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[i], l_animation.frames[i]);
+        vector<Mat>  planes_s;
+        vector<Mat>  planes_l;
+        Mat diff;
+        split(s_animation.frames[i], planes_s);
+        imshow("s", planes_s[3]);
+        split(l_animation.frames[i], planes_l);
+        imshow("l", planes_l[3]);
+        absdiff(planes_s[3], planes_l[3], diff);
+        imshow("diff", diff*250);
+        waitKey();
     }
 #endif
 }
@@ -196,6 +203,11 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgb)
     EXPECT_EQ(png_frames.size(), read_frames.size());
     EXPECT_EQ(read_frames.size(), imcount(output));
     EXPECT_EQ(0, remove(output.c_str()));
+
+    for (size_t i = 0; i < png_frames.size(); i++)
+    {
+        EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), png_frames[i], read_frames[i]);
+    }
 }
 
 TEST(Imgcodecs_Png, load_save_multiframes_gray)
@@ -208,7 +220,7 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray)
     png_frames.push_back(image.clone());
     Mat roi = image(Rect(0, 680, 680, 220));
 
-    for (int i = 0; i < 15; i++)
+    for (size_t i = 0; i < 15; i++)
     {
         roi = roi - Scalar(10, 10, 10, 20);
         png_frames.push_back(image.clone());
@@ -221,6 +233,11 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray)
     EXPECT_EQ(png_frames.size(), read_frames.size());
     EXPECT_EQ(read_frames.size(), imcount(output));
     EXPECT_EQ(0, remove(output.c_str()));
+
+    for (size_t i = 0; i < png_frames.size(); i++)
+    {
+        EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), png_frames[i], read_frames[i]);
+    }
 }
 
 /**

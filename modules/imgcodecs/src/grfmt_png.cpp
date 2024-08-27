@@ -83,12 +83,12 @@
 namespace cv
 {
 
-const uint id_IHDR = 0x52444849; // PNG header
-const uint id_acTL = 0x4C546361; // Animation control chunk
-const uint id_fcTL = 0x4C546366; // Frame control chunk
-const uint id_IDAT = 0x54414449; // first frame and/or default image
-const uint id_fdAT = 0x54416466; // Frame data chunk
-const uint id_IEND = 0x444E4549; // end/footer chunk
+const uint32_t id_IHDR = 0x52444849; // PNG header
+const uint32_t id_acTL = 0x4C546361; // Animation control chunk
+const uint32_t id_fcTL = 0x4C546366; // Frame control chunk
+const uint32_t id_IDAT = 0x54414449; // first frame and/or default image
+const uint32_t id_fdAT = 0x54416466; // Frame data chunk
+const uint32_t id_IEND = 0x444E4549; // end/footer chunk
 
 const unsigned long cMaxPNGSize = 1000000UL;
 
@@ -143,7 +143,7 @@ void  PngDecoder::close()
     }
 }
 
-void  PngDecoder::readDataFromBuf( void* _png_ptr, uchar* dst, size_t size )
+void  PngDecoder::readDataFromBuf( void* _png_ptr, unsigned char* dst, size_t size )
 {
     png_structp png_ptr = (png_structp)_png_ptr;
     PngDecoder* decoder = (PngDecoder*)(png_get_io_ptr(png_ptr));
@@ -187,8 +187,8 @@ bool  PngDecoder::readHeader()
                     if (m_f)
                     {
                         png_init_io(png_ptr, m_f);
-                        uchar sig[8];
-                        uint id;
+                        unsigned char sig[8];
+                        uint32_t id;
                         CHUNK chunk;
 
                         if (fread(sig, 1, 8, m_f))
@@ -261,8 +261,8 @@ bool  PngDecoder::readData( Mat& img )
     }
 
     volatile bool result = false;
-    AutoBuffer<uchar*> _buffer(m_height);
-    uchar** buffer = _buffer.data();
+    AutoBuffer<unsigned char*> _buffer(m_height);
+    unsigned char** buffer = _buffer.data();
     bool color = img.channels() > 1;
 
     png_structp png_ptr = (png_structp)m_png_ptr;
@@ -362,17 +362,20 @@ bool PngDecoder::readAnimation(Mat& img)
 
         fseek(m_f, -8, SEEK_CUR);
     }
+    else if (dop == 0)
+        m_animation.frames[m_frame_no - 1].copyTo(img);
+    else
+        img.setTo(0);
 
-    img.setTo(0);
     frameCur.setMat(img);
 
     processing_start((void*)&frameRaw);
     png_structp png_ptr = (png_structp)m_png_ptr;
     png_infop info_ptr = (png_infop)m_info_ptr;
 
-    uint id = 0;
-    uint j = 0;
-    uint imagesize = m_width * m_height * img.channels();
+    uint32_t id = 0;
+    uint32_t j = 0;
+    uint32_t imagesize = m_width * m_height * img.channels();
 
     while (!feof(m_f))
     {
@@ -409,8 +412,6 @@ bool PngDecoder::readAnimation(Mat& img)
                     }
                     frameCur.setPixels(frameNext.getPixels());
                     frameCur.setRows(frameNext.getRows());
-                    //imwrite(format("frameCur%03d.png", m_frame_no), img);
-                    //printf("frame : %d dop : %d bop :%d\n", m_frame_no, dop);
                 }
                 else
                 {
@@ -484,15 +485,15 @@ bool PngDecoder::readAnimation(Mat& img)
     return false;
 }
 
-void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, uint x, uint y, uint w, uint h, int channels)
+void PngDecoder::compose_frame(unsigned char** rows_dst, unsigned char** rows_src, unsigned char _bop, uint32_t x, uint32_t y, uint32_t w, uint32_t h, int channels)
 {
-    uint  i, j;
+    uint32_t  i, j;
     int u, v, al;
 
     for (j = 0; j < h; j++)
     {
-        uchar* sp = rows_src[j];
-        uchar* dp = rows_dst[j + y] + x * channels;
+        unsigned char* sp = rows_src[j];
+        unsigned char* dp = rows_dst[j + y] + x * channels;
 
         if (_bop == 0)
             memcpy(dp, sp, w * channels);
@@ -521,9 +522,9 @@ void PngDecoder::compose_frame(uchar** rows_dst, uchar** rows_src, uchar _bop, u
     }
 }
 
-uint PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
+uint32_t PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
 {
-    uchar len[4];
+    unsigned char len[4];
     if (fread(&len, 4, 1, f) == 1)
     {
         pChunk->size = png_get_uint_32(len) + 12;
@@ -531,10 +532,10 @@ uint PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
         {
             CV_LOG_WARNING(NULL, "chunk data is too large");
         }
-        pChunk->p = new uchar[pChunk->size];
+        pChunk->p = new unsigned char[pChunk->size];
         memcpy(pChunk->p, len, 4);
         if (fread(pChunk->p + 4, pChunk->size - 4, 1, f) == 1)
-            return *(uint*)(pChunk->p + 4);
+            return *(uint32_t*)(pChunk->p + 4);
     }
     return 0;
 }
@@ -565,7 +566,7 @@ bool PngDecoder::processing_start(void* frame_ptr)
     png_process_data(png_ptr, info_ptr, header, 8);
     png_process_data(png_ptr, info_ptr, m_chunkIHDR.p, m_chunkIHDR.size);
 
-    for (uint i = 0; i < m_chunksInfo.size(); i++)
+    for (size_t i = 0; i < m_chunksInfo.size(); i++)
         png_process_data(png_ptr, info_ptr, m_chunksInfo[i].p, m_chunksInfo[i].size);
 
     return true;
@@ -646,7 +647,7 @@ ImageEncoder PngEncoder::newEncoder() const
     return makePtr<PngEncoder>();
 }
 
-void PngEncoder::writeDataToBuf(void* _png_ptr, uchar* src, size_t size)
+void PngEncoder::writeDataToBuf(void* _png_ptr, unsigned char* src, size_t size)
 {
     if( size == 0 )
         return;
@@ -670,7 +671,7 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
     int y, width = img.cols, height = img.rows;
     int depth = img.depth(), channels = img.channels();
     volatile bool result = false;
-    AutoBuffer<uchar*> buffer;
+    AutoBuffer<unsigned char*> buffer;
 
     if( depth != CV_8U && depth != CV_16U )
         return false;
@@ -769,9 +770,9 @@ bool  PngEncoder::write( const Mat& img, const std::vector<int>& params )
 
 void PngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
 {
-    uint i, j;
-    uchar* sp;
-    uint size = frames[0].getWidth() * frames[0].getHeight();
+    uint32_t i, j;
+    unsigned char* sp;
+    uint32_t size = frames[0].getWidth() * frames[0].getHeight();
 
     for (i = 0; i < frames.size(); i++)
     {
@@ -782,10 +783,10 @@ void PngEncoder::optim_dirty(std::vector<APNGFrame>& frames)
     }
 }
 
-void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint first)
+void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint32_t first)
 {
-    uint imagesize = frames[0].getWidth() * frames[0].getHeight() * 4;
-    uint i = first;
+    uint32_t imagesize = frames[0].getWidth() * frames[0].getHeight() * 4;
+    uint32_t i = first;
 
     while (++i < frames.size())
     {
@@ -795,8 +796,8 @@ void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint first)
         i--;
         delete[] frames[i].getPixels();
         delete[] frames[i].getRows();
-        uint num = frames[i].getDelayNum();
-        uint den = frames[i].getDelayDen();
+        uint32_t num = frames[i].getDelayNum();
+        uint32_t den = frames[i].getDelayDen();
         frames.erase(frames.begin() + i);
 
         if (frames[i].getDelayDen() == den)
@@ -819,10 +820,10 @@ void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint first)
     }
 }
 
-void PngEncoder::write_chunk(FILE* f, const char* name, uchar* data, uint length)
+void PngEncoder::write_chunk(FILE* f, const char* name, unsigned char* data, uint32_t length)
 {
-    uchar buf[4];
-    uint crc = crc32(0, Z_NULL, 0);
+    unsigned char buf[4];
+    uint32_t crc = crc32(0, Z_NULL, 0);
 
     png_save_uint_32(buf, length);
     fwrite(buf, 1, 4, f);
@@ -847,33 +848,33 @@ void PngEncoder::write_chunk(FILE* f, const char* name, uchar* data, uint length
     fwrite(buf, 1, 4, f);
 }
 
-void PngEncoder::write_IDATs(FILE* f, int frame, uchar* data, uint length, uint idat_size)
+void PngEncoder::write_IDATs(FILE* f, int frame, unsigned char* data, uint32_t length, uint32_t idat_size)
 {
-    uint z_cmf = data[0];
+    uint32_t z_cmf = data[0];
     if ((z_cmf & 0x0f) == 8 && (z_cmf & 0xf0) <= 0x70)
     {
         if (length >= 2)
         {
-            uint z_cinfo = z_cmf >> 4;
-            uint half_z_window_size = 1 << (z_cinfo + 7);
+            uint32_t z_cinfo = z_cmf >> 4;
+            uint32_t half_z_window_size = 1 << (z_cinfo + 7);
             while (idat_size <= half_z_window_size && half_z_window_size >= 256)
             {
                 z_cinfo--;
                 half_z_window_size >>= 1;
             }
             z_cmf = (z_cmf & 0x0f) | (z_cinfo << 4);
-            if (data[0] != (uchar)z_cmf)
+            if (data[0] != (unsigned char)z_cmf)
             {
-                data[0] = (uchar)z_cmf;
+                data[0] = (unsigned char)z_cmf;
                 data[1] &= 0xe0;
-                data[1] += (uchar)(0x1f - ((z_cmf << 8) + data[1]) % 0x1f);
+                data[1] += (unsigned char)(0x1f - ((z_cmf << 8) + data[1]) % 0x1f);
             }
         }
     }
 
     while (length > 0)
     {
-        uint ds = length;
+        uint32_t ds = length;
         if (ds > 32768)
             ds = 32768;
 
@@ -887,19 +888,19 @@ void PngEncoder::write_IDATs(FILE* f, int frame, uchar* data, uint length, uint 
     }
 }
 
-void PngEncoder::process_rect(uchar* row, int rowbytes, int bpp, int stride, int h, uchar* rows)
+void PngEncoder::process_rect(unsigned char* row, int rowbytes, int bpp, int stride, int h, unsigned char* rows)
 {
     int i, j, v;
     int a, b, c, pa, pb, pc, p;
-    uchar* prev = NULL;
-    uchar* dp = rows;
-    uchar* out;
+    unsigned char* prev = NULL;
+    unsigned char* dp = rows;
+    unsigned char* out;
 
     for (j = 0; j < h; j++)
     {
-        uint sum = 0;
-        uchar* best_row = row_buf;
-        uint mins = ((uint)(-1)) >> 1;
+        uint32_t sum = 0;
+        unsigned char* best_row = row_buf;
+        uint32_t mins = ((uint32_t)(-1)) >> 1;
 
         out = row_buf + 1;
         for (i = 0; i < rowbytes; i++)
@@ -1019,9 +1020,9 @@ void PngEncoder::process_rect(uchar* row, int rowbytes, int bpp, int stride, int
     }
 }
 
-void PngEncoder::deflate_rect_op(uchar* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n)
+void PngEncoder::deflate_rect_op(unsigned char* pdata, int x, int y, int w, int h, int bpp, int stride, int zbuf_size, int n)
 {
-    uchar* row = pdata + y * stride + x * bpp;
+    unsigned char* row = pdata + y * stride + x * bpp;
     int rowbytes = w * bpp;
 
     op_zstream1.data_type = Z_BINARY;
@@ -1057,29 +1058,29 @@ void PngEncoder::deflate_rect_op(uchar* pdata, int x, int y, int w, int h, int b
     deflateReset(&op_zstream2);
 }
 
-void PngEncoder::get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar* ptemp, uint bpp, uint stride, int zbuf_size, uint has_tcolor, uint tcolor, int n)
+void PngEncoder::get_rect(uint32_t w, uint32_t h, unsigned char* pimage1, unsigned char* pimage2, unsigned char* ptemp, uint32_t bpp, uint32_t stride, int zbuf_size, uint32_t has_tcolor, uint32_t tcolor, int n)
 {
-    uint i, j, x0, y0, w0, h0;
-    uint x_min = w - 1;
-    uint y_min = h - 1;
-    uint x_max = 0;
-    uint y_max = 0;
-    uint diffnum = 0;
-    uint over_is_possible = 1;
+    uint32_t i, j, x0, y0, w0, h0;
+    uint32_t x_min = w - 1;
+    uint32_t y_min = h - 1;
+    uint32_t x_max = 0;
+    uint32_t y_max = 0;
+    uint32_t diffnum = 0;
+    uint32_t over_is_possible = 1;
 
     if (!has_tcolor)
         over_is_possible = 0;
 
     if (bpp == 1)
     {
-        uchar* pa = pimage1;
-        uchar* pb = pimage2;
-        uchar* pc = ptemp;
+        unsigned char* pa = pimage1;
+        unsigned char* pb = pimage2;
+        unsigned char* pc = ptemp;
 
         for (j = 0; j < h; j++)
             for (i = 0; i < w; i++)
             {
-                uchar c = *pb++;
+                unsigned char c = *pb++;
                 if (*pa++ != c)
                 {
                     diffnum++;
@@ -1109,8 +1110,8 @@ void PngEncoder::get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar*
         for (j = 0; j < h; j++)
             for (i = 0; i < w; i++)
             {
-                uint c1 = *pa++;
-                uint c2 = *pb++;
+                uint32_t c1 = *pa++;
+                uint32_t c2 = *pb++;
                 if ((c1 != c2) && ((c1 >> 8) || (c2 >> 8)))
                 {
                     diffnum++;
@@ -1133,15 +1134,15 @@ void PngEncoder::get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar*
     }
     else if (bpp == 3)
     {
-        uchar* pa = pimage1;
-        uchar* pb = pimage2;
-        uchar* pc = ptemp;
+        unsigned char* pa = pimage1;
+        unsigned char* pb = pimage2;
+        unsigned char* pc = ptemp;
 
         for (j = 0; j < h; j++)
             for (i = 0; i < w; i++)
             {
-                uint c1 = (pa[2] << 16) + (pa[1] << 8) + pa[0];
-                uint c2 = (pb[2] << 16) + (pb[1] << 8) + pb[0];
+                uint32_t c1 = (pa[2] << 16) + (pa[1] << 8) + pa[0];
+                uint32_t c2 = (pb[2] << 16) + (pb[1] << 8) + pb[0];
                 if (c1 != c2)
                 {
                     diffnum++;
@@ -1167,15 +1168,15 @@ void PngEncoder::get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar*
     }
     else if (bpp == 4)
     {
-        uint* pa = (uint*)pimage1;
-        uint* pb = (uint*)pimage2;
-        uint* pc = (uint*)ptemp;
+        uint32_t* pa = (uint32_t*)pimage1;
+        uint32_t* pb = (uint32_t*)pimage2;
+        uint32_t* pc = (uint32_t*)ptemp;
 
         for (j = 0; j < h; j++)
             for (i = 0; i < w; i++)
             {
-                uint c1 = *pa++;
-                uint c2 = *pb++;
+                uint32_t c1 = *pa++;
+                uint32_t c2 = *pb++;
                 if ((c1 != c2) && ((c1 >> 24) || (c2 >> 24)))
                 {
                     diffnum++;
@@ -1216,14 +1217,14 @@ void PngEncoder::get_rect(uint w, uint h, uchar* pimage1, uchar* pimage2, uchar*
         deflate_rect_op(ptemp, x0, y0, w0, h0, bpp, stride, zbuf_size, n * 2 + 1);
 }
 
-void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uint* zsize, int bpp, int stride, uchar* rows, int zbuf_size, int n)
+void PngEncoder::deflate_rect_fin(int deflate_method, int iter, unsigned char* zbuf, uint32_t* zsize, int bpp, int stride, unsigned char* rows, int zbuf_size, int n)
 {
-    uchar* row = op[n].p + op[n].y * stride + op[n].x * bpp;
+    unsigned char* row = op[n].p + op[n].y * stride + op[n].x * bpp;
     int rowbytes = op[n].w * bpp;
 
     if (op[n].filters == 0)
     {
-        uchar* dp = rows;
+        unsigned char* dp = rows;
         for (int j = 0; j < op[n].h; j++)
         {
             *dp++ = 0;
@@ -1240,7 +1241,7 @@ void PngEncoder::deflate_rect_fin(int deflate_method, int iter, uchar* zbuf, uin
         CV_UNUSED(iter);
 #if 0  // needs include "zopfli.h"
         ZopfliOptions opt_zopfli;
-        uchar* data = 0;
+        unsigned char* data = 0;
         size_t size = 0;
         ZopfliInitOptions(&opt_zopfli);
         opt_zopfli.numiterations = iter;
@@ -1336,35 +1337,35 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
     }
 
     CV_UNUSED(isBilevel);
-    uint first =0;
-    uint loops= animation.loop_count;
-    uint coltype= animation.frames[0].channels() == 1 ? PNG_COLOR_TYPE_GRAY : animation.frames[0].channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
+    uint32_t first =0;
+    uint32_t loops= animation.loop_count;
+    uint32_t coltype= animation.frames[0].channels() == 1 ? PNG_COLOR_TYPE_GRAY : animation.frames[0].channels() == 3 ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGB_ALPHA;
     int deflate_method=0;
     int iter=0;
 
     FILE* f;
-    uint i, j, k;
-    uint x0, y0, w0, h0, dop, bop;
-    uint idat_size, zbuf_size, zsize;
-    uchar* zbuf;
-    uchar header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-    uint num_frames = (int)frames.size();
-    uint width = frames[0].getWidth();
-    uint height = frames[0].getHeight();
-    uint bpp = (coltype == 6) ? 4 : (coltype == 2) ? 3
+    uint32_t i, j, k;
+    uint32_t x0, y0, w0, h0, dop, bop;
+    uint32_t idat_size, zbuf_size, zsize;
+    unsigned char* zbuf;
+    unsigned char header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+    uint32_t num_frames = (int)frames.size();
+    uint32_t width = frames[0].getWidth();
+    uint32_t height = frames[0].getHeight();
+    uint32_t bpp = (coltype == 6) ? 4 : (coltype == 2) ? 3
         : (coltype == 4) ? 2
         : 1;
-    uint has_tcolor = (coltype >= 4 || (coltype <= 2 && trnssize)) ? 1 : 0;
-    uint tcolor = 0;
-    uint rowbytes = width * bpp;
-    uint imagesize = rowbytes * height;
+    uint32_t has_tcolor = (coltype >= 4 || (coltype <= 2 && trnssize)) ? 1 : 0;
+    uint32_t tcolor = 0;
+    uint32_t rowbytes = width * bpp;
+    uint32_t imagesize = rowbytes * height;
 
-    uchar* temp = new uchar[imagesize];
-    uchar* over1 = new uchar[imagesize];
-    uchar* over2 = new uchar[imagesize];
-    uchar* over3 = new uchar[imagesize];
-    uchar* rest = new uchar[imagesize];
-    uchar* rows = new uchar[(rowbytes + 1) * height];
+    unsigned char* temp = new unsigned char[imagesize];
+    unsigned char* over1 = new unsigned char[imagesize];
+    unsigned char* over2 = new unsigned char[imagesize];
+    unsigned char* over3 = new unsigned char[imagesize];
+    unsigned char* rest = new unsigned char[imagesize];
+    unsigned char* rows = new unsigned char[(rowbytes + 1) * height];
 
     if (trnssize)
     {
@@ -1386,9 +1387,9 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
     if ((f = fopen(m_filename.c_str(), "wb")) != 0)
     {
-        uchar buf_IHDR[13];
-        uchar buf_acTL[8];
-        uchar buf_fcTL[26];
+        unsigned char buf_IHDR[13];
+        unsigned char buf_acTL[8];
+        unsigned char buf_fcTL[26];
 
         png_save_uint_32(buf_IHDR, width);
         png_save_uint_32(buf_IHDR + 4, height);
@@ -1411,7 +1412,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
             first = 0;
 
         if (palsize > 0)
-            write_chunk(f, "PLTE", (uchar*)(&palette), palsize * 3);
+            write_chunk(f, "PLTE", (unsigned char*)(&palette), palsize * 3);
 
         if (trnssize > 0)
             write_chunk(f, "tRNS", trns, trnssize);
@@ -1431,14 +1432,14 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         idat_size = (rowbytes + 1) * height;
         zbuf_size = idat_size + ((idat_size + 7) >> 3) + ((idat_size + 63) >> 6) + 11;
 
-        zbuf = new uchar[zbuf_size];
-        op_zbuf1 = new uchar[zbuf_size];
-        op_zbuf2 = new uchar[zbuf_size];
-        row_buf = new uchar[rowbytes + 1];
-        sub_row = new uchar[rowbytes + 1];
-        up_row = new uchar[rowbytes + 1];
-        avg_row = new uchar[rowbytes + 1];
-        paeth_row = new uchar[rowbytes + 1];
+        zbuf = new unsigned char[zbuf_size];
+        op_zbuf1 = new unsigned char[zbuf_size];
+        op_zbuf2 = new unsigned char[zbuf_size];
+        row_buf = new unsigned char[rowbytes + 1];
+        sub_row = new unsigned char[rowbytes + 1];
+        up_row = new unsigned char[rowbytes + 1];
+        avg_row = new unsigned char[rowbytes + 1];
+        paeth_row = new unsigned char[rowbytes + 1];
 
         row_buf[0] = 0;
         sub_row[0] = 1;
@@ -1469,7 +1470,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
         for (i = first; i < num_frames - 1; i++)
         {
-            uint op_min;
+            uint32_t op_min;
             int op_best;
 
             for (j = 0; j < 6; j++)

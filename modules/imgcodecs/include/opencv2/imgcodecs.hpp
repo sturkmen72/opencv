@@ -216,15 +216,21 @@ enum ImwriteHDRCompressionFlags {
     IMWRITE_HDR_COMPRESSION_RLE = 1
 };
 
-/** @brief this struct used to load animated images from a file.
-* TO DO : improve the documentation
+/** @brief Represents an animation with multiple frames.
+The Animation struct is used to store and manage the data for an animated sequence.
+It includes information about the number of times the animation should loop, the background color,
+timestamps for each frame, and the frames themselves.
 */
 struct CV_EXPORTS_W_SIMPLE Animation
 {
-    CV_PROP_RW int loop_count;               // Number of times the animation should loop. 0 means infinite looping.
-    CV_PROP_RW uint32_t bgcolor;             // Background color of the animation in RGBA format.
-    CV_PROP_RW std::vector<int> timestamps;  // Timestamps for each frame in milliseconds.
-    CV_PROP_RW std::vector<Mat> frames;      // Vector of frames, where each Mat represents a single frame.
+    //! Number of times the animation should loop. 0 means infinite looping.
+    CV_PROP_RW int loop_count;
+    //! Background color of the animation in RGBA format.
+    CV_PROP_RW uint32_t bgcolor;
+    //! Timestamps for each frame in milliseconds.
+    CV_PROP_RW std::vector<int> timestamps;
+    //! Vector of frames, where each Mat represents a single frame.
+    CV_PROP_RW std::vector<Mat> frames;
 
     // Default constructor
     Animation()
@@ -232,7 +238,7 @@ struct CV_EXPORTS_W_SIMPLE Animation
     {
     }
 
-    // Returns total number of frames in the animation.
+    //! Returns total number of frames in the animation.
     CV_WRAP int getFrameCount() const
     {
         return static_cast<int>(frames.size());

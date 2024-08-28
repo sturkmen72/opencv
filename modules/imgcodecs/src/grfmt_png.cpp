@@ -194,7 +194,7 @@ bool  PngDecoder::readHeader()
                         if (fread(sig, 1, 8, m_f))
                         {
                             id = read_chunk(m_f, &m_chunkIHDR);
-                            if (!(id == id_IHDR && chunk.size == 25))
+                            if (!(id == id_IHDR && m_chunkIHDR.size == 25))
                                 return false;
                             id = read_chunk(m_f, &chunk);
 

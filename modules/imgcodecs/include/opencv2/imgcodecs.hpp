@@ -216,6 +216,8 @@ enum ImwriteHDRCompressionFlags {
     IMWRITE_HDR_COMPRESSION_RLE = 1
 };
 
+//! @} imgcodecs_flags
+
 /** @brief Represents an animation with multiple frames.
 The Animation struct is used to store and manage the data for an animated sequence.
 It includes information about the number of times the animation should loop, the background color,
@@ -244,9 +246,6 @@ struct CV_EXPORTS_W_SIMPLE Animation
         return static_cast<int>(frames.size());
     }
 };
-
-
-//! @} imgcodecs_flags
 
 /** @brief Loads an image from a file.
 

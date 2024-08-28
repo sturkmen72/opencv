@@ -88,6 +88,8 @@ const uint32_t id_acTL = 0x4C546361; // Animation control chunk
 const uint32_t id_fcTL = 0x4C546366; // Frame control chunk
 const uint32_t id_IDAT = 0x54414449; // first frame and/or default image
 const uint32_t id_fdAT = 0x54416466; // Frame data chunk
+const uint32_t id_PLTE = 0x45544C50;
+const uint32_t id_tRNS = 0x534E5274;
 const uint32_t id_IEND = 0x444E4549; // end/footer chunk
 
 const unsigned long cMaxPNGSize = 1000000UL;
@@ -184,28 +186,47 @@ bool  PngDecoder::readHeader()
                 else
                 {
                     m_f = fopen( m_filename.c_str(), "rb" );
-                    if (m_f)
+                    png_init_io(png_ptr, m_f);
+                    unsigned char sig[8];
+                    uint32_t id;
+                    CHUNK chunk;
+
+                    fread(sig, 1, 8, m_f);
+                    id = read_chunk(m_f, &m_chunkIHDR);
+                    if (!(id == id_IHDR && m_chunkIHDR.size == 25))
+                        return false;
+
+                    while (!feof(m_f))
                     {
-                        png_init_io(png_ptr, m_f);
-                        unsigned char sig[8];
-                        uint32_t id;
-                        CHUNK chunk;
+                        id = read_chunk(m_f, &chunk);
 
-                        if (fread(sig, 1, 8, m_f))
+                        if (id == id_IDAT)
                         {
-                            id = read_chunk(m_f, &m_chunkIHDR);
-                            if (!(id == id_IHDR && m_chunkIHDR.size == 25))
-                                return false;
-                            id = read_chunk(m_f, &chunk);
-
-                            if (id == id_acTL && chunk.size == 20)
-                            {
-                                m_is_animated = true;
-                                m_frame_count = png_get_uint_32(chunk.p + 8);
-                                m_animation.loop_count = png_get_uint_32(chunk.p + 12);
-                            }
-                            fseek(m_f, 0, SEEK_SET);
+                        fseek(m_f, 0, SEEK_SET);
+                        break;
                         }
+
+                        if (id == id_acTL && chunk.size == 20)
+                        {
+                            m_is_animated = true;
+                            m_frame_count = png_get_uint_32(chunk.p + 8);
+                            m_animation.loop_count = png_get_uint_32(chunk.p + 12);
+                        }
+
+                        if (id == id_fcTL)
+                        {
+                            w0 = png_get_uint_32(chunk.p + 12);
+                            h0 = png_get_uint_32(chunk.p + 16);
+                            x0 = png_get_uint_32(chunk.p + 20);
+                            y0 = png_get_uint_32(chunk.p + 24);
+                            delay_num = png_get_uint_16(chunk.p + 28);
+                            delay_den = png_get_uint_16(chunk.p + 30);
+                            dop = chunk.p[32];
+                            bop = chunk.p[33];
+                        }
+
+                        if (id == id_PLTE || id == id_tRNS)
+                            m_chunksInfo.push_back(chunk);
                     }
                 }
 
@@ -392,8 +413,12 @@ bool PngDecoder::readAnimation(Mat& img)
             {
                 if (processing_finish())
                 {
-                    m_mat_next = Mat::zeros(img.rows, img.cols, img.type());
-                    frameNext.setMat(m_mat_next);
+                    if (m_frame_no == 0)
+                    {
+                        m_mat_raw.copyTo(img);
+                        m_mat_raw.copyTo(m_mat_next);
+                        frameNext.setMat(m_mat_next);
+                    }
 
                     if (dop == 2)
                         memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
@@ -401,8 +426,7 @@ bool PngDecoder::readAnimation(Mat& img)
                     compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0, img.channels());
                     frameCur.setDelayNum(delay_num);
                     frameCur.setDelayDen(delay_den);
-                    if (m_frame_no == 0)
-                        m_mat_raw.copyTo(img);
+
                     m_animation.frames.push_back(img.clone());
                     m_animation.timestamps.push_back(delay_den);
                     if (dop != 2)

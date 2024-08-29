@@ -377,6 +377,10 @@ bool PngDecoder::nextPage() {
 
 bool PngDecoder::readAnimation(Mat& img)
 {
+    uint32_t id = 0;
+    uint32_t j = 0;
+    uint32_t imagesize = m_width * m_height * img.channels();
+
     if (m_frame_no == 0)
     {
         m_mat_raw = Mat(img.rows, img.cols, img.type());
@@ -386,17 +390,13 @@ bool PngDecoder::readAnimation(Mat& img)
         fseek(m_f, -8, SEEK_CUR);
     }
     else
-        m_animation.frames[m_frame_no - 1].copyTo(img);
+        m_mat_next.copyTo(img);
 
     frameCur.setMat(img);
 
     processing_start((void*)&frameRaw);
     png_structp png_ptr = (png_structp)m_png_ptr;
     png_infop info_ptr = (png_infop)m_info_ptr;
-
-    uint32_t id = 0;
-    uint32_t j = 0;
-    uint32_t imagesize = m_width * m_height * img.channels();
 
     while (!feof(m_f))
     {
@@ -425,16 +425,14 @@ bool PngDecoder::readAnimation(Mat& img)
                         for (j = 0; j < h0; j++)
                             memset(frameNext.getRows()[y0 + j] + x0 * img.channels(), 0, w0 * img.channels());
                 }
-                frameCur.setPixels(frameNext.getPixels());
-                frameCur.setRows(frameNext.getRows());
-                }
-                else
-                {
-                    delete[] frameCur.getRows();
-                    delete[] frameCur.getPixels();
-                    delete[] chunk.p;
-                    return false;
-                }
+           }
+           else
+           {
+                delete[] frameCur.getRows();
+                delete[] frameCur.getPixels();
+                delete[] chunk.p;
+                return false;
+           }
 
             w0 = png_get_uint_32(chunk.p + 12);
             h0 = png_get_uint_32(chunk.p + 16);

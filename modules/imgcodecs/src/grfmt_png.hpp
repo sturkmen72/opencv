@@ -53,7 +53,6 @@ protected:
     CHUNK  m_chunkIHDR;
     std::vector<CHUNK> m_chunksInfo;
     int    m_frame_no;
-    bool   m_hasInfo;
     APNGFrame frameRaw;
     APNGFrame frameNext;
     Mat m_mat_raw;

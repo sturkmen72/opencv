@@ -187,7 +187,7 @@ bool  PngDecoder::readHeader()
                     m_f = fopen( m_filename.c_str(), "rb" );
                     png_init_io(png_ptr, m_f);
                     unsigned char sig[8];
-                    uint32_t id;
+                    uint32_t id = 0;
                     CHUNK chunk;
 
                     if(fread(sig, 1, 8, m_f))

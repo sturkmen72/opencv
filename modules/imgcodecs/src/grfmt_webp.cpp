@@ -215,11 +215,6 @@ bool WebPDecoder::readData(Mat &img)
     {
         cvtColor(read_img, img, COLOR_BGRA2BGR);
     }
-    else if (img.type() == CV_8UC4 && m_type == CV_8UC3)
-    {
-        CV_Error(Error::StsInternal, "tests could not catch this. or there is no possibility to occur");
-        cvtColor(read_img, img, COLOR_BGR2BGRA);
-    }
     else
     {
         CV_Error(Error::StsInternal, "");

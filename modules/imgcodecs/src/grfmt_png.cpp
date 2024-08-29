@@ -106,7 +106,6 @@ PngDecoder::PngDecoder()
     m_bit_depth = 0;
     m_is_animated = false;
     m_frame_no = 0;
-    m_hasInfo = false;
     w0 = 0;
     h0 = 0;
     x0 = 0;
@@ -191,8 +190,9 @@ bool  PngDecoder::readHeader()
                     uint32_t id;
                     CHUNK chunk;
 
-                    fread(sig, 1, 8, m_f);
-                    id = read_chunk(m_f, &m_chunkIHDR);
+                    if(fread(sig, 1, 8, m_f))
+                        id = read_chunk(m_f, &m_chunkIHDR);
+
                     if (!(id == id_IHDR && m_chunkIHDR.size == 25))
                         return false;
 
@@ -379,16 +379,14 @@ bool PngDecoder::readAnimation(Mat& img)
 {
     if (m_frame_no == 0)
     {
-        m_mat_raw = Mat::zeros(img.rows, img.cols, img.type());
+        m_mat_raw = Mat(img.rows, img.cols, img.type());
+        m_mat_next = Mat(img.rows, img.cols, img.type());
         frameRaw.setMat(m_mat_raw);
-
-
+        frameNext.setMat(m_mat_next);
         fseek(m_f, -8, SEEK_CUR);
     }
-    else if (dop == 0)
-        m_animation.frames[m_frame_no - 1].copyTo(img);
     else
-        img.setTo(0);
+        m_animation.frames[m_frame_no - 1].copyTo(img);
 
     frameCur.setMat(img);
 
@@ -409,35 +407,26 @@ bool PngDecoder::readAnimation(Mat& img)
 
         if (id == id_fcTL)
         {
-            if (m_hasInfo)
+            if (processing_finish())
             {
-                if (processing_finish())
+                if (dop == 2)
+                    memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
+
+                compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0, img.channels());
+                frameCur.setDelayNum(delay_num);
+                frameCur.setDelayDen(delay_den);
+
+                m_animation.frames.push_back(img.clone());
+                m_animation.timestamps.push_back(delay_den);
+                if (dop != 2)
                 {
-                    if (m_frame_no == 0)
-                    {
-                        m_mat_raw.copyTo(img);
-                        m_mat_raw.copyTo(m_mat_next);
-                        frameNext.setMat(m_mat_next);
-                    }
-
-                    if (dop == 2)
-                        memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
-
-                    compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0, img.channels());
-                    frameCur.setDelayNum(delay_num);
-                    frameCur.setDelayDen(delay_den);
-
-                    m_animation.frames.push_back(img.clone());
-                    m_animation.timestamps.push_back(delay_den);
-                    if (dop != 2)
-                    {
-                        memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
-                        if (dop == 1)
-                            for (j = 0; j < h0; j++)
-                                memset(frameNext.getRows()[y0 + j] + x0 * img.channels(), 0, w0 * img.channels());
-                    }
-                    frameCur.setPixels(frameNext.getPixels());
-                    frameCur.setRows(frameNext.getRows());
+                    memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
+                    if (dop == 1)
+                        for (j = 0; j < h0; j++)
+                            memset(frameNext.getRows()[y0 + j] + x0 * img.channels(), 0, w0 * img.channels());
+                }
+                frameCur.setPixels(frameNext.getPixels());
+                frameCur.setRows(frameNext.getRows());
                 }
                 else
                 {
@@ -446,7 +435,6 @@ bool PngDecoder::readAnimation(Mat& img)
                     delete[] chunk.p;
                     return false;
                 }
-            }
 
             w0 = png_get_uint_32(chunk.p + 12);
             h0 = png_get_uint_32(chunk.p + 16);
@@ -464,13 +452,12 @@ bool PngDecoder::readAnimation(Mat& img)
                 delete[] chunk.p;
                 return false;
             }
-
+            //imwrite(format("fr_next%d.png", m_frame_no), m_mat_next);
             memcpy(m_chunkIHDR.p + 8, chunk.p + 12, 8);
             return true;
         }
         else if (id == id_IDAT)
         {
-            m_hasInfo = true;
             png_process_data(png_ptr, info_ptr, chunk.p, chunk.size);
         }
         else if (id == id_fdAT)
@@ -494,17 +481,6 @@ bool PngDecoder::readAnimation(Mat& img)
 
             delete[] chunk.p;
             return true;
-        }
-        else if (!isalpha(chunk.p[4]) || !isalpha(chunk.p[5]) || !isalpha(chunk.p[6]) || !isalpha(chunk.p[7]))
-        {
-            delete[] chunk.p;
-            break;
-        }
-        else if (!m_hasInfo)
-        {
-            png_process_data(png_ptr, info_ptr, chunk.p, chunk.size);
-            m_chunksInfo.push_back(chunk);
-            continue;
         }
         delete[] chunk.p;
     }

@@ -198,14 +198,10 @@ bool  PngDecoder::readHeader()
 
                     while (!feof(m_f))
                     {
-                        bool fcTL_loaded = false;
                         id = read_chunk(m_f, &chunk);
 
                         if (id == id_IDAT)
                         {
-                            if (!fcTL_loaded)
-                                m_is_animated = true;
-
                             fseek(m_f, 0, SEEK_SET);
                             break;
                         }
@@ -219,7 +215,6 @@ bool  PngDecoder::readHeader()
 
                         if (id == id_fcTL)
                         {
-                            fcTL_loaded = true;
                             w0 = png_get_uint_32(chunk.p + 12);
                             h0 = png_get_uint_32(chunk.p + 16);
                             x0 = png_get_uint_32(chunk.p + 20);
@@ -422,7 +417,7 @@ bool PngDecoder::readAnimation(Mat& img)
                 frameCur.setDelayDen(delay_den);
 
                 m_animation.frames.push_back(img.clone());
-                m_animation.timestamps.push_back(delay_den);
+                m_animation.timestamps.push_back((float)delay_num * 1000 / delay_den);
                 if (dop != 2)
                 {
                     memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
@@ -1334,6 +1329,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         if (animation.frames[i].channels() == 3)
             cvtColor(animation.frames[i], tmpframes[i], COLOR_BGR2RGB);
         apngFrame.setMat(tmpframes[i]);
+        apngFrame.setDelayDen(animation.timestamps[i]);
         frames.push_back(apngFrame);
     }
 

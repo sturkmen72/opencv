@@ -37,7 +37,7 @@ protected:
     bool readAnimation(Mat& img);
     static void info_fn(png_structp png_ptr, png_infop info_ptr);
     static void row_fn(png_structp png_ptr, png_bytep new_row, png_uint_32 row_num, int pass);
-    bool  processing_start(void* frame_ptr);
+    bool  processing_start(void* frame_ptr, const Mat& img);
     bool  processing_finish();
     void compose_frame(unsigned char** rows_dst, unsigned char** rows_src, unsigned char bop, uint32_t x, uint32_t y, uint32_t w, uint32_t h, int channels);
     static void  readDataFromBuf(void* png_ptr, unsigned char* dst, size_t size);

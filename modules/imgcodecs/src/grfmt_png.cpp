@@ -394,7 +394,7 @@ bool PngDecoder::readAnimation(Mat& img)
 
     frameCur.setMat(img);
 
-    processing_start((void*)&frameRaw);
+    processing_start((void*)&frameRaw, img);
     png_structp png_ptr = (png_structp)m_png_ptr;
     png_infop info_ptr = (png_infop)m_info_ptr;
 
@@ -536,7 +536,7 @@ uint32_t PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
     return 0;
 }
 
-bool PngDecoder::processing_start(void* frame_ptr)
+bool PngDecoder::processing_start(void* frame_ptr, const Mat& img)
 {
     static uint8_t header[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 
@@ -557,10 +557,21 @@ bool PngDecoder::processing_start(void* frame_ptr)
 
     png_set_crc_action(png_ptr, PNG_CRC_QUIET_USE, PNG_CRC_QUIET_USE);
     png_set_progressive_read_fn(png_ptr, frame_ptr, (png_progressive_info_ptr)info_fn, row_fn, NULL);
-    png_set_bgr(png_ptr);
+
+    if (img.channels() < 4)
+        png_set_strip_alpha(png_ptr);
+    else
+        png_set_tRNS_to_alpha(png_ptr);
 
     png_process_data(png_ptr, info_ptr, header, 8);
     png_process_data(png_ptr, info_ptr, m_chunkIHDR.p, m_chunkIHDR.size);
+
+    if ((m_color_type & PNG_COLOR_MASK_COLOR) && img.channels() > 1 && !m_use_rgb)
+        png_set_bgr(png_ptr); // convert RGB to BGR
+    else if (img.channels() > 1)
+        png_set_gray_to_rgb(png_ptr); // Gray->RGB
+    else
+        png_set_rgb_to_gray(png_ptr, 1, 0.299, 0.587); // RGB->Gray
 
     for (size_t i = 0; i < m_chunksInfo.size(); i++)
         png_process_data(png_ptr, info_ptr, m_chunksInfo[i].p, m_chunksInfo[i].size);
@@ -593,8 +604,6 @@ void PngDecoder::info_fn(png_structp png_ptr, png_infop info_ptr)
 {
     png_set_expand(png_ptr);
     png_set_strip_16(png_ptr);
-    //png_set_gray_to_rgb(png_ptr);
-    //png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
     (void)png_set_interlace_handling(png_ptr);
     png_read_update_info(png_ptr, info_ptr);
 }

@@ -198,12 +198,16 @@ bool  PngDecoder::readHeader()
 
                     while (!feof(m_f))
                     {
+                        bool fcTL_loaded = false;
                         id = read_chunk(m_f, &chunk);
 
                         if (id == id_IDAT)
                         {
-                        fseek(m_f, 0, SEEK_SET);
-                        break;
+                            if (!fcTL_loaded)
+                                m_is_animated = true;
+
+                            fseek(m_f, 0, SEEK_SET);
+                            break;
                         }
 
                         if (id == id_acTL && chunk.size == 20)
@@ -215,6 +219,7 @@ bool  PngDecoder::readHeader()
 
                         if (id == id_fcTL)
                         {
+                            fcTL_loaded = true;
                             w0 = png_get_uint_32(chunk.p + 12);
                             h0 = png_get_uint_32(chunk.p + 16);
                             x0 = png_get_uint_32(chunk.p + 20);
@@ -428,8 +433,6 @@ bool PngDecoder::readAnimation(Mat& img)
            }
            else
            {
-                delete[] frameCur.getRows();
-                delete[] frameCur.getPixels();
                 delete[] chunk.p;
                 return false;
            }
@@ -445,12 +448,10 @@ bool PngDecoder::readAnimation(Mat& img)
 
             if (w0 > cMaxPNGSize || h0 > cMaxPNGSize || x0 > cMaxPNGSize || y0 > cMaxPNGSize || int(x0 + w0) > img.cols || int(y0 + h0) > img.rows || dop > 2 || bop > 1)
             {
-                delete[] frameCur.getRows();
-                delete[] frameCur.getPixels();
                 delete[] chunk.p;
                 return false;
             }
-            //imwrite(format("fr_next%d.png", m_frame_no), m_mat_next);
+
             memcpy(m_chunkIHDR.p + 8, chunk.p + 12, 8);
             return true;
         }

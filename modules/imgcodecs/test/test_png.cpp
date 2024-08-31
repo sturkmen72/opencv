@@ -123,7 +123,18 @@ TEST(Imgcodecs_Png, load_save_animation)
 
     for (int i = 0; i < 15; i++)
     {
-        roi = roi - Scalar(1, 1, 1, 20);
+        for (int x = 0; x < roi.rows; x++)
+            for (int y = 0; y < roi.cols; y++)
+            {
+                if (roi.at<Vec4b>(x, y)[0] > 220)
+                    roi.at<Vec4b>(x, y)[0] = roi.at<Vec4b>(x, y)[0] - 2;
+                if (roi.at<Vec4b>(x, y)[1] > 220)
+                    roi.at<Vec4b>(x, y)[1] = roi.at<Vec4b>(x, y)[1] - 2;
+                if (roi.at<Vec4b>(x, y)[2] > 220)
+                    roi.at<Vec4b>(x, y)[2] = roi.at<Vec4b>(x, y)[2] - 2;
+                if (roi.at<Vec4b>(x, y)[3] > 0)
+                    roi.at<Vec4b>(x, y)[3] = roi.at<Vec4b>(x, y)[3] - 5;
+            }
         s_animation.frames.push_back(image.clone());
         timestamp += 100;
         s_animation.timestamps.push_back(timestamp);
@@ -137,22 +148,8 @@ TEST(Imgcodecs_Png, load_save_animation)
     EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size());
     EXPECT_EQ(0, remove(output.c_str()));
 
-#if 0
-    for (size_t i = 0; i < s_animation.frames.size(); i++)
-    {
+    for (size_t i = 1; i < s_animation.frames.size(); i++)
         EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[i], l_animation.frames[i]);
-        vector<Mat>  planes_s;
-        vector<Mat>  planes_l;
-        Mat diff;
-        split(s_animation.frames[i], planes_s);
-        imshow("s", planes_s[3]);
-        split(l_animation.frames[i], planes_l);
-        imshow("l", planes_l[3]);
-        absdiff(planes_s[3], planes_l[3], diff);
-        imshow("diff", diff*250);
-        waitKey();
-    }
-#endif
 }
 
 TEST(Imgcodecs_Png, load_save_multiframes_rgba)

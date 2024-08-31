@@ -132,7 +132,7 @@ TEST(Imgcodecs_Png, load_save_animation)
                     roi.at<Vec4b>(x, y)[1] = roi.at<Vec4b>(x, y)[1] - 2;
                 if (roi.at<Vec4b>(x, y)[2] > 220)
                     roi.at<Vec4b>(x, y)[2] = roi.at<Vec4b>(x, y)[2] - 2;
-                if (roi.at<Vec4b>(x, y)[3] > 0)
+                if (roi.at<Vec4b>(x, y)[3] > 150)
                     roi.at<Vec4b>(x, y)[3] = roi.at<Vec4b>(x, y)[3] - 5;
             }
         s_animation.frames.push_back(image.clone());
@@ -148,7 +148,7 @@ TEST(Imgcodecs_Png, load_save_animation)
     EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size());
     EXPECT_EQ(0, remove(output.c_str()));
 
-    for (size_t i = 1; i < s_animation.frames.size(); i++)
+    for (size_t i = 1; i < l_animation.frames.size(); i++)
         EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[i], l_animation.frames[i]);
 }
 

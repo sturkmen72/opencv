@@ -65,6 +65,7 @@ protected:
     uint32_t delay_den;
     uint32_t dop;
     uint32_t bop;
+    bool m_is_fcTL_loaded;
 };
 
 

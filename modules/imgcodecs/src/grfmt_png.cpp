@@ -198,6 +198,7 @@ bool  PngDecoder::readHeader()
 
                     while (!feof(m_f))
                     {
+                        m_is_fcTL_loaded = false;
                         id = read_chunk(m_f, &chunk);
 
                         if (id == id_IDAT)
@@ -209,12 +210,21 @@ bool  PngDecoder::readHeader()
                         if (id == id_acTL && chunk.size == 20)
                         {
                             m_is_animated = true;
-                            m_frame_count = png_get_uint_32(chunk.p + 8);
+                            if (chunk.p[8] > 0)
+                            {
+                                chunk.p[8] = 0;
+                                chunk.p[9] = 0;
+                                m_frame_count = png_get_uint_32(chunk.p + 8);
+                                m_frame_count++;
+                            }
+                            else
+                                m_frame_count = png_get_uint_32(chunk.p + 8);
                             m_animation.loop_count = png_get_uint_32(chunk.p + 12);
                         }
 
                         if (id == id_fcTL)
                         {
+                            m_is_fcTL_loaded = true;
                             w0 = png_get_uint_32(chunk.p + 12);
                             h0 = png_get_uint_32(chunk.p + 16);
                             x0 = png_get_uint_32(chunk.p + 20);
@@ -407,6 +417,15 @@ bool PngDecoder::readAnimation(Mat& img)
 
         if (id == id_fcTL)
         {
+            if (!m_is_fcTL_loaded)
+            {
+                m_is_fcTL_loaded = true;
+                w0 = m_width;
+                h0 = m_height;
+                delay_num = 1;
+                delay_den = 100;
+            }
+
             if (processing_finish())
             {
                 if (dop == 2)
@@ -417,7 +436,7 @@ bool PngDecoder::readAnimation(Mat& img)
                 frameCur.setDelayDen(delay_den);
 
                 m_animation.frames.push_back(img.clone());
-                m_animation.timestamps.push_back((float)delay_num * 1000 / delay_den);
+                m_animation.timestamps.push_back(delay_num * 1000 / delay_den);
                 if (dop != 2)
                 {
                     memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
@@ -469,6 +488,7 @@ bool PngDecoder::readAnimation(Mat& img)
                 frameCur.setDelayDen(delay_den);
                 m_animation.frames.push_back(img.clone());
                 m_animation.timestamps.push_back(delay_den);
+                m_png_ptr = 0;
             }
             else
                 return false;

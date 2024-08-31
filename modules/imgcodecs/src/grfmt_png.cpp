@@ -488,7 +488,6 @@ bool PngDecoder::readAnimation(Mat& img)
                 frameCur.setDelayDen(delay_den);
                 m_animation.frames.push_back(img.clone());
                 m_animation.timestamps.push_back(delay_den);
-                m_png_ptr = 0;
             }
             else
                 return false;
@@ -617,6 +616,7 @@ bool PngDecoder::processing_finish()
 
     png_process_data(png_ptr, info_ptr, footer, 12);
     png_destroy_read_struct(&png_ptr, &info_ptr, 0);
+    m_png_ptr = 0;
     return true;
 }
 

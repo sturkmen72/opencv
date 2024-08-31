@@ -146,6 +146,12 @@ TEST(Imgcodecs_Png, load_save_animation)
     EXPECT_EQ(s_animation.frames.size(), imcount(output));
     EXPECT_EQ(true, imreadanimation(output, l_animation));
     EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size());
+    image = imread(output, IMREAD_UNCHANGED);
+    EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[0], image);
+    image = imread(output, IMREAD_COLOR);
+    EXPECT_EQ(false, image.empty());
+    image = imread(output, IMREAD_GRAYSCALE);
+    EXPECT_EQ(false, image.empty());
     EXPECT_EQ(0, remove(output.c_str()));
 
     for (size_t i = 1; i < l_animation.frames.size(); i++)
@@ -227,6 +233,15 @@ TEST(Imgcodecs_Png, load_save_multiframes_gray)
     EXPECT_EQ(true, imwrite(output, png_frames));
     vector<Mat> read_frames;
     EXPECT_EQ(true, imreadmulti(output, read_frames));
+    EXPECT_EQ(1, read_frames[0].channels());
+    read_frames.clear();
+    EXPECT_EQ(true, imreadmulti(output, read_frames, IMREAD_UNCHANGED));
+    EXPECT_EQ(1, read_frames[0].channels());
+    read_frames.clear();
+    EXPECT_EQ(true, imreadmulti(output, read_frames, IMREAD_COLOR));
+    EXPECT_EQ(3, read_frames[0].channels());
+    read_frames.clear();
+    EXPECT_EQ(true, imreadmulti(output, read_frames, IMREAD_GRAYSCALE));
     EXPECT_EQ(png_frames.size(), read_frames.size());
     EXPECT_EQ(read_frames.size(), imcount(output));
     EXPECT_EQ(0, remove(output.c_str()));

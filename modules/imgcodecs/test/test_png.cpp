@@ -149,9 +149,9 @@ TEST(Imgcodecs_Png, load_save_animation)
     image = imread(output, IMREAD_UNCHANGED);
     EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), s_animation.frames[0], image);
     image = imread(output, IMREAD_COLOR);
-    EXPECT_EQ(false, image.empty());
+    EXPECT_EQ(0, image.empty());
     image = imread(output, IMREAD_GRAYSCALE);
-    EXPECT_EQ(false, image.empty());
+    EXPECT_EQ(0, image.empty());
     EXPECT_EQ(0, remove(output.c_str()));
 
     for (size_t i = 1; i < l_animation.frames.size(); i++)
@@ -170,7 +170,18 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgba)
 
     for (int i = 0; i < 15; i++)
     {
-        roi = roi - Scalar(0, 0, 0, 20);
+        for (int x = 0; x < roi.rows; x++)
+            for (int y = 0; y < roi.cols; y++)
+            {
+                if (roi.at<Vec4b>(x, y)[0] > 220)
+                    roi.at<Vec4b>(x, y)[0] = roi.at<Vec4b>(x, y)[0] - 2;
+                if (roi.at<Vec4b>(x, y)[1] > 220)
+                    roi.at<Vec4b>(x, y)[1] = roi.at<Vec4b>(x, y)[1] - 2;
+                if (roi.at<Vec4b>(x, y)[2] > 220)
+                    roi.at<Vec4b>(x, y)[2] = roi.at<Vec4b>(x, y)[2] - 2;
+                if (roi.at<Vec4b>(x, y)[3] > 150)
+                    roi.at<Vec4b>(x, y)[3] = roi.at<Vec4b>(x, y)[3] - 5;
+            }
         png_frames.push_back(image.clone());
     }
 
@@ -195,7 +206,16 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgb)
 
     for (int i = 0; i < 15; i++)
     {
-        roi = roi - Scalar(0, 5, 0, 20);
+        for (int x = 0; x < roi.rows; x++)
+            for (int y = 0; y < roi.cols; y++)
+            {
+                if (roi.at<Vec3b>(x, y)[0] > 220)
+                    roi.at<Vec3b>(x, y)[0] = roi.at<Vec3b>(x, y)[0] - 6;
+                if (roi.at<Vec3b>(x, y)[1] > 220)
+                    roi.at<Vec3b>(x, y)[1] = roi.at<Vec3b>(x, y)[1] - 6;
+                if (roi.at<Vec3b>(x, y)[2] > 220)
+                    roi.at<Vec3b>(x, y)[2] = roi.at<Vec3b>(x, y)[2] - 6;
+            }
         png_frames.push_back(image.clone());
     }
 

@@ -390,6 +390,7 @@ bool PngDecoder::readAnimation(Mat& img)
     uint32_t id = 0;
     uint32_t j = 0;
     uint32_t imagesize = m_width * m_height * img.channels();
+    m_is_IDAT_loaded = false;
 
     if (m_frame_no == 0)
     {
@@ -415,7 +416,7 @@ bool PngDecoder::readAnimation(Mat& img)
         if (!id)
             return false;
 
-        if (id == id_fcTL)
+        if (id == id_fcTL && m_is_IDAT_loaded)
         {
             if (!m_is_fcTL_loaded)
             {
@@ -444,12 +445,12 @@ bool PngDecoder::readAnimation(Mat& img)
                         for (j = 0; j < h0; j++)
                             memset(frameNext.getRows()[y0 + j] + x0 * img.channels(), 0, w0 * img.channels());
                 }
-           }
-           else
-           {
+            }
+            else
+            {
                 delete[] chunk.p;
                 return false;
-           }
+            }
 
             w0 = png_get_uint_32(chunk.p + 12);
             h0 = png_get_uint_32(chunk.p + 16);
@@ -471,10 +472,12 @@ bool PngDecoder::readAnimation(Mat& img)
         }
         else if (id == id_IDAT)
         {
+            m_is_IDAT_loaded = true;
             png_process_data(png_ptr, info_ptr, chunk.p, chunk.size);
         }
-        else if (id == id_fdAT)
+        else if (id == id_fdAT && m_is_fcTL_loaded)
         {
+            m_is_IDAT_loaded = true;
             png_save_uint_32(chunk.p + 4, chunk.size - 16);
             memcpy(chunk.p + 8, "IDAT", 4);
             png_process_data(png_ptr, info_ptr, chunk.p + 4, chunk.size - 4);
@@ -495,6 +498,9 @@ bool PngDecoder::readAnimation(Mat& img)
             delete[] chunk.p;
             return true;
         }
+        else
+            png_process_data(png_ptr, info_ptr, chunk.p, chunk.size);
+
         delete[] chunk.p;
     }
     return false;

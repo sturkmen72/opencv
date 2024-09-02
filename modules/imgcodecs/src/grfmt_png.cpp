@@ -114,6 +114,7 @@ PngDecoder::PngDecoder()
     delay_den = 0;
     dop = 0;
     bop = 0;
+    m_timestamp = 0;
 }
 
 PngDecoder::~PngDecoder()
@@ -424,7 +425,7 @@ bool PngDecoder::readAnimation(Mat& img)
                 w0 = m_width;
                 h0 = m_height;
                 delay_num = 1;
-                delay_den = 100;
+                delay_den = 0;
             }
 
             if (processing_finish())
@@ -433,11 +434,10 @@ bool PngDecoder::readAnimation(Mat& img)
                     memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
 
                 compose_frame(frameCur.getRows(), frameRaw.getRows(), bop, x0, y0, w0, h0, img.channels());
-                frameCur.setDelayNum(delay_num);
-                frameCur.setDelayDen(delay_den);
-
                 m_animation.frames.push_back(img.clone());
-                m_animation.timestamps.push_back(delay_num * 1000 / delay_den);
+                m_timestamp += delay_den;
+                m_animation.timestamps.push_back(m_timestamp);
+
                 if (dop != 2)
                 {
                     memcpy(frameNext.getPixels(), frameCur.getPixels(), imagesize);
@@ -460,7 +460,9 @@ bool PngDecoder::readAnimation(Mat& img)
             delay_den = png_get_uint_16(chunk.p + 30);
             dop = chunk.p[32];
             bop = chunk.p[33];
-
+#if 0
+printf("%d %d\n", delay_num, delay_den);
+#endif
             if (w0 > cMaxPNGSize || h0 > cMaxPNGSize || x0 > cMaxPNGSize || y0 > cMaxPNGSize || int(x0 + w0) > img.cols || int(y0 + h0) > img.rows || dop > 2 || bop > 1)
             {
                 delete[] chunk.p;
@@ -490,7 +492,8 @@ bool PngDecoder::readAnimation(Mat& img)
                 frameCur.setDelayNum(delay_num);
                 frameCur.setDelayDen(delay_den);
                 m_animation.frames.push_back(img.clone());
-                m_animation.timestamps.push_back(delay_den);
+                m_timestamp += delay_den;
+                m_animation.timestamps.push_back(m_timestamp);
             }
             else
                 return false;
@@ -1364,7 +1367,8 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         if (animation.frames[i].channels() == 3)
             cvtColor(animation.frames[i], tmpframes[i], COLOR_BGR2RGB);
         apngFrame.setMat(tmpframes[i]);
-        apngFrame.setDelayDen(animation.timestamps[i]);
+        int timestamp = i == 0 ? animation.timestamps[i + 1] - animation.timestamps[i] : animation.timestamps[i] - animation.timestamps[i - 1];
+        apngFrame.setDelayDen(timestamp);
         frames.push_back(apngFrame);
     }
 

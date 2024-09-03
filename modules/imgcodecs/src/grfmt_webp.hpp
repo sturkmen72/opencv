@@ -44,6 +44,7 @@ protected:
     Mat data;
     std::unique_ptr<WebPAnimDecoder, UniquePtrDeleter> anim_decoder;
     bool m_has_animation;
+    int m_previous_timestamp;
 };
 
 class WebPEncoder CV_FINAL : public BaseImageEncoder

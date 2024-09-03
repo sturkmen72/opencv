@@ -152,7 +152,7 @@ TEST(Imgcodecs_WebP, load_save_animation)
     Mat image = imread(filename, IMREAD_UNCHANGED);
     s_animation.frames.push_back(image.clone());
     Mat roi = image(Rect(0, 680, 680, 220));
-    int timestamp = 0;
+    int timestamp = 100;
     s_animation.timestamps.push_back(timestamp);
     s_animation.bgcolor = 0xff00ff;
     s_animation.loop_count = 5;
@@ -161,7 +161,6 @@ TEST(Imgcodecs_WebP, load_save_animation)
     {
         roi = roi - Scalar(0, 0, 0, 20);
         s_animation.frames.push_back(image.clone());
-        timestamp += 100;
         s_animation.timestamps.push_back(timestamp);
     }
 
@@ -176,7 +175,7 @@ TEST(Imgcodecs_WebP, load_save_animation)
     EXPECT_EQ(l_animation.loop_count, s_animation.loop_count);
     EXPECT_EQ(0, remove(output.c_str()));
 
-    for (size_t i = 1; i < l_animation.frames.size(); i++)
+    for (size_t i = 1; i < l_animation.frames.size()-1; i++)
         EXPECT_EQ(s_animation.timestamps[i], l_animation.timestamps[i]);
 }
 

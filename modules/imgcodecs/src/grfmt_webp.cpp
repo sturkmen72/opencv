@@ -24,6 +24,7 @@ WebPDecoder::WebPDecoder()
     m_buf_supported = true;
     fs_size = 0;
     m_has_animation = false;
+    m_previous_timestamp = 0;
 }
 
 WebPDecoder::~WebPDecoder()
@@ -175,7 +176,8 @@ bool WebPDecoder::readData(Mat &img)
         else
             tmp.copyTo(img);
 
-        m_animation.timestamps.push_back(timestamp);
+        m_animation.timestamps.push_back(timestamp - m_previous_timestamp);
+        m_previous_timestamp = timestamp;
         return true;
     }
 
@@ -334,11 +336,10 @@ bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<
 {
     Animation animation;
     animation.frames = img_vec;
-    int timestamp = 0;
+    int timestamp = 100;
     for (size_t i = 0; i < animation.frames.size(); i++)
     {
         animation.timestamps.push_back(timestamp);
-        timestamp += 10;
     }
     return writeanimation(animation, params);
 }
@@ -398,7 +399,7 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
 
     for (size_t i = 0; i < animation.frames.size(); i++)
     {
-        timestamp = animation.timestamps[i];
+        timestamp += animation.timestamps[i];
         pic.argb = (uint32_t*)animation.frames[i].data;
         ok = WebPAnimEncoderAdd(anim_encoder.get(), &pic, timestamp, &config);
     }

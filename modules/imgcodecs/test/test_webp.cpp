@@ -175,6 +175,9 @@ TEST(Imgcodecs_WebP, load_save_animation)
     EXPECT_EQ(l_animation.bgcolor, s_animation.bgcolor);
     EXPECT_EQ(l_animation.loop_count, s_animation.loop_count);
     EXPECT_EQ(0, remove(output.c_str()));
+
+    for (size_t i = 1; i < l_animation.frames.size(); i++)
+        EXPECT_EQ(s_animation.timestamps[i], l_animation.timestamps[i]);
 }
 
 #endif // HAVE_WEBP

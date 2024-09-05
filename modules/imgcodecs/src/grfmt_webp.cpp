@@ -88,11 +88,14 @@ bool WebPDecoder::readHeader()
 
     if (m_has_animation)
     {
-        fs.seekg(0, std::ios::beg); CV_Assert(fs && "File stream error");
-        data.create(1, validateToInt(fs_size), CV_8UC1);
-        fs.read((char*)data.ptr(), fs_size);
-        CV_Assert(fs && "Can't read file data");
-        fs.close();
+        if (m_buf.empty())
+        {
+            fs.seekg(0, std::ios::beg); CV_Assert(fs && "File stream error");
+            data.create(1, validateToInt(fs_size), CV_8UC1);
+            fs.read((char*)data.ptr(), fs_size);
+            CV_Assert(fs && "Can't read file data");
+            fs.close();
+        }
 
         CV_Assert(data.type() == CV_8UC1); CV_Assert(data.rows == 1);
 

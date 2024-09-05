@@ -1287,12 +1287,46 @@ bool imdecodemulti(InputArray _buf, int flags, CV_OUT std::vector<Mat>& mats, co
     }
 }
 
+bool imencodemulti_( const String& ext, std::vector<Mat>& images,
+               std::vector<uchar>& buf, const std::vector<int>& params_ )
+{
+    CV_TRACE_FUNCTION();
+
+    ImageEncoder encoder = findEncoder( ext );
+    if( !encoder )
+        CV_Error( Error::StsError, "could not find encoder for the specified extension" );
+
+    CV_Check(params_.size(), (params_.size() & 1) == 0, "Encoding 'params' must be key-value pairs");
+    CV_CheckLE(params_.size(), (size_t)(CV_IO_MAX_IMAGE_PARAMS*2), "");
+
+    bool code = false;
+    if( encoder->setDestination(buf) )
+    {
+        code = encoder->writemulti(images, params_);
+        encoder->throwOnEror();
+        CV_Assert( code );
+    }
+
+    return code;
+}
+
 bool imencode( const String& ext, InputArray _image,
                std::vector<uchar>& buf, const std::vector<int>& params_ )
 {
     CV_TRACE_FUNCTION();
 
-    Mat image = _image.getMat();
+    CV_Assert(!_image.empty());
+
+    Mat image;
+    std::vector<Mat> img_vec;
+    if (_image.isMatVector() || _image.isUMatVector())
+    {
+        _image.getMatVector(img_vec);
+        return imencodemulti_(ext, img_vec, buf, params_);
+    }
+    else
+        image = _image.getMat();
+
     CV_Assert(!image.empty());
 
     int channels = image.channels();

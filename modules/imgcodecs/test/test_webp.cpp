@@ -140,6 +140,11 @@ TEST(Imgcodecs_WebP, load_save_multiframes)
     size_t expected_frame_count = png_frames.size() - 2;
     EXPECT_EQ(expected_frame_count, webp_frames.size());
     EXPECT_EQ(expected_frame_count, imcount(output));
+
+    std::vector<uchar> buf;
+    EXPECT_EQ(true, imencode(".webp", webp_frames, buf));
+    EXPECT_EQ(true, imdecodemulti(buf, IMREAD_COLOR_RGB, webp_frames));
+    EXPECT_EQ(true, imwrite(output, webp_frames));
     EXPECT_EQ(0, remove(output.c_str()));
 }
 

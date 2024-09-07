@@ -1185,11 +1185,11 @@ imdecodemulti_(const Mat& buf, int flags, std::vector<Mat>& mats, int start, int
     }
     catch (const cv::Exception& e)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: " << e.what());
+        CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read header: " << e.what());
     }
     catch (...)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: unknown exception");
+        CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read header: unknown exception");
     }
 
     int current = start;
@@ -1234,11 +1234,11 @@ imdecodemulti_(const Mat& buf, int flags, std::vector<Mat>& mats, int start, int
         }
         catch (const cv::Exception& e)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: " << e.what());
+            CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read data: " << e.what());
         }
         catch (...)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: unknown exception");
+            CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read data: unknown exception");
         }
         if (!success)
             break;
@@ -1287,7 +1287,8 @@ bool imdecodemulti(InputArray _buf, int flags, CV_OUT std::vector<Mat>& mats, co
     }
 }
 
-bool imencodemulti_( const String& ext, std::vector<Mat>& images,
+static bool
+imencodemulti_( const String& ext, std::vector<Mat>& images,
                std::vector<uchar>& buf, const std::vector<int>& params_ )
 {
     CV_TRACE_FUNCTION();

@@ -192,7 +192,7 @@ bool  PngDecoder::readHeader()
                     CHUNK chunk;
 
                     if(fread(sig, 1, 8, m_f))
-                        id = read_chunk(m_f, &m_chunkIHDR);
+                        id = read_chunk(&m_chunkIHDR);
 
                     if (!(id == id_IHDR && m_chunkIHDR.size == 25))
                         return false;
@@ -200,7 +200,7 @@ bool  PngDecoder::readHeader()
                     while (!feof(m_f))
                     {
                         m_is_fcTL_loaded = false;
-                        id = read_chunk(m_f, &chunk);
+                        id = read_chunk(&chunk);
 
                         if (id == id_IDAT)
                         {
@@ -413,7 +413,7 @@ bool PngDecoder::readAnimation(Mat& img)
     while (!feof(m_f))
     {
         CHUNK chunk;
-        id = read_chunk(m_f, &chunk);
+        id = read_chunk(&chunk);
         if (!id)
             return false;
 
@@ -546,10 +546,26 @@ void PngDecoder::compose_frame(unsigned char** rows_dst, unsigned char** rows_sr
     }
 }
 
-uint32_t PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
+size_t PngDecoder::read_from_io(void* _Buffer, size_t _ElementSize, size_t _ElementCount)
+{
+    if (m_f)
+        return fread(_Buffer, _ElementSize, _ElementCount, m_f);
+
+    if(m_buf_pos + _ElementSize > m_buf.cols * m_buf.rows * m_buf.elemSize())
+    {
+        CV_Error(Error::StsInternal, "PNG input buffer is incomplete");
+        return 0;
+    }
+    memcpy( _Buffer, m_buf.ptr() + m_buf_pos, _ElementSize );
+    m_buf_pos += _ElementSize;
+
+    return _ElementSize;
+}
+
+uint32_t PngDecoder::read_chunk(CHUNK* pChunk)
 {
     unsigned char len[4];
-    if (fread(&len, 4, 1, f) == 1)
+    if (read_from_io(&len, 4, 1) == 1)
     {
         pChunk->size = png_get_uint_32(len) + 12;
         if (pChunk->size > PNG_USER_CHUNK_MALLOC_MAX)
@@ -558,7 +574,7 @@ uint32_t PngDecoder::read_chunk(FILE* f, CHUNK* pChunk)
         }
         pChunk->p = new unsigned char[pChunk->size];
         memcpy(pChunk->p, len, 4);
-        if (fread(pChunk->p + 4, pChunk->size - 4, 1, f) == 1)
+        if (read_from_io(pChunk->p + 4, pChunk->size - 4, 1) == 1)
             return *(uint32_t*)(pChunk->p + 4);
     }
     return 0;

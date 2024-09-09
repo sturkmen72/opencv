@@ -1185,11 +1185,11 @@ imdecodemulti_(const Mat& buf, int flags, std::vector<Mat>& mats, int start, int
     }
     catch (const cv::Exception& e)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: " << e.what());
+        CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read header: " << e.what());
     }
     catch (...)
     {
-        CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read header: unknown exception");
+        CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read header: unknown exception");
     }
 
     int current = start;
@@ -1234,11 +1234,11 @@ imdecodemulti_(const Mat& buf, int flags, std::vector<Mat>& mats, int start, int
         }
         catch (const cv::Exception& e)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: " << e.what());
+            CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read data: " << e.what());
         }
         catch (...)
         {
-            CV_LOG_ERROR(NULL, "imreadmulti_('" << filename << "'): can't read data: unknown exception");
+            CV_LOG_ERROR(NULL, "imdecodemulti_('" << filename << "'): can't read data: unknown exception");
         }
         if (!success)
             break;
@@ -1287,12 +1287,47 @@ bool imdecodemulti(InputArray _buf, int flags, CV_OUT std::vector<Mat>& mats, co
     }
 }
 
+static bool
+imencodemulti_( const String& ext, std::vector<Mat>& images,
+               std::vector<uchar>& buf, const std::vector<int>& params_ )
+{
+    CV_TRACE_FUNCTION();
+
+    ImageEncoder encoder = findEncoder( ext );
+    if( !encoder )
+        CV_Error( Error::StsError, "could not find encoder for the specified extension" );
+
+    CV_Check(params_.size(), (params_.size() & 1) == 0, "Encoding 'params' must be key-value pairs");
+    CV_CheckLE(params_.size(), (size_t)(CV_IO_MAX_IMAGE_PARAMS*2), "");
+
+    bool code = false;
+    if( encoder->setDestination(buf) )
+    {
+        code = encoder->writemulti(images, params_);
+        encoder->throwOnEror();
+        CV_Assert( code );
+    }
+
+    return code;
+}
+
 bool imencode( const String& ext, InputArray _image,
                std::vector<uchar>& buf, const std::vector<int>& params_ )
 {
     CV_TRACE_FUNCTION();
 
-    Mat image = _image.getMat();
+    CV_Assert(!_image.empty());
+
+    Mat image;
+    std::vector<Mat> img_vec;
+    if (_image.isMatVector() || _image.isUMatVector())
+    {
+        _image.getMatVector(img_vec);
+        return imencodemulti_(ext, img_vec, buf, params_);
+    }
+    else
+        image = _image.getMat();
+
     CV_Assert(!image.empty());
 
     int channels = image.channels();

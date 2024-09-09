@@ -870,32 +870,43 @@ void PngEncoder::optim_duplicates(std::vector<APNGFrame>& frames, uint32_t first
     }
 }
 
+size_t PngEncoder::write_to_io(void const* _Buffer, size_t  _ElementSize, size_t _ElementCount, FILE * _Stream)
+{
+    if (_Stream)
+        return fwrite(_Buffer, _ElementSize, _ElementCount, _Stream);
+
+    size_t cursz = m_buf->size();
+    m_buf->resize(cursz + _ElementCount);
+    memcpy( &(*m_buf)[cursz], _Buffer, _ElementCount );
+    return _ElementCount;
+}
+
 void PngEncoder::write_chunk(FILE* f, const char* name, unsigned char* data, uint32_t length)
 {
     unsigned char buf[4];
     uint32_t crc = crc32(0, Z_NULL, 0);
 
     png_save_uint_32(buf, length);
-    fwrite(buf, 1, 4, f);
-    fwrite(name, 1, 4, f);
+    write_to_io(buf, 1, 4, f);
+    write_to_io(name, 1, 4, f);
     crc = crc32(crc, (const Bytef*)name, 4);
 
     if (memcmp(name, "fdAT", 4) == 0)
     {
         png_save_uint_32(buf, next_seq_num++);
-        fwrite(buf, 1, 4, f);
+        write_to_io(buf, 1, 4, f);
         crc = crc32(crc, buf, 4);
         length -= 4;
     }
 
     if (data != NULL && length > 0)
     {
-        fwrite(data, 1, length, f);
+        write_to_io(data, 1, length, f);
         crc = crc32(crc, data, length);
     }
 
     png_save_uint_32(buf, crc);
-    fwrite(buf, 1, 4, f);
+    write_to_io(buf, 1, 4, f);
 }
 
 void PngEncoder::write_IDATs(FILE* f, int frame, unsigned char* data, uint32_t length, uint32_t idat_size)
@@ -1395,7 +1406,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
     int deflate_method=0;
     int iter=0;
 
-    FILE* f;
+    FILE* m_f = NULL;
     uint32_t i, j, k;
     uint32_t x0, y0, w0, h0, dop, bop;
     uint32_t idat_size, zbuf_size, zsize;
@@ -1437,7 +1448,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         }
     }
 
-    if ((f = fopen(m_filename.c_str(), "wb")) != 0)
+    if (m_buf || (m_f = fopen(m_filename.c_str(), "wb")) != 0)
     {
         unsigned char buf_IHDR[13];
         unsigned char buf_acTL[8];
@@ -1454,20 +1465,20 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         png_save_uint_32(buf_acTL, num_frames - first);
         png_save_uint_32(buf_acTL + 4, loops);
 
-        fwrite(header, 1, 8, f);
+        write_to_io(header, 1, 8, m_f);
 
-        write_chunk(f, "IHDR", buf_IHDR, 13);
+        write_chunk(m_f, "IHDR", buf_IHDR, 13);
 
         if (num_frames > 1)
-            write_chunk(f, "acTL", buf_acTL, 8);
+            write_chunk(m_f, "acTL", buf_acTL, 8);
         else
             first = 0;
 
         if (palsize > 0)
-            write_chunk(f, "PLTE", (unsigned char*)(&palette), palsize * 3);
+            write_chunk(m_f, "PLTE", (unsigned char*)(&palette), palsize * 3);
 
         if (trnssize > 0)
-            write_chunk(f, "tRNS", trns, trnssize);
+            write_chunk(m_f, "tRNS", trns, trnssize);
 
         op_zstream1.data_type = Z_BINARY;
         op_zstream1.zalloc = Z_NULL;
@@ -1513,7 +1524,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
         if (first)
         {
-            write_IDATs(f, 0, zbuf, zsize, idat_size);
+            write_IDATs(m_f, 0, zbuf, zsize, idat_size);
             for (j = 0; j < 6; j++)
                 op[j].valid = 0;
             deflate_rect_op(frames[1].getPixels(), x0, y0, w0, h0, bpp, rowbytes, zbuf_size, 0);
@@ -1573,9 +1584,9 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
             png_save_uint_16(buf_fcTL + 22, frames[i].getDelayDen());
             buf_fcTL[24] = dop;
             buf_fcTL[25] = bop;
-            write_chunk(f, "fcTL", buf_fcTL, 26);
+            write_chunk(m_f, "fcTL", buf_fcTL, 26);
 
-            write_IDATs(f, i, zbuf, zsize, idat_size);
+            write_IDATs(m_f, i, zbuf, zsize, idat_size);
 
             /* process apng dispose - begin */
             if (dop != 2)
@@ -1613,14 +1624,15 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
             png_save_uint_16(buf_fcTL + 22, frames[num_frames - 1].getDelayDen());
             buf_fcTL[24] = 0;
             buf_fcTL[25] = bop;
-            write_chunk(f, "fcTL", buf_fcTL, 26);
+            write_chunk(m_f, "fcTL", buf_fcTL, 26);
         }
 
-        write_IDATs(f, num_frames - 1, zbuf, zsize, idat_size);
+        write_IDATs(m_f, num_frames - 1, zbuf, zsize, idat_size);
 
-        write_chunk(f, "IEND", 0, 0);
+        write_chunk(m_f, "IEND", 0, 0);
 
-        fclose(f);
+        if (m_f)
+            fclose(m_f);
 
         delete[] zbuf;
         delete[] op_zbuf1;

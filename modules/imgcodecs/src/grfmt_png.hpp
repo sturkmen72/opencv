@@ -90,6 +90,7 @@ public:
 protected:
     static void writeDataToBuf(void* png_ptr, unsigned char* src, size_t size);
     static void flushBuf(void* png_ptr);
+    size_t PngEncoder::write_to_io(void const* _Buffer, size_t  _ElementSize, size_t _ElementCount, FILE* _Stream);
 
 private:
     void write_chunk(FILE* f, const char* name, unsigned char* data, uint32_t length);

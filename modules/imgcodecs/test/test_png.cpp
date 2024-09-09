@@ -195,6 +195,9 @@ TEST(Imgcodecs_Png, load_save_multiframes_rgba)
     EXPECT_EQ(png_frames.size(), read_frames.size());
     EXPECT_EQ(read_frames.size(), imcount(output));
     EXPECT_EQ(0, remove(output.c_str()));
+    std::vector<uchar> buf;
+    EXPECT_EQ(true, imencode(".png", png_frames, buf));
+    EXPECT_EQ(true, imdecodemulti(buf, IMREAD_COLOR_RGB, read_frames));
 }
 
 TEST(Imgcodecs_Png, load_save_multiframes_rgb)

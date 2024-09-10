@@ -155,7 +155,8 @@ TEST(Imgcodecs_WebP, load_save_animation)
     EXPECT_EQ(true, imwrite(output, s_animation.frames));
     vector<Mat> webp_frames;
     EXPECT_EQ(true, imreadmulti(output, webp_frames));
-    EXPECT_EQ(1, webp_frames.size());
+    expected_frame_count = 1;
+    EXPECT_EQ(webp_frames.size(), expected_frame_count);
 
     std::vector<uchar> buf;
     EXPECT_EQ(true, imencode(".webp", webp_frames, buf));

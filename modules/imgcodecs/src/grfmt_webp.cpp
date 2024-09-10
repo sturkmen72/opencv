@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "grfmt_webp.hpp"
+#include <opencv2/core/utils/logger.hpp>
 #include <opencv2/core/utils/configuration.private.hpp>
 #include <webp/decode.h>
 #include <webp/encode.h>
@@ -347,9 +348,8 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
     if (img_vec.size() > 1)
-        printf("you are trying to write %zd images.\n"
-            "only the first image will be written.\n"
-            "use imwriteanimation() function to write more images.\n", img_vec.size());
+        CV_LOG_WARNING(NULL, "\nyou are trying to write " << img_vec.size() <<
+            " images.\nonly the first image will be written.\nuse imwriteanimation() function to write more images.\n");
     return write(img_vec[0], params);
 }
 

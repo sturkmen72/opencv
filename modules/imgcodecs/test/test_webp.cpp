@@ -115,39 +115,6 @@ TEST(Imgcodecs_WebP, encode_decode_with_alpha_webp)
     EXPECT_EQ(512, img_webp_bgr.rows);
 }
 
-TEST(Imgcodecs_WebP, load_save_multiframes)
-{
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "readwrite/OpenCV_logo_white.png";
-    vector<Mat> png_frames;
-
-    Mat image = imread(filename, IMREAD_UNCHANGED);
-    png_frames.push_back(image.clone());
-    Mat roi = image(Rect(0, 680, 680, 220));
-
-    for (int i = 0; i < 15; i++)
-    {
-        roi = roi - Scalar(0, 0, 0, 20);
-        png_frames.push_back(image.clone());
-    }
-
-    string output = cv::tempfile(".webp");
-    EXPECT_EQ(true, imwrite(output, png_frames));
-    vector<Mat> webp_frames;
-    EXPECT_EQ(true, imreadmulti(output, webp_frames, IMREAD_UNCHANGED));
-    // Since the last three images are identical, only one image was inserted as the last frame,
-    // and its duration was calculated by libwebp.
-    size_t expected_frame_count = png_frames.size() - 2;
-    EXPECT_EQ(expected_frame_count, webp_frames.size());
-    EXPECT_EQ(expected_frame_count, imcount(output));
-
-    std::vector<uchar> buf;
-    EXPECT_EQ(true, imencode(".webp", webp_frames, buf));
-    EXPECT_EQ(true, imdecodemulti(buf, IMREAD_COLOR_RGB, webp_frames));
-    EXPECT_EQ(true, imwrite(output, webp_frames));
-    EXPECT_EQ(0, remove(output.c_str()));
-}
-
 TEST(Imgcodecs_WebP, load_save_animation)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
@@ -173,15 +140,27 @@ TEST(Imgcodecs_WebP, load_save_animation)
 
     EXPECT_EQ(true, imwriteanimation(output, s_animation));
     EXPECT_EQ(true, imreadanimation(output, l_animation));
+
     // Since the last three images are identical, only one image was inserted as the last frame,
     // and its duration was calculated by libwebp.
-    EXPECT_EQ(l_animation.frames.size(), s_animation.frames.size() - 2);
+    size_t expected_frame_count = s_animation.frames.size() - 2;
+    EXPECT_EQ(imcount(output), expected_frame_count);
+    EXPECT_EQ(l_animation.frames.size(), expected_frame_count);
     EXPECT_EQ(l_animation.bgcolor, s_animation.bgcolor);
     EXPECT_EQ(l_animation.loop_count, s_animation.loop_count);
-    EXPECT_EQ(0, remove(output.c_str()));
 
     for (size_t i = 1; i < l_animation.frames.size()-1; i++)
         EXPECT_EQ(s_animation.timestamps[i], l_animation.timestamps[i]);
+
+    EXPECT_EQ(true, imwrite(output, s_animation.frames));
+    vector<Mat> webp_frames;
+    EXPECT_EQ(true, imreadmulti(output, webp_frames));
+    EXPECT_EQ(1, webp_frames.size());
+
+    std::vector<uchar> buf;
+    EXPECT_EQ(true, imencode(".webp", webp_frames, buf));
+    EXPECT_EQ(true, imdecodemulti(buf, IMREAD_COLOR_RGB, webp_frames));
+    EXPECT_EQ(0, remove(output.c_str()));
 }
 
 #endif // HAVE_WEBP

@@ -346,16 +346,11 @@ bool WebPEncoder::write(const Mat& img, const std::vector<int>& params)
 
 bool WebPEncoder::writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params)
 {
-    Animation animation;
-    animation.frames = img_vec;
-    int timestamp = 100;
-
-    for (size_t i = 0; i < animation.frames.size(); i++)
-    {
-        animation.timestamps.push_back(timestamp);
-    }
-
-    return writeanimation(animation, params);
+    if (img_vec.size() > 1)
+        printf("you are trying to write %zd images.\n"
+            "only the first image will be written.\n"
+            "use imwriteanimation() function to write more images.\n", img_vec.size());
+    return write(img_vec[0], params);
 }
 
 bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)

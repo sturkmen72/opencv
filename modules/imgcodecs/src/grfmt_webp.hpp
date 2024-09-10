@@ -10,10 +10,8 @@
 #ifdef HAVE_WEBP
 
 #include <fstream>
-#include <webp/decode.h>
-#include <webp/encode.h>
-#include <webp/demux.h>
-#include <webp/mux.h>
+
+struct WebPAnimDecoder;
 
 namespace cv
 {
@@ -21,24 +19,23 @@ namespace cv
 class WebPDecoder CV_FINAL : public BaseImageDecoder
 {
 public:
-
     WebPDecoder();
     ~WebPDecoder() CV_OVERRIDE;
 
-    bool readData( Mat& img ) CV_OVERRIDE;
+    bool readData(Mat& img) CV_OVERRIDE;
     bool readHeader() CV_OVERRIDE;
     bool nextPage() CV_OVERRIDE;
 
     size_t signatureLength() const CV_OVERRIDE;
-    bool checkSignature( const String& signature) const CV_OVERRIDE;
+    bool checkSignature(const String& signature) const CV_OVERRIDE;
 
     ImageDecoder newDecoder() const CV_OVERRIDE;
 
 protected:
-
     struct UniquePtrDeleter {
-        void operator()(WebPAnimDecoder* decoder) const { WebPAnimDecoderDelete(decoder); }
+        void operator()(WebPAnimDecoder* decoder) const;
     };
+
     std::ifstream fs;
     size_t fs_size;
     Mat data;

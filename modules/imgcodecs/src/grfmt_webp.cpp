@@ -10,6 +10,10 @@
 #include <limits.h>
 #include "grfmt_webp.hpp"
 #include <opencv2/core/utils/configuration.private.hpp>
+#include <webp/decode.h>
+#include <webp/encode.h>
+#include <webp/demux.h>
+#include <webp/mux.h>
 
 namespace cv
 {
@@ -29,6 +33,11 @@ WebPDecoder::WebPDecoder()
 
 WebPDecoder::~WebPDecoder()
 {
+}
+
+void WebPDecoder::UniquePtrDeleter::operator()(WebPAnimDecoder* decoder) const
+{
+    WebPAnimDecoderDelete(decoder);
 }
 
 size_t WebPDecoder::signatureLength() const

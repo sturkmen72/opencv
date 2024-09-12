@@ -123,11 +123,11 @@ TEST(Imgcodecs_WebP, load_save_animation)
 
     Mat image = imread(filename, IMREAD_UNCHANGED);
     s_animation.frames.push_back(image.clone());
-    Mat roi = image(Rect(0, 680, 680, 220));
+    Mat roi = image(Rect(0, 170, 164, 47));
     int timestamp = 100;
     s_animation.timestamps.push_back(timestamp);
-    s_animation.bgcolor = 0xff00ff;
-    s_animation.loop_count = 5;
+    s_animation.bgcolor = 0xffffffff;
+    s_animation.loop_count = 0xffff; // MAX_LOOP_COUNT
 
     for (int i = 0; i < 15; i++)
     {

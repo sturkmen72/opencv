@@ -169,7 +169,6 @@ if(WITH_TIFF)
 endif()
 
 # --- libwebp (optional) ---
-
 if(WITH_WEBP)
   if(BUILD_WEBP)
     ocv_clear_vars(WEBP_FOUND WEBP_LIBRARY WEBP_LIBRARIES WEBP_INCLUDE_DIR)
@@ -180,34 +179,42 @@ if(WITH_WEBP)
       set(HAVE_WEBP 1)
     endif()
   endif()
+
+  # --- Add libwebp to 3rdparty/libwebp and compile it if not available ---
+  if(NOT WEBP_FOUND AND (NOT ANDROID OR HAVE_CPUFEATURES))
+    ocv_clear_vars(WEBP_LIBRARY WEBP_LIBRARIES WEBP_INCLUDE_DIR)
+    set(WEBP_LIBRARY libwebp CACHE INTERNAL "")
+    set(WEBP_LIBRARIES ${WEBP_LIBRARY})
+    add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libwebp")
+    set(WEBP_INCLUDE_DIR "${${WEBP_LIBRARY}_SOURCE_DIR}/src" CACHE INTERNAL "")
+    set(HAVE_WEBP 1)
+  endif()
 endif()
 
-# --- Add libwebp to 3rdparty/libwebp and compile it if not available ---
-if(WITH_WEBP AND NOT WEBP_FOUND
-    AND (NOT ANDROID OR HAVE_CPUFEATURES)
-)
-  ocv_clear_vars(WEBP_LIBRARY WEBP_INCLUDE_DIR)
-  set(WEBP_LIBRARY libwebp CACHE INTERNAL "")
-  set(WEBP_LIBRARIES ${WEBP_LIBRARY})
-
-  add_subdirectory("${OpenCV_SOURCE_DIR}/3rdparty/libwebp")
-  set(WEBP_INCLUDE_DIR "${${WEBP_LIBRARY}_SOURCE_DIR}/src" CACHE INTERNAL "")
-  set(HAVE_WEBP 1)
-endif()
-
+# --- Extract libwebp ABI Versions ---
 if(NOT WEBP_VERSION AND WEBP_INCLUDE_DIR)
-  ocv_clear_vars(ENC_MAJ_VERSION ENC_MIN_VERSION ENC_REV_VERSION)
-  if(EXISTS "${WEBP_INCLUDE_DIR}/enc/vp8enci.h")
-    ocv_parse_header("${WEBP_INCLUDE_DIR}/enc/vp8enci.h" WEBP_VERSION_LINES ENC_MAJ_VERSION ENC_MIN_VERSION ENC_REV_VERSION)
-    set(WEBP_VERSION "${ENC_MAJ_VERSION}.${ENC_MIN_VERSION}.${ENC_REV_VERSION}")
-  elseif(EXISTS "${WEBP_INCLUDE_DIR}/webp/encode.h")
-    file(STRINGS "${WEBP_INCLUDE_DIR}/webp/encode.h" WEBP_ENCODER_ABI_VERSION REGEX "#define[ \t]+WEBP_ENCODER_ABI_VERSION[ \t]+([x0-9a-f]+)" )
-    if(WEBP_ENCODER_ABI_VERSION MATCHES "#define[ \t]+WEBP_ENCODER_ABI_VERSION[ \t]+([x0-9a-f]+)")
-        set(WEBP_ENCODER_ABI_VERSION "${CMAKE_MATCH_1}")
-        set(WEBP_VERSION "encoder: ${WEBP_ENCODER_ABI_VERSION}")
-    else()
-      unset(WEBP_ENCODER_ABI_VERSION)
+  # Macro for extracting ABI version from a header
+  macro(extract_webp_abi_version header_file define_pattern result_variable)
+    if(EXISTS "${header_file}")
+      file(STRINGS "${header_file}" tmp_var REGEX "${define_pattern}")
+      if(tmp_var MATCHES "${define_pattern}")
+        set(${result_variable} "${CMAKE_MATCH_1}")
+      else()
+        unset(${result_variable})
+      endif()
     endif()
+  endmacro()
+
+  # Extract encoder, decoder, and demux ABI versions
+  extract_webp_abi_version("${WEBP_INCLUDE_DIR}/webp/encode.h" "#define[ \t]+WEBP_ENCODER_ABI_VERSION[ \t]+([x0-9a-f]+)" WEBP_ENCODER_ABI_VERSION)
+  extract_webp_abi_version("${WEBP_INCLUDE_DIR}/webp/decode.h" "#define[ \t]+WEBP_DECODER_ABI_VERSION[ \t]+([x0-9a-f]+)" WEBP_DECODER_ABI_VERSION)
+  extract_webp_abi_version("${WEBP_INCLUDE_DIR}/webp/demux.h"  "#define[ \t]+WEBP_DEMUX_ABI_VERSION[ \t]+([x0-9a-f]+)" WEBP_DEMUX_ABI_VERSION)
+
+  # Ensure WEBP_VERSION is set if all versions are found
+  if(WEBP_ENCODER_ABI_VERSION AND WEBP_DECODER_ABI_VERSION AND WEBP_DEMUX_ABI_VERSION)
+    set(WEBP_VERSION "decoder: ${WEBP_DECODER_ABI_VERSION}, encoder: ${WEBP_ENCODER_ABI_VERSION}, demux: ${WEBP_DEMUX_ABI_VERSION}")
+  else()
+    message(WARNING "Some WebP ABI versions could not be extracted.")
   endif()
 endif()
 

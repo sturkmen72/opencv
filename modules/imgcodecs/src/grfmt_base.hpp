@@ -216,9 +216,9 @@ public:
      * @param params A vector of parameters controlling the encoding process.
      * @return true if multiple images were successfully written, false otherwise.
      */
-    virtual bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params) {return false;}
+    virtual bool writemulti(const std::vector<Mat>& img_vec, const std::vector<int>& params);
 
-    virtual bool writeanimation(const Animation& animation, const std::vector<int>& params) {return false;}
+    virtual bool writeanimation(const Animation& animation, const std::vector<int>& params);
 
     /**
      * @brief Get a description of the image encoder (e.g., the format it supports).

@@ -118,7 +118,7 @@ TEST(Imgcodecs_WebP, encode_decode_with_alpha_webp)
 TEST(Imgcodecs_WebP, load_save_animation)
 {
     // Initialize random seed
-    srand(time(0));  // For different randomness each time; or use srand(42); for consistent randomness
+    srand(42);  // For different randomness each time; or use srand(42); for consistent randomness
 
     const string root = cvtest::TS::ptr()->get_data_path();
     const string filename = root + "readwrite/OpenCV_logo_white.png";
@@ -182,7 +182,7 @@ TEST(Imgcodecs_WebP, load_save_animation)
     EXPECT_EQ(true, imwrite(output, s_animation.frames));
     vector<Mat> webp_frames;
     EXPECT_EQ(true, imreadmulti(output, webp_frames));
-    
+
     expected_frame_count = 1;
     EXPECT_EQ(webp_frames.size(), expected_frame_count);
 

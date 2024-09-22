@@ -375,7 +375,7 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     }
 
     config.lossless = animation.quality == 100 ? 1 : 0;
-    config.quality = animation.quality;
+    config.quality = static_cast<float>(animation.quality);
     anim_config.anim_params.bgcolor = animation.bgcolor;
     anim_config.anim_params.loop_count = animation.loop_count;
 

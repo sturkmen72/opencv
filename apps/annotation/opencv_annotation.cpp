@@ -218,6 +218,37 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
+        const string filename = "OpenCV_logo_white.png";
+    Animation l_animation, l2_animation, s_animation;
+
+    Mat image = imread(filename, IMREAD_UNCHANGED);
+    s_animation.frames.push_back(image.clone());
+    Mat roi = image(Rect(0, 170, 164, 47));
+    int timestamp = 100;
+    s_animation.timestamps.push_back(timestamp);
+    s_animation.bgcolor = 0xffffffff;
+    s_animation.loop_count = 0xffff; // MAX_LOOP_COUNT
+
+    for (int i = 0; i < 15; i++)
+    {
+        roi = roi - Scalar(0, 0, 0, 20);
+        s_animation.frames.push_back(image.clone());
+        s_animation.timestamps.push_back(timestamp);
+    }
+
+    string output = "OpenCV_logo_white1.webp";
+
+    imwriteanimation(output, s_animation);
+
+        //output = "giphy1.webp";
+    imreadanimation(output, l_animation);
+
+    output = "OpenCV_logo_white2.avif";
+    imwriteanimation(output, l_animation);
+    imreadanimation(output, l2_animation);
+        output = "OpenCV_logo_white3.avif";
+    imwriteanimation(output, l2_animation);
+    return 0;
     // Use the cmdlineparser to process input arguments
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"
@@ -294,24 +325,6 @@ int main( int argc, const char** argv )
         }
     }
 
-    // When all data is processed, store the data gathered inside the proper file
-    // This now even gets called when the ESC button was hit to store preliminary results
-    ofstream output(annotations_file.c_str());
-    if ( !output.is_open() ){
-        cerr << "The path for the output file contains an error and could not be opened. Please check again!" << endl;
-        return 0;
-    }
-
-    // Store the annotations, write to the output file
-    for(map<String, vector<Rect> >::iterator it = annotations.begin(); it != annotations.end(); it++){
-        vector<Rect> &anno = it->second;
-        output << it->first << " " << anno.size();
-        for(size_t j=0; j < anno.size(); j++){
-            Rect temp = anno[j];
-            output << " " << temp.x << " " << temp.y << " " << temp.width << " " << temp.height;
-        }
-        output << endl;
-    }
 
     return 0;
 }

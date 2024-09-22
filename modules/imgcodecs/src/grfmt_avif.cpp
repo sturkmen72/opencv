@@ -235,7 +235,7 @@ bool AvifDecoder::readData(Mat &img) {
     CV_Error(Error::StsInternal, "Cannot convert from AVIF to Mat");
     return false;
   }
-
+  m_animation.timestamps.push_back(decoder_->duration);
   if (decoder_->image->exif.size > 0) {
     m_exif.parseExif(decoder_->image->exif.data, decoder_->image->exif.size);
   }
@@ -307,7 +307,7 @@ bool AvifEncoder::writemulti(const std::vector<Mat> &img_vec,
     return writeanimation(animation, params);
 }
 
-bool AvifEncoder::writeanimation(const Animation& animinfo,
+bool AvifEncoder::writeanimation(const Animation& animation,
                                  const std::vector<int> &params) {
   int bit_depth = 8;
   int speed = AVIF_SPEED_FASTEST;
@@ -342,12 +342,12 @@ bool AvifEncoder::writeanimation(const Animation& animinfo,
 #endif
   encoder_->speed = speed;
 
-  const avifAddImageFlags flag = (animinfo.frames.size() == 1)
+  const avifAddImageFlags flag = (animation.frames.size() == 1)
                                      ? AVIF_ADD_IMAGE_FLAG_SINGLE
                                      : AVIF_ADD_IMAGE_FLAG_NONE;
   std::vector<AvifImageUniquePtr> images;
   std::vector<cv::Mat> imgs_scaled;
-  for (const cv::Mat &img : animinfo.frames) {
+  for (const cv::Mat &img : animation.frames) {
     CV_CheckType(
         img.type(),
         (bit_depth == 8 && img.depth() == CV_8U) ||
@@ -363,10 +363,9 @@ bool AvifEncoder::writeanimation(const Animation& animinfo,
 
   for (size_t i = 0; i < images.size(); i++)
   {
-    int timestamp = i == 0 ? 0 : animinfo.timestamps[i] - animinfo.timestamps[i-1];
+    int timestamp = i == 0 ? 0 : animation.timestamps[i] - animation.timestamps[i-1];
     OPENCV_AVIF_CHECK_STATUS(
-        avifEncoderAddImage(encoder_, images[i].get(), timestamp,
-                            flag),
+        avifEncoderAddImage(encoder_, images[i].get(), timestamp,flag),
         encoder_);
   }
 

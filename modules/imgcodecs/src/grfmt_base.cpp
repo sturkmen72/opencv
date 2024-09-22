@@ -89,7 +89,7 @@ bool BaseImageDecoder::checkSignature( const String& signature ) const
     return signature.size() >= len && memcmp( signature.c_str(), m_signature.c_str(), len ) == 0;
 }
 
-int BaseImageDecoder::setScale( const int& scale_denom )
+int BaseImageDecoder::setScale( const int scale_denom )
 {
     int temp = m_scale_denom;
     m_scale_denom = scale_denom;
@@ -139,24 +139,12 @@ bool BaseImageEncoder::setDestination( std::vector<uchar>& buf )
     return true;
 }
 
-bool BaseImageEncoder::writemulti(const std::vector<Mat>&, const std::vector<int>& )
-{
-    return false;
-}
-
-bool BaseImageEncoder::writeanimation(const Animation& animation, const std::vector<int>& params)
-{
-    CV_UNUSED(animation);
-    CV_UNUSED(params);
-    return false;
-}
-
 ImageEncoder BaseImageEncoder::newEncoder() const
 {
     return ImageEncoder();
 }
 
-void BaseImageEncoder::throwOnEror() const
+void BaseImageEncoder::throwOnError() const
 {
     if(!m_last_error.empty())
     {

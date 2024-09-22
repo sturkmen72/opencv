@@ -374,8 +374,8 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
         return false;
     }
 
-    config.lossless = 1;
-    config.quality = 100.0f;
+    config.lossless = animation.quality == 100 ? 1 : 0;
+    config.quality = animation.quality;
     anim_config.anim_params.bgcolor = animation.bgcolor;
     anim_config.anim_params.loop_count = animation.loop_count;
 
@@ -406,11 +406,11 @@ bool WebPEncoder::writeanimation(const Animation& animation, const std::vector<i
     pic.argb_stride = width;
     WebPEncode(&config, &pic);
 
-    Mat tmp = animation.frames[0];
+    Size canvas_size = Size(animation.frames[0].cols,animation.frames[0].rows);
+
     for (size_t i = 0; i < animation.frames.size(); i++)
     {
-        CV_Assert(tmp.size == animation.frames[i].size);
-        tmp = animation.frames[i];
+        CV_Assert(canvas_size == Size(animation.frames[i].cols,animation.frames[i].rows));
         pic.argb = (uint32_t*)animation.frames[i].data;
         ok = WebPAnimEncoderAdd(anim_encoder.get(), &pic, timestamp, &config);
         timestamp += animation.timestamps[i];

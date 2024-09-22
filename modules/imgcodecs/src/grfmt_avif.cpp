@@ -237,7 +237,9 @@ bool AvifDecoder::readData(Mat &img) {
     CV_Error(Error::StsInternal, "Cannot convert from AVIF to Mat");
     return false;
   }
+
   m_animation.timestamps.push_back(decoder_->duration);
+
   if (decoder_->image->exif.size > 0) {
     m_exif.parseExif(decoder_->image->exif.data, decoder_->image->exif.size);
   }

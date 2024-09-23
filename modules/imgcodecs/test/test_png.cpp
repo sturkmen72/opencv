@@ -185,6 +185,29 @@ TEST_P(Imgcodecs_PNG_Exif, DISABLED_exif_orientation)
     EXPECT_GE(vec.val[0], colorThresholdHigh);
     EXPECT_LE(vec.val[1], colorThresholdLow);
     EXPECT_LE(vec.val[2], colorThresholdLow);
+
+    m_img = imread(filename, IMREAD_COLOR | IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
+    ASSERT_FALSE(m_img.empty());
+    EXPECT_EQ(4, m_img.channels());
+    Vec4b vec4;
+
+    //Checking the first quadrant (with supposed red)
+    vec4 = m_img.at<Vec4b>(2, 2); //some point inside the square
+    EXPECT_LE(vec4.val[0], colorThresholdLow);
+    EXPECT_LE(vec4.val[1], colorThresholdLow);
+    EXPECT_GE(vec4.val[2], colorThresholdHigh);
+
+    //Checking the second quadrant (with supposed green)
+    vec4 = m_img.at<Vec4b>(2, 7);  //some point inside the square
+    EXPECT_LE(vec4.val[0], colorThresholdLow);
+    EXPECT_GE(vec4.val[1], colorThresholdHigh);
+    EXPECT_LE(vec4.val[2], colorThresholdLow);
+
+    //Checking the third quadrant (with supposed blue)
+    vec4 = m_img.at<Vec4b>(7, 2);  //some point inside the square
+    EXPECT_GE(vec4.val[0], colorThresholdHigh);
+    EXPECT_LE(vec4.val[1], colorThresholdLow);
+    EXPECT_LE(vec4.val[2], colorThresholdLow);
 }
 
 const string exif_files[] =

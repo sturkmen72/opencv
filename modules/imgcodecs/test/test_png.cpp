@@ -186,7 +186,7 @@ TEST_P(Imgcodecs_PNG_Exif, DISABLED_exif_orientation)
     EXPECT_LE(vec.val[1], colorThresholdLow);
     EXPECT_LE(vec.val[2], colorThresholdLow);
 
-    m_img = imread(filename, IMREAD_ANYCOLOR);
+    m_img = imread(filename, IMREAD_ADD_ALPHA);
     ASSERT_FALSE(m_img.empty());
     EXPECT_EQ(4, m_img.channels());
     Vec4b vec4;

@@ -83,7 +83,7 @@ static Size validateInputImageSize(const Size& size)
 
 static inline int calcType(int type, int flags)
 {
-    if (flags == IMREAD_ADD_ALPHA)
+    if (flags == 7)
         return type;
 
     if( (flags & IMREAD_LOAD_GDAL) != IMREAD_LOAD_GDAL && flags != IMREAD_UNCHANGED )

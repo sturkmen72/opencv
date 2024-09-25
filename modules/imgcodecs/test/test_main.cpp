@@ -7,4 +7,4 @@
     #include <hpx/hpx_main.hpp>
 #endif
 
-CV_TEST_MAIN("highgui")
+CV_TEST_MAIN("imgcodecs")

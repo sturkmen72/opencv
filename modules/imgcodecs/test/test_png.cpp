@@ -164,50 +164,53 @@ TEST_P(Imgcodecs_PNG_Exif, DISABLED_exif_orientation)
     const int colorThresholdHigh = 250;
     const int colorThresholdLow = 5;
 
-    Mat m_img = imread(filename);
+    Mat m_img = imread(filename, IMREAD_COLOR | IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
     ASSERT_FALSE(m_img.empty());
-    Vec3b vec;
 
-    //Checking the first quadrant (with supposed red)
-    vec = m_img.at<Vec3b>(2, 2); //some point inside the square
-    EXPECT_LE(vec.val[0], colorThresholdLow);
-    EXPECT_LE(vec.val[1], colorThresholdLow);
-    EXPECT_GE(vec.val[2], colorThresholdHigh);
+    if (m_img.channels() == 3)
+    {
+        Vec3b vec;
 
-    //Checking the second quadrant (with supposed green)
-    vec = m_img.at<Vec3b>(2, 7);  //some point inside the square
-    EXPECT_LE(vec.val[0], colorThresholdLow);
-    EXPECT_GE(vec.val[1], colorThresholdHigh);
-    EXPECT_LE(vec.val[2], colorThresholdLow);
+        //Checking the first quadrant (with supposed red)
+        vec = m_img.at<Vec3b>(2, 2); //some point inside the square
+        EXPECT_LE(vec.val[0], colorThresholdLow);
+        EXPECT_LE(vec.val[1], colorThresholdLow);
+        EXPECT_GE(vec.val[2], colorThresholdHigh);
 
-    //Checking the third quadrant (with supposed blue)
-    vec = m_img.at<Vec3b>(7, 2);  //some point inside the square
-    EXPECT_GE(vec.val[0], colorThresholdHigh);
-    EXPECT_LE(vec.val[1], colorThresholdLow);
-    EXPECT_LE(vec.val[2], colorThresholdLow);
+        //Checking the second quadrant (with supposed green)
+        vec = m_img.at<Vec3b>(2, 7);  //some point inside the square
+        EXPECT_LE(vec.val[0], colorThresholdLow);
+        EXPECT_GE(vec.val[1], colorThresholdHigh);
+        EXPECT_LE(vec.val[2], colorThresholdLow);
 
-    m_img = imread(filename, IMREAD_COLOR | IMREAD_ANYCOLOR | IMREAD_ANYDEPTH);
-    ASSERT_FALSE(m_img.empty());
-    EXPECT_EQ(4, m_img.channels());
-    Vec4b vec4;
+        //Checking the third quadrant (with supposed blue)
+        vec = m_img.at<Vec3b>(7, 2);  //some point inside the square
+        EXPECT_GE(vec.val[0], colorThresholdHigh);
+        EXPECT_LE(vec.val[1], colorThresholdLow);
+        EXPECT_LE(vec.val[2], colorThresholdLow);
+    }
+    else
+    {
+        Vec4b vec4;
 
-    //Checking the first quadrant (with supposed red)
-    vec4 = m_img.at<Vec4b>(2, 2); //some point inside the square
-    EXPECT_LE(vec4.val[0], colorThresholdLow);
-    EXPECT_LE(vec4.val[1], colorThresholdLow);
-    EXPECT_GE(vec4.val[2], colorThresholdHigh);
+        //Checking the first quadrant (with supposed red)
+        vec4 = m_img.at<Vec4b>(2, 2); //some point inside the square
+        EXPECT_LE(vec4.val[0], colorThresholdLow);
+        EXPECT_LE(vec4.val[1], colorThresholdLow);
+        EXPECT_GE(vec4.val[2], colorThresholdHigh);
 
-    //Checking the second quadrant (with supposed green)
-    vec4 = m_img.at<Vec4b>(2, 7);  //some point inside the square
-    EXPECT_LE(vec4.val[0], colorThresholdLow);
-    EXPECT_GE(vec4.val[1], colorThresholdHigh);
-    EXPECT_LE(vec4.val[2], colorThresholdLow);
+        //Checking the second quadrant (with supposed green)
+        vec4 = m_img.at<Vec4b>(2, 7);  //some point inside the square
+        EXPECT_LE(vec4.val[0], colorThresholdLow);
+        EXPECT_GE(vec4.val[1], colorThresholdHigh);
+        EXPECT_LE(vec4.val[2], colorThresholdLow);
 
-    //Checking the third quadrant (with supposed blue)
-    vec4 = m_img.at<Vec4b>(7, 2);  //some point inside the square
-    EXPECT_GE(vec4.val[0], colorThresholdHigh);
-    EXPECT_LE(vec4.val[1], colorThresholdLow);
-    EXPECT_LE(vec4.val[2], colorThresholdLow);
+        //Checking the third quadrant (with supposed blue)
+        vec4 = m_img.at<Vec4b>(7, 2);  //some point inside the square
+        EXPECT_GE(vec4.val[0], colorThresholdHigh);
+        EXPECT_LE(vec4.val[1], colorThresholdLow);
+        EXPECT_LE(vec4.val[2], colorThresholdLow);
+    }
 }
 
 const string exif_files[] =

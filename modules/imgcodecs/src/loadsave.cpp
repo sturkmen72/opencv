@@ -400,7 +400,7 @@ imread_( const String& filename, int flags, OutputArray mat )
 {
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
-    flags |= IMREAD_APPLY_ORIENTATION;
+
 #ifdef HAVE_GDAL
     if(flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL ){
         decoder = GdalDecoder().newDecoder();

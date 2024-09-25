@@ -506,7 +506,7 @@ imread_( const String& filename, int flags, OutputArray mat )
     }
 
     /// optionally rotate the data if EXIF orientation flag says so
-    if (flags != IMREAD_UNCHANGED && ((flags & IMREAD_IGNORE_ORIENTATION) == 0 || (flags == IMREAD_APPLY_ORIENTATION)) )
+    if ( flags != IMREAD_UNCHANGED && (flags & IMREAD_IGNORE_ORIENTATION) == 0 )
     {
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }

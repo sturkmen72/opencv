@@ -383,13 +383,8 @@ static void ExifTransform(int orientation, OutputArray img)
 
 static void ApplyExifOrientation(ExifEntry_t orientationTag, OutputArray img)
 {
-    int orientation = IMAGE_ORIENTATION_TL;
-
     if (orientationTag.tag != INVALID_TAG)
-    {
-        orientation = orientationTag.field_u16; //orientation is unsigned short, so check field_u16
-        ExifTransform(orientation, img);
-    }
+        ExifTransform(orientationTag.field_u16, img); //orientation is unsigned short, so check field_u16
 }
 
 /**
@@ -405,7 +400,7 @@ imread_( const String& filename, int flags, OutputArray mat )
 {
     /// Search for the relevant decoder to handle the imagery
     ImageDecoder decoder;
-
+    flags |= IMREAD_APPLY_ORIENTATION;
 #ifdef HAVE_GDAL
     if(flags != IMREAD_UNCHANGED && (flags & IMREAD_LOAD_GDAL) == IMREAD_LOAD_GDAL ){
         decoder = GdalDecoder().newDecoder();
@@ -511,9 +506,7 @@ imread_( const String& filename, int flags, OutputArray mat )
     }
 
     /// optionally rotate the data if EXIF orientation flag says so
-    if (!mat.empty() &&
-        (flags & IMREAD_IGNORE_ORIENTATION) == 0 &&
-        (flags != IMREAD_UNCHANGED || (flags & IMREAD_APPLY_ORIENTATION) == IMREAD_APPLY_ORIENTATION))
+    if (flags != IMREAD_UNCHANGED && ((flags & IMREAD_IGNORE_ORIENTATION) == 0 || (flags == IMREAD_APPLY_ORIENTATION)) )
     {
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }

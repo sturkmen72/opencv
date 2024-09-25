@@ -83,9 +83,6 @@ static Size validateInputImageSize(const Size& size)
 
 static inline int calcType(int type, int flags)
 {
-    if ( (flags & (IMREAD_COLOR | IMREAD_ANYCOLOR | IMREAD_ANYDEPTH)) == (IMREAD_COLOR | IMREAD_ANYCOLOR | IMREAD_ANYDEPTH))
-        return type;
-
     if( (flags & IMREAD_LOAD_GDAL) != IMREAD_LOAD_GDAL && flags != IMREAD_UNCHANGED )
     {
         if( (flags & IMREAD_ANYDEPTH) == 0 )
@@ -514,7 +511,10 @@ imread_( const String& filename, int flags, OutputArray mat )
     }
 
     /// optionally rotate the data if EXIF orientation flag says so
-    if (!mat.empty() && (flags & IMREAD_IGNORE_ORIENTATION) == 0 && (flags != IMREAD_UNCHANGED && (flags & IMREAD_APPLY_ORIENTATION == IMREAD_APPLY_ORIENTATION)) )
+    if (!mat.empty() &&
+        (flags & IMREAD_IGNORE_ORIENTATION) == 0 &&
+        flags != IMREAD_UNCHANGED &&
+        (flags & IMREAD_APPLY_ORIENTATION) == IMREAD_APPLY_ORIENTATION)
     {
         ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
     }

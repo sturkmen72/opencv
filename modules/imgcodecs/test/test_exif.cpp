@@ -121,3 +121,6 @@ const string exif_files[] =
 
 INSTANTIATE_TEST_CASE_P(ExifFiles, Imgcodecs_Exif,
     testing::ValuesIn(exif_files));
+
+}
+}

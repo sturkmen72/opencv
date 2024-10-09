@@ -9,21 +9,32 @@ namespace opencv_test {
 static
 Mat generateTestImageBGR_()
 {
-    Size sz(640, 480);
-    Mat result(sz, CV_8UC3, Scalar::all(0));
+    Size sz(320, 240);
+    Mat result(sz, CV_8UC3, Scalar::all(0));  // Create a black image
 
+    // Load the image
     const string fname = cvtest::findDataFile("../cv/shared/baboon.png");
-    Mat image = imread(fname, IMREAD_COLOR);
-    CV_Assert(!image.empty());
-    CV_CheckEQ(image.size(), Size(512, 512), "");
-    Rect roi((640-512) / 2, 0, 512, 480);
-    image(Rect(0, 0, 512, 480)).copyTo(result(roi));
-    result(Rect(0,  0, 5, 5)).setTo(Scalar(0, 0, 255));  // R
-    result(Rect(5,  0, 5, 5)).setTo(Scalar(0, 255, 0));  // G
-    result(Rect(10, 0, 5, 5)).setTo(Scalar(255, 0, 0));  // B
-    result(Rect(0,  5, 5, 5)).setTo(Scalar(128, 128, 128));  // gray
-    //imshow("test_image", result); waitKey();
-    return result;
+    Mat image = imread(fname, IMREAD_REDUCED_COLOR_2);
+    CV_Assert(!image.empty());  // Ensure the image is loaded
+    CV_CheckEQ(image.size(), Size(256, 256), "Image size mismatch");
+
+    // Define the ROI to copy the baboon image into
+    Rect roi((320 - 256) / 2, 0, 256, 240);
+    image(Rect(0, 0, 256, 240)).copyTo(result(roi));  // Copy the image to result
+
+    // Add colored squares
+    result(Rect(0,  0, 5, 5)).setTo(Scalar(0, 0, 255));  // Red
+    result(Rect(5,  0, 5, 5)).setTo(Scalar(0, 255, 0));  // Green
+    result(Rect(10, 0, 5, 5)).setTo(Scalar(255, 0, 0));  // Blue
+    result(Rect(0,  5, 5, 5)).setTo(Scalar(128, 128, 128));  // Gray
+
+#if 0
+    // Display the result
+    imshow("test_image", result); 
+    waitKey();  // Wait for a key press
+#endif
+
+    return result;  // Return the generated image
 }
 Mat generateTestImageBGR()
 {

@@ -546,14 +546,6 @@ public:
     Params params;
 };
 
-/*
-
-TODO:
-the color MSER has not been completely refactored yet. We leave it mostly as-is,
-with just enough changes to convert C structures to C++ ones and
-add support for color images into MSER_Impl::detectAndLabel.
-*/
-
 const int TABLE_SIZE = 400;
 
 static const float chitab3[]=

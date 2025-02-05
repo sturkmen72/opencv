@@ -90,7 +90,7 @@ public:
      * @param scale_denom The denominator of the scale factor (image is scaled down by 1/scale_denom).
      * @return The scale factor that was set.
      */
-    virtual int setScale(const int& scale_denom);
+    virtual int setScale(int scale_denom);
 
     /**
      * @brief Read the image header to extract basic properties (width, height, type).

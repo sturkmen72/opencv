@@ -120,6 +120,71 @@
 #define mingw_getsp(...) 0
 #define __builtin_frame_address(...) 0
 
+cv::Mat generateGradientCircle1(int width, int height, int radius) {
+    cv::Mat img(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0)); // RGBA image
+
+    cv::Point center(width / 2, height / 2);
+    radius = width / 2;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            double dist = cv::norm(cv::Point(x, y) - center);
+            if (dist < radius) {
+                // Inverse gradient ratio
+                double ratio = 1.0 - (dist / radius);
+                
+                // Hue variation from center (white) to outer (colorful)
+                int hue = static_cast<int>((1 - ratio) * 180); // Hue between 0-180 (OpenCV HSV range)
+                
+                // Create HSV image
+                cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar(hue, 255, 255)); // Full saturation & brightness
+                cv::Mat rgb;
+                cv::cvtColor(hsv, rgb, cv::COLOR_HSV2BGR);
+
+                // Extract color and apply alpha blending
+                cv::Vec3b color = rgb.at<cv::Vec3b>(0, 0);
+                uchar alpha = static_cast<uchar>(255 * ratio); // Fully opaque at center, fades outward
+
+                img.at<cv::Vec4b>(y, x) = cv::Vec4b(color[0], color[1], color[2], alpha);
+            }
+        }
+    }
+    img.convertTo(img, CV_16U, 255);
+    return img;
+}
+
+cv::Mat generateGradientCircle2(int width, int height, cv::Vec3b color_start, cv::Vec3b color_end) {
+    cv::Mat img(height, width, CV_8UC4, cv::Scalar(0, 0, 0, 0)); // RGBA Mat
+
+    cv::Point center(width / 2, height / 2);
+    int radius = std::min(width, height) / 4; // Dynamically set radius
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            double dist = cv::norm(cv::Point(x, y) - center);
+            if (dist < radius) {
+                // Compute transition ratio
+                double ratio = dist / radius;
+
+                // Linear interpolation (Lerp) for color transition
+                cv::Vec3b color(
+                    static_cast<uchar>(color_start[0] * (1 - ratio) + color_end[0] * ratio),
+                    static_cast<uchar>(color_start[1] * (1 - ratio) + color_end[1] * ratio),
+                    static_cast<uchar>(color_start[2] * (1 - ratio) + color_end[2] * ratio)
+                );
+
+                // Compute alpha (opacity fades outwards)
+                uchar alpha = static_cast<uchar>(255 * (1 - ratio));
+
+                // Assign to RGBA image
+                img.at<cv::Vec4b>(y, x) = cv::Vec4b(color[0], color[1], color[2], alpha);
+            }
+        }
+    }
+    img.setTo(cv::Scalar(255,0,0,65));
+    img.convertTo(img, CV_16U, 255);
+    return img;
+}
+
 namespace cv
 {
 
@@ -520,6 +585,17 @@ bool  PngDecoder::readData( Mat& img )
                         cvtColor(mat_cur, img, COLOR_BGRA2GRAY);
                     else if (img.channels() == 3)
                         cvtColor(mat_cur, img, COLOR_BGRA2BGR);
+                    mat_cur = generateGradientCircle1(256, 256, 60);
+                    imwrite("16bpng.png", mat_cur);
+                    m_mat_raw = generateGradientCircle2(256, 256, Vec3b(0,255,0),Vec3b(255,0,0));
+                    imwrite("16bpng2.png", m_mat_raw);
+                    frameRaw.setMat(m_mat_raw);
+                    frameCur.setMat(mat_cur);
+                    m_mat_next = mat_cur.clone();
+                    frameNext.setMat(m_mat_next);
+                    compose_frame(frameCur.getRows(), frameRaw.getRows(), 1, 120, 120, 100, 100, mat_cur);
+                    imwrite("16bpng3.png", mat_cur);
+                    imwrite("16bpng4.png", m_mat_raw);
                 }
                 else
                     return false;
@@ -617,6 +693,7 @@ bool PngDecoder::nextPage() {
 void PngDecoder::compose_frame(std::vector<png_bytep>& rows_dst, const std::vector<png_bytep>& rows_src, unsigned char _bop, uint32_t x, uint32_t y, uint32_t w, uint32_t h, Mat& img)
 {
     const size_t elem_size = img.elemSize();
+    printf("%zd\n", elem_size);
     if (_bop == 0) {
         // Overwrite mode: copy source row directly to destination
         for(uint32_t j = 0; j < h; ++j) {

@@ -229,7 +229,7 @@ bool WebPDecoder::readData(Mat &img)
         else
         if (img.type() == CV_8UC3)
         {
-            cvtColor(tmp, img, COLOR_BGRA2BGR);
+            cvtColor(tmp, img, m_use_rgb ? COLOR_BGRA2RGB : COLOR_BGRA2BGR);
         }
         else
             tmp.copyTo(img);

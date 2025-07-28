@@ -9,7 +9,7 @@ namespace opencv_test { namespace {
 #ifdef HAVE_GDAL
 
 static void test_gdal_read(const string filename, bool required = true) {
-    const string path = cvtest::findDataFile(filename);
+    const string path = cvtest::findDataFile(filename, false);
     Mat img;
     ASSERT_NO_THROW(img = imread(path, cv::IMREAD_LOAD_GDAL | cv::IMREAD_ANYDEPTH | cv::IMREAD_ANYCOLOR));
     if(!required && img.empty())

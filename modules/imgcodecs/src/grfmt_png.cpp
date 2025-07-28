@@ -1589,7 +1589,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         : 1;
     uint32_t has_tcolor = (coltype >= 4 || (coltype <= 2 && trnssize)) ? 1 : 0;
     uint32_t tcolor = 0;
-    uint32_t rowbytes = width * bpp;
+    uint32_t rowbytes = animation.frames[0].depth() == CV_16U ? width * bpp * 2 : width * bpp;
     uint32_t imagesize = rowbytes * height;
 
     AutoBuffer<unsigned char> temp(imagesize);
@@ -1649,7 +1649,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
         png_save_uint_32(buf_IHDR, width);
         png_save_uint_32(buf_IHDR + 4, height);
-        buf_IHDR[8] = animation.frames[0].depth() == CV_8U ? 8 : 16;
+        buf_IHDR[8] = animation.frames[0].depth() == CV_16U ? 16 : 8;
         buf_IHDR[9] = coltype;
         buf_IHDR[10] = 0;
         buf_IHDR[11] = 0;

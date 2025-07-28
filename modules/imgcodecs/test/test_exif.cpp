@@ -193,8 +193,7 @@ typedef testing::TestWithParam<string> Exif;
 
 TEST_P(Exif, exif_orientation)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + GetParam();
+    const string filename = findDataFile(GetParam(), false);
     const int colorThresholdHigh = 250;
     const int colorThresholdLow = 5;
 
@@ -501,8 +500,7 @@ TEST(Imgcodecs_Png, Read_Write_With_Exif_Xmp_Iccp)
 
 TEST(Imgcodecs_Png, Read_Exif_From_Text)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "../perf/320x260.png";
+    const string filename = findDataFile("../perf/320x260.png", false);
     const string dst_file = cv::tempfile(".png");
 
     std::vector<uchar> exif_data =
@@ -518,7 +516,7 @@ TEST(Imgcodecs_Png, Read_Exif_From_Text)
     Mat img = imreadWithMetadata(filename, read_metadata_types, read_metadata, IMREAD_GRAYSCALE);
 
     std::vector<int> metadata_types = { IMAGE_METADATA_EXIF };
-    EXPECT_EQ(read_metadata_types, metadata_types);
+    ASSERT_EQ(read_metadata_types, metadata_types);
     EXPECT_EQ(read_metadata[0], exif_data);
 }
 
@@ -537,13 +535,10 @@ typedef testing::TestWithParam<ReadExif_Sanity_Params> ReadExif_Sanity;
 
 TEST_P(ReadExif_Sanity, Check)
 {
-    std::string filename = get<0>(GetParam());
+    std::string filename = findDataFile(get<0>(GetParam()), false);
     size_t exif_size = get<1>(GetParam());
     std::string pattern = get<2>(GetParam());
     size_t ploc = get<3>(GetParam());
-
-    const string root = cvtest::TS::ptr()->get_data_path();
-    filename = root + filename;
 
     std::vector<int> metadata_types;
     std::vector<Mat> metadata;
@@ -565,13 +560,13 @@ TEST_P(ReadExif_Sanity, Check)
 static const std::vector<ReadExif_Sanity_Params> exif_sanity_params
 {
 #ifdef HAVE_JPEG
-    ReadExif_Sanity_Params("readwrite/testExifOrientation_3.jpg", 916, "Photoshop", 120),
+    ReadExif_Sanity_Params("testExifOrientation_3.jpg", 916, "Photoshop", 120),
 #endif
 #ifdef OPENCV_IMGCODECS_PNG_WITH_EXIF
-    ReadExif_Sanity_Params("readwrite/testExifOrientation_5.png", 112, "ExifTool", 102),
+    ReadExif_Sanity_Params("testExifOrientation_5.png", 112, "ExifTool", 102),
 #endif
 #ifdef HAVE_AVIF
-    ReadExif_Sanity_Params("readwrite/testExifOrientation_7.avif", 913, "Photoshop", 120),
+    ReadExif_Sanity_Params("testExifOrientation_7.avif", 913, "Photoshop", 120),
 #endif
 };
 

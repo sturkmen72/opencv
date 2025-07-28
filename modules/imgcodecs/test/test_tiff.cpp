@@ -58,7 +58,7 @@ TEST_P(Imgcodecs_Tiff_decode_Huge, regression)
 
     // Detect data file
     const string req_filename = cv::format("readwrite/huge-tiff/%s_%zu.tif", typeToString(mat_type).c_str(), (size_t)buffer_size);
-    const string filename = findDataFile( req_filename );
+    const string filename = cvtest::findDataFile( req_filename, false );
 
     // Preparation process for test
     {
@@ -1125,7 +1125,7 @@ TEST(Imgcodecs_Tiff, imdecode_no_exception_temporary_file_removed)
 
 TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr12989_grayscale)
 {
-    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1.tiff");
+    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1.tiff", false);
     cv::Mat img;
     ASSERT_NO_THROW(img = cv::imread(filename, IMREAD_GRAYSCALE));
     ASSERT_FALSE(img.empty());
@@ -1139,7 +1139,7 @@ TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr12989_grayscale)
 
 TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr12989_default)
 {
-    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1.tiff");
+    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1.tiff", false);
     cv::Mat img;
     ASSERT_NO_THROW(img = cv::imread(filename));  // by default image type is CV_8UC3
     ASSERT_FALSE(img.empty());
@@ -1150,7 +1150,7 @@ TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr12989_default)
 
 TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr17275_grayscale)
 {
-    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1_min.tiff");
+    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1_min.tiff", false);
     cv::Mat img;
     ASSERT_NO_THROW(img = cv::imread(filename, IMREAD_GRAYSCALE));
     ASSERT_FALSE(img.empty());
@@ -1164,7 +1164,7 @@ TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr17275_grayscale)
 
 TEST(Imgcodecs_Tiff, decode_black_and_write_image_pr17275_default)
 {
-    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1_min.tiff");
+    const string filename = cvtest::findDataFile("readwrite/bitsperpixel1_min.tiff", false);
     cv::Mat img;
     ASSERT_NO_THROW(img = cv::imread(filename));  // by default image type is CV_8UC3
     ASSERT_FALSE(img.empty());

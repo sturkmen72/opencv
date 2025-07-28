@@ -9,7 +9,7 @@ namespace opencv_test {
 
 Mat generateTestImageBGR();
 Mat generateTestImageGrayscale();
-void readFileBytes(const std::string& fname, std::vector<unsigned char>& buf);
+bool readFileBytes(const std::string& fname, std::vector<unsigned char>& buf);
 
 }  // namespace
 

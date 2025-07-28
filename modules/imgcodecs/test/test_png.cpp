@@ -155,10 +155,8 @@ typedef testing::TestWithParam<string> Imgcodecs_Png_PngSuite;
 TEST_P(Imgcodecs_Png_PngSuite, decode)
 {
     // Construct full paths for the PNG image and corresponding ground truth XML file
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/" + GetParam() + ".png";
-    const string xml_filename = root + "pngsuite/" + GetParam() + ".xml";
-
+    const string filename = cvtest::findDataFile("pngsuite/" + GetParam() + ".png", false);
+    const string xml_filename = cvtest::findDataFile("pngsuite/" + GetParam() + ".xml", false);
     // Load the XML file containing the ground truth data
     FileStorage fs(xml_filename, FileStorage::READ);
     ASSERT_TRUE(fs.isOpened()); // Ensure the file was opened successfully
@@ -418,9 +416,8 @@ typedef testing::TestWithParam<string> Imgcodecs_Png_PngSuite_Gamma;
 TEST_P(Imgcodecs_Png_PngSuite_Gamma, decode)
 {
     // Construct full paths for the PNG image and corresponding ground truth XML file
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/" + GetParam() + ".png";
-    const string xml_filename = root + "pngsuite/" + GetParam() + ".xml";
+    const string filename = cvtest::findDataFile("pngsuite/" + GetParam() + ".png", false);
+    const string xml_filename = cvtest::findDataFile("pngsuite/" + GetParam() + ".xml", false);
 
     // Load the XML file containing the ground truth data
     FileStorage fs(xml_filename, FileStorage::READ);
@@ -459,8 +456,7 @@ typedef testing::TestWithParam<string> Imgcodecs_Png_PngSuite_Corrupted;
 
 TEST_P(Imgcodecs_Png_PngSuite_Corrupted, decode)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/" + GetParam() + ".png";
+    const string filename = cvtest::findDataFile("pngsuite/" + GetParam() + ".png", false);
 
     Mat src = imread(filename, IMREAD_UNCHANGED);
 
@@ -495,15 +491,14 @@ typedef testing::TestWithParam<testing::tuple<string, PNGStrategy, PNGFilters, i
 
 TEST_P(Imgcodecs_Png_Encode, params)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/" + get<0>(GetParam());
+    const string filename = cvtest::findDataFile("pngsuite/" + get<0>(GetParam()), false);
 
     const int strategy = get<1>(GetParam());
     const int filter = get<2>(GetParam());
     const int compression_level = get<3>(GetParam());
 
     std::vector<uchar> file_buf;
-    readFileBytes(filename, file_buf);
+    ASSERT_TRUE(readFileBytes(filename, file_buf));
     Mat src = imdecode(file_buf, IMREAD_UNCHANGED);
     EXPECT_FALSE(src.empty()) << "Cannot decode test image " << filename;
 
@@ -533,8 +528,7 @@ typedef testing::TestWithParam<testing::tuple<string, int, size_t>> Imgcodecs_Pn
 
 TEST_P(Imgcodecs_Png_ImwriteFlags, compression_level)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + get<0>(GetParam());
+    const string filename = cvtest::findDataFile(get<0>(GetParam()), false);
 
     const int compression_level = get<1>(GetParam());
     const size_t compression_level_output_size = get<2>(GetParam());

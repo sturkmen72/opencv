@@ -363,6 +363,12 @@ TEST(Imgcodecs_APNG, imwriteanimation_rgba16u)
     EXPECT_EQ(expected_frame_count, imcount(output));
     EXPECT_EQ(expected_frame_count, l_animation.frames.size());
 
+    for (size_t i = 0; i < l_animation.frames.size() - 1; i++)
+    {
+        EXPECT_EQ(s_animation.durations[i], l_animation.durations[i]);
+        EXPECT_EQ(0, cvtest::norm(s_animation.frames[i], l_animation.frames[i], NORM_INF));
+    }
+
     std::vector<uchar> buf;
     readFileBytes(output, buf);
     vector<Mat> apng_frames;

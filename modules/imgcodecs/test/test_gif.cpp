@@ -160,9 +160,8 @@ INSTANTIATE_TEST_CASE_P(/*nothing*/, Imgcodecs_Gif_GifSuite_SingleFrame,
                         testing::ValuesIn(gifsuite_files_read_single));
 
 TEST(Imgcodecs_Gif, read_gif_big){
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string gif_filename = root + "gifsuite/gif_big.gif";
-    const string png_filename = root + "gifsuite/gif_big.png";
+    const string filename = cvtest::findDataFile("gifsuite/gif_big.gif", false);
+    const string png_filename = cvtest::findDataFile("gifsuite/gif_big.png", false);
     cv::Mat img_8UC4;
     ASSERT_NO_THROW(img_8UC4 = imread(gif_filename, IMREAD_UNCHANGED));
     ASSERT_FALSE(img_8UC4.empty());
@@ -186,9 +185,8 @@ TEST(Imgcodecs_Gif, read_gif_big){
 typedef testing::TestWithParam<std::pair<string,int>> Imgcodecs_Gif_GifSuite_SingleFrame_BGRA;
 
 TEST_P(Imgcodecs_Gif_GifSuite_SingleFrame_BGRA, read_gif_single_bgra){
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string gif_filename = root + "gifsuite/" + GetParam().first + ".gif";
-    const string png_filename = root + "gifsuite/" + GetParam().first + ".png";
+    const string gif_filename = cvtest::findDataFile("gifsuite/" + GetParam().first + ".gif", false);
+    const string png_filename = cvtest::findDataFile("pngsuite/" + GetParam().first + ".png", false);
     cv::Mat gif_img;
     cv::Mat png_img;
     ASSERT_NO_THROW(gif_img = cv::imread(gif_filename, IMREAD_UNCHANGED));

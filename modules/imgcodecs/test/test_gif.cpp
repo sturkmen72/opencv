@@ -114,8 +114,7 @@ const std::pair<string,int> gifsuite_files_bgra[]={
 
 TEST(Imgcodecs_Gif, read_gif_multi)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "gifsuite/gif_multi.gif";
+    const string filename = cvtest::findDataFile("gifsuite/gif_multi.gif", false);
     vector<cv::Mat> img_vec_8UC4;
     ASSERT_NO_THROW(cv::imreadmulti(filename, img_vec_8UC4,0,20,IMREAD_UNCHANGED));
     EXPECT_EQ(img_vec_8UC4.size(), imcount(filename));
@@ -129,7 +128,7 @@ TEST(Imgcodecs_Gif, read_gif_multi)
     EXPECT_EQ(img_vec_8UC3.size(),expected_size);
     for(long unsigned int i=0;i<img_vec_8UC3.size();i++){
         cv::Mat img=img_vec_8UC3[i];
-        const string png_filename = root + "pngsuite/" + gifsuite_files_multi[i] + ".png";
+        const string png_filename = cvtest::findDataFile("pngsuite/" + gifsuite_files_multi[i] + ".png", false);
         cv::Mat img_png;
         ASSERT_NO_THROW(img_png = imread(png_filename,IMREAD_UNCHANGED));
         ASSERT_FALSE(img_png.empty());
@@ -141,9 +140,8 @@ typedef testing::TestWithParam<string> Imgcodecs_Gif_GifSuite_SingleFrame;
 
 TEST_P(Imgcodecs_Gif_GifSuite_SingleFrame, read_gif_single)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "gifsuite/" + GetParam() + ".gif";
-    const string png_filename=root + "pngsuite/" + GetParam() + ".png";
+    const string filename = cvtest::findDataFile("gifsuite/" + GetParam() + ".gif", false);
+    const string png_filename = cvtest::findDataFile("pngsuite/" + GetParam() + ".png", false);
     const long unsigned int expected_size = 1;
 
     EXPECT_EQ(expected_size, imcount(filename));
@@ -283,8 +281,7 @@ TEST(Imgcodecs_Gif,write_gif_flags){
 }
 
 TEST(Imgcodecs_Gif, write_gif_big) {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string png_filename = root + "gifsuite/gif_big.png";
+    const string png_filename = findDataFile("gifsuite/gif_big.png", false);
     const string gif_filename = cv::tempfile(".png");
     cv::Mat img;
     ASSERT_NO_THROW(img = cv::imread(png_filename, IMREAD_UNCHANGED));
@@ -304,8 +301,7 @@ typedef testing::TestWithParam<string> Imgcodecs_Gif_GifSuite_Read_Write_Suite;
 
 TEST_P(Imgcodecs_Gif_GifSuite_Read_Write_Suite ,read_gif_single)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string png_filename = root + "pngsuite/"+GetParam()+".png";
+    const string png_filename = findDataFile("pngsuite/" + GetParam() + ".png", false);
     const string gif_filename = cv::tempfile(".gif");
     cv::Mat img;
     ASSERT_NO_THROW(img = cv::imread(png_filename, IMREAD_UNCHANGED));
@@ -329,11 +325,10 @@ INSTANTIATE_TEST_CASE_P(/*nothing*/, Imgcodecs_Gif_GifSuite_Read_Write_Suite ,
                                      testing::ValuesIn(gifsuite_files_read_write_suite));
 
 TEST(Imgcodecs_Gif, write_gif_multi) {
-    const string root = cvtest::TS::ptr()->get_data_path();
     const string gif_filename = cv::tempfile(".gif");
     vector<cv::Mat> img_vec;
     for (long unsigned int i = 0; i < 20; i++) {
-        const string png_filename = root + "pngsuite/" + gifsuite_files_multi[i] + ".png";
+        const string png_filename = cvtest::findDataFile("pngsuite/" + gifsuite_files_multi[i] + ".png", false);
         cv::Mat img;
         ASSERT_NO_THROW(img = cv::imread(png_filename, IMREAD_UNCHANGED));
         ASSERT_FALSE(img.empty());
@@ -374,8 +369,7 @@ TEST(Imgcodecs_Gif, encode_IMREAD_GRAYSCALE) {
 // See https://github.com/opencv/opencv/issues/26924
 TEST(Imgcodecs_Gif, decode_disposal_method)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "gifsuite/disposalMethod.gif";
+    const string filename = cvtest::findDataFile("gifsuite/disposalMethod.gif", false);
     cv::Animation anim;
     bool ret = false;
     EXPECT_NO_THROW(ret = imreadanimation(filename, anim, cv::IMREAD_UNCHANGED));

@@ -1612,8 +1612,6 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
         if (animation.frames[i].channels() == 3)
             cvtColor(animation.frames[i], tmpframes[i], COLOR_BGR2RGB);
 
-        if (tmpframes[i].depth() != CV_8U)
-            tmpframes[i].convertTo(tmpframes[i], CV_8U, 1.0 / 255);
         apngFrame.setMat(tmpframes[i], animation.durations[i]);
 
         if (i > 0 && !getRect(width, height, frames.back().getPixels(), apngFrame.getPixels(), over1.data(), bpp, rowbytes, 0, 0, 0, 3))

@@ -447,7 +447,7 @@ TEST(Imgcodecs_Image, multipage_collection_backward_decoding)
     for(int i = (int)collection.size() - 1; i >= 0; --i)
     {
         cv::Mat ithPage = imread(page_files[i]);
-        EXPECT_FALSE(ithPage.empty());
+        ASSERT_FALSE(ithPage.empty());
         double diff = cv::norm(collection[i], ithPage, NORM_INF);
         EXPECT_EQ(diff, 0.);
     }
@@ -491,7 +491,7 @@ TEST(ImgCodecs, multipage_collection_decoding_range_based_for_loop_test)
     for(auto &&i: collection)
     {
         cv::Mat ithPage = imread(page_files[index]);
-        EXPECT_FALSE(ithPage.empty());
+        ASSERT_FALSE(ithPage.empty());
         double diff = cv::norm(i, ithPage, NORM_INF);
         EXPECT_EQ(0., diff);
         ++index;

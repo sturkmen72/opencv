@@ -257,24 +257,29 @@ TEST(Imgcodecs_Gif, read_gif_special){
 }
 
 TEST(Imgcodecs_Gif,write_gif_flags){
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string png_filename = root + "gifsuite/special1.png";
-    vector<uchar> buff;
-    const int expected_rows=611;
-    const int expected_cols=293;
-    Mat img_gt = Mat::ones(expected_rows, expected_cols, CV_8UC1);
+    //rows611 x cols293, three‑channel, constant value 1
+    const int expected_rows = 611;
+    const int expected_cols = 293;
+    Mat img_gt(expected_rows, expected_cols, CV_8UC3, cv::Scalar::all(1));
+    //the encoding parameters
+    vector<unsigned char> buff;
     vector<int> param;
     param.push_back(IMWRITE_GIF_QUALITY);
     param.push_back(7);
     param.push_back(IMWRITE_GIF_DITHER);
     param.push_back(2);
-    EXPECT_NO_THROW(imencode(".png", img_gt, buff, param));
-    Mat img;
-    EXPECT_NO_THROW(img = imdecode(buff, IMREAD_ANYDEPTH)); // hang
-    EXPECT_FALSE(img.empty());
+    //Encode part
+    ASSERT_NO_THROW(imencode(".gif", img_gt, buff, param));
+    //Decode part
+    cv::Mat img;
+    ASSERT_NO_THROW(img = imdecode(buff, cv::IMREAD_ANYCOLOR));
+    ASSERT_FALSE(img.empty());
+
     EXPECT_EQ(img.cols, expected_cols);
     EXPECT_EQ(img.rows, expected_rows);
-    EXPECT_PRED_FORMAT2(cvtest::MatComparator(0, 0), img, img_gt);
+    EXPECT_EQ(img.type(), CV_8UC3);
+    // Compare, maxdiff=16
+    EXPECT_PRED_FORMAT2(cvtest::MatComparator(16, 0), img, img_gt);
 }
 
 TEST(Imgcodecs_Gif, write_gif_big) {
@@ -456,7 +461,8 @@ TEST_P(Imgcodecs_Gif_loop_count, imwriteanimation)
         EXPECT_NE(pos, buf.end()) << "Netscape Application Block should be included if Animation.loop_count != 1";
     }
 
-    remove(gif_filename.c_str());
+    ifs.close();
+    EXPECT_EQ(0, remove(gif_filename.c_str()));
 }
 
 INSTANTIATE_TEST_CASE_P(/*nothing*/,
@@ -498,7 +504,7 @@ TEST_P(Imgcodecs_Gif_duration, imwriteanimation)
     EXPECT_NO_THROW(ret = imwriteanimation(gif_filename, anim));
     EXPECT_EQ(ret, ( (0 <= duration) && (duration <= 655350) ) );
 
-    remove(gif_filename.c_str());
+    EXPECT_EQ(0, remove(gif_filename.c_str()));
 }
 
 INSTANTIATE_TEST_CASE_P(/*nothing*/,

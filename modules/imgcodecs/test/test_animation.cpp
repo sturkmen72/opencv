@@ -13,7 +13,9 @@ static bool fillFrames(Animation& animation, bool hasAlpha, int n = 14)
     const string root = cvtest::TS::ptr()->get_data_path();
     const string filename = root + "pngsuite/tp1n3p08.png";
 
-    EXPECT_TRUE(imreadanimation(filename, animation));
+    if (!imreadanimation(filename, animation))
+        return false;
+
     EXPECT_EQ(1000, animation.durations.back());
 
     if (!hasAlpha)
@@ -83,7 +85,7 @@ static bool fillFrames(Animation& animation, bool hasAlpha, int n = 14)
 TEST(Imgcodecs_Gif, imwriteanimation_rgba)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true));
+    ASSERT_TRUE(fillFrames(s_animation, true));
     s_animation.bgcolor = Scalar(0, 0, 0, 0); // TO DO not implemented yet.
 
     // Create a temporary output filename for saving the animation.
@@ -138,7 +140,7 @@ TEST(Imgcodecs_Gif, imwriteanimation_rgba)
 TEST(Imgcodecs_WebP, imwriteanimation_rgba)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true));
+    ASSERT_TRUE(fillFrames(s_animation, true));
     s_animation.bgcolor = Scalar(50, 100, 150, 128); // different values for test purpose.
 
     // Create a temporary output filename for saving the animation.
@@ -191,7 +193,7 @@ TEST(Imgcodecs_WebP, imwriteanimation_rgba)
 TEST(Imgcodecs_WebP, imwriteanimation_rgb)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     // Create a temporary output filename for saving the animation.
     string output = cv::tempfile(".webp");
@@ -239,7 +241,7 @@ TEST(Imgcodecs_WebP, imwriteanimation_rgb)
 TEST(Imgcodecs_WebP, imwritemulti_rgba)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true));
+    ASSERT_TRUE(fillFrames(s_animation, true));
 
     string output = cv::tempfile(".webp");
     ASSERT_TRUE(imwrite(output, s_animation.frames));
@@ -253,7 +255,7 @@ TEST(Imgcodecs_WebP, imwritemulti_rgba)
 TEST(Imgcodecs_WebP, imwritemulti_rgb)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     string output = cv::tempfile(".webp");
     ASSERT_TRUE(imwrite(output, s_animation.frames));
@@ -266,7 +268,7 @@ TEST(Imgcodecs_WebP, imwritemulti_rgb)
 TEST(Imgcodecs_WebP, imencode_rgba)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true, 3));
+    ASSERT_TRUE(fillFrames(s_animation, true, 3));
 
     std::vector<uchar> buf;
     vector<Mat> apng_frames;
@@ -284,7 +286,7 @@ TEST(Imgcodecs_WebP, imencode_rgba)
 TEST(Imgcodecs_APNG, imwriteanimation_rgba)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true));
+    ASSERT_TRUE(fillFrames(s_animation, true));
 
     // Create a temporary output filename for saving the animation.
     string output = cv::tempfile(".png");
@@ -342,7 +344,7 @@ TEST(Imgcodecs_APNG, imwriteanimation_rgba)
 TEST(Imgcodecs_APNG, imwriteanimation_rgba16u)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true));
+    ASSERT_TRUE(fillFrames(s_animation, true));
 
     for (size_t i = 0; i < s_animation.frames.size(); i++)
     {
@@ -387,7 +389,7 @@ TEST(Imgcodecs_APNG, imwriteanimation_rgba16u)
 TEST(Imgcodecs_APNG, imwriteanimation_rgb)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     string output = cv::tempfile(".png");
 
@@ -407,7 +409,7 @@ TEST(Imgcodecs_APNG, imwriteanimation_rgb)
 TEST(Imgcodecs_APNG, imwriteanimation_gray)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     for (size_t i = 0; i < s_animation.frames.size(); i++)
     {
@@ -440,7 +442,7 @@ TEST(Imgcodecs_APNG, imwriteanimation_gray)
 TEST(Imgcodecs_APNG, imwritemulti_rgba)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true));
+    ASSERT_TRUE(fillFrames(s_animation, true));
 
     string output = cv::tempfile(".png");
     EXPECT_EQ(true, imwrite(output, s_animation.frames));
@@ -454,7 +456,7 @@ TEST(Imgcodecs_APNG, imwritemulti_rgba)
 TEST(Imgcodecs_APNG, imwritemulti_rgb)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     string output = cv::tempfile(".png");
     ASSERT_TRUE(imwrite(output, s_animation.frames));
@@ -472,7 +474,7 @@ TEST(Imgcodecs_APNG, imwritemulti_rgb)
 TEST(Imgcodecs_APNG, imwritemulti_gray)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     for (size_t i = 0; i < s_animation.frames.size(); i++)
     {
@@ -503,7 +505,7 @@ TEST(Imgcodecs_APNG, imwritemulti_gray)
 TEST(Imgcodecs_APNG, imwriteanimation_bgcolor)
 {
     Animation s_animation, l_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true, 2));
+    ASSERT_TRUE(fillFrames(s_animation, true, 2));
     s_animation.bgcolor = Scalar(50, 100, 150); // will be written in bKGD chunk as RGB.
 
     // Create a temporary output filename for saving the animation.
@@ -533,7 +535,7 @@ TEST(Imgcodecs_APNG, imwriteanimation_bgcolor)
 TEST(Imgcodecs_APNG, imencode_rgba)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, true, 3));
+    ASSERT_TRUE(fillFrames(s_animation, true, 3));
 
     std::vector<uchar> buf;
     vector<Mat> read_frames;
@@ -564,7 +566,7 @@ const string exts_multi[] = {
 TEST_P(Imgcodecs_ImageCollection, animations)
 {
     Animation s_animation;
-    EXPECT_TRUE(fillFrames(s_animation, false));
+    ASSERT_TRUE(fillFrames(s_animation, false));
 
     string output = cv::tempfile(GetParam().c_str());
     ASSERT_TRUE(imwritemulti(output, s_animation.frames));
@@ -595,7 +597,7 @@ TEST(Imgcodecs_APNG, imdecode_animation)
     const string root = cvtest::TS::ptr()->get_data_path();
     const string filename = root + "pngsuite/tp1n3p08.png";
 
-    EXPECT_TRUE(imreadanimation(filename, gt_animation));
+    ASSERT_TRUE(imreadanimation(filename, gt_animation));
     EXPECT_EQ(1000, gt_animation.durations.back());
 
     std::vector<unsigned char> buf;
@@ -619,7 +621,7 @@ TEST(Imgcodecs_APNG, imencode_animation)
     const string root = cvtest::TS::ptr()->get_data_path();
     const string filename = root + "pngsuite/tp1n3p08.png";
 
-    EXPECT_TRUE(imreadanimation(filename, gt_animation));
+    ASSERT_TRUE(imreadanimation(filename, gt_animation));
     EXPECT_EQ(1000, gt_animation.durations.back());
 
     std::vector<unsigned char> buf;
@@ -643,7 +645,7 @@ TEST(Imgcodecs_APNG, animation_has_hidden_frame)
     const string filename = root + "readwrite/033.png";
     Animation animation1, animation2, animation3;
 
-    imreadanimation(filename, animation1);
+    ASSERT_TRUE(imreadanimation(filename, animation1));
 
     EXPECT_FALSE(animation1.still_image.empty());
     EXPECT_EQ((size_t)2, animation1.frames.size());

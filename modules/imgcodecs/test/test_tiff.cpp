@@ -1041,6 +1041,7 @@ TEST_P(Imgcodecs_Tiff_Modes, decode_multipage_use_memory_buffer_selected_pages)
     for (int page_i = range.start; page_i < range.end; page_i++)
     {
         const Mat page = imread(root + page_files[page_i], mode);
+        ASSERT_FALSE(page.empty());
         middle_pages_from_imread.push_back(page);
     }
     ASSERT_EQ(
@@ -1091,6 +1092,7 @@ TEST(Imgcodecs_Tiff_Modes, write_multipage)
     for (size_t i = 0; i < page_count; i++)
     {
         const Mat page = imread(root + page_files[i], IMREAD_REDUCED_GRAYSCALE_8 + (int)i);
+        ASSERT_FALSE(page.empty());
         pages.push_back(page);
     }
 
@@ -1202,6 +1204,7 @@ TEST(Imgcodecs_Tiff, read_multipage_indexed)
     {
         // imread and imreadmulti have different default values for the flag
         const Mat page = imread(root + page_files[i], IMREAD_ANYCOLOR);
+        ASSERT_FALSE(page.empty());
         single_pages.push_back(page);
     }
     ASSERT_EQ((size_t)page_count, single_pages.size());

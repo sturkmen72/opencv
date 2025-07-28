@@ -36,7 +36,7 @@ const tuple<string, Size> images[] =
 
 TEST_P(Imgcodecs_Resize, imread_reduce_flags)
 {
-    const string file_name = cvtest::findDataFile(get<0>(get<0>(GetParam())), false);
+    const string file_name = cvtest::findDataFile(get<0>(get<0>(GetParam())));
     const Size imageSize = get<1>(get<0>(GetParam()));
 
     const int imread_flag = get<0>(get<1>(GetParam()));
@@ -56,7 +56,7 @@ TEST_P(Imgcodecs_Resize, imread_reduce_flags)
 
 TEST_P(Imgcodecs_Resize, imdecode_reduce_flags)
 {
-    const string file_name = cvtest::findDataFile(get<0>(get<0>(GetParam())), false);
+    const string file_name = cvtest::findDataFile(get<0>(get<0>(GetParam())));
     const Size imageSize = get<1>(get<0>(GetParam()));
 
     const int imread_flag = get<0>(get<1>(GetParam()));
@@ -293,7 +293,7 @@ INSTANTIATE_TEST_CASE_P(imgcodecs, Imgcodecs_Image, testing::ValuesIn(exts));
 
 TEST(Imgcodecs_Image, regression_9376)
 {
-    String path = cvtest::findDataFile("readwrite/regression_9376.bmp", false);
+    String path = cvtest::findDataFile("readwrite/regression_9376.bmp");
     Mat m = imread(path);
     ASSERT_FALSE(m.empty());
     EXPECT_EQ(32, m.cols);
@@ -302,7 +302,7 @@ TEST(Imgcodecs_Image, regression_9376)
 
 TEST(Imgcodecs_Image, imread_overload)
 {
-    const string imgName = cvtest::findDataFile("../highgui/readwrite/ordinary.bmp", false);
+    const string imgName = cvtest::findDataFile("readwrite/ordinary.bmp");
 
     Mat ref = imread(imgName);
     ASSERT_FALSE(ref.empty());
@@ -332,7 +332,7 @@ TEST(Imgcodecs_Image, imread_overload)
 
 TEST(Imgcodecs_Image, write_umat)
 {
-    const string src_name = cvtest::findDataFile("../python/images/baboon.bmp", false);
+    const string src_name = cvtest::findDataFile("../python/images/baboon.bmp");
     const string dst_name = cv::tempfile(".bmp");
 
     Mat image1 = imread(src_name);
@@ -352,7 +352,7 @@ TEST(Imgcodecs_Image, write_umat)
 #ifdef HAVE_TIFF
 TEST(Imgcodecs_Image, multipage_collection_size)
 {
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
 
     ImageCollection collection(filename, IMREAD_ANYCOLOR);
     EXPECT_EQ((std::size_t)6, collection.size());
@@ -361,7 +361,7 @@ TEST(Imgcodecs_Image, multipage_collection_size)
 TEST(Imgcodecs_Image, multipage_collection_read_pages_iterator)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
     const string page_files[] = {
             root + "readwrite/multipage_p1.tif",
             root + "readwrite/multipage_p2.tif",
@@ -384,7 +384,7 @@ TEST(Imgcodecs_Image, multipage_collection_read_pages_iterator)
 TEST(Imgcodecs_Image, multipage_collection_two_iterator)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
     const string page_files[] = {
             root + "readwrite/multipage_p1.tif",
             root + "readwrite/multipage_p2.tif",
@@ -412,7 +412,7 @@ TEST(Imgcodecs_Image, multipage_collection_two_iterator)
 
 TEST(Imgcodecs_Image, multipage_collection_operator_plusplus)
 {
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
 
     // operator++ test
     ImageCollection collection(filename, IMREAD_ANYCOLOR);
@@ -427,7 +427,7 @@ TEST(Imgcodecs_Image, multipage_collection_operator_plusplus)
 TEST(Imgcodecs_Image, multipage_collection_backward_decoding)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
     const string page_files[] = {
             root + "readwrite/multipage_p1.tif",
             root + "readwrite/multipage_p2.tif",
@@ -461,7 +461,7 @@ TEST(Imgcodecs_Image, multipage_collection_backward_decoding)
 TEST(ImgCodecs, multipage_collection_decoding_range_based_for_loop_test)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
     const string page_files[] = {
             root + "readwrite/multipage_p1.tif",
             root + "readwrite/multipage_p2.tif",
@@ -498,7 +498,7 @@ TEST(ImgCodecs, multipage_collection_decoding_range_based_for_loop_test)
 
 TEST(ImgCodecs, multipage_collection_two_iterator_operatorpp)
 {
-    const string filename = cvtest::findDataFile("../highgui/readwrite/multipage.tif", false);
+    const string filename = cvtest::findDataFile("readwrite/multipage.tif");
     ImageCollection imcol(filename, IMREAD_ANYCOLOR);
 
     auto it0 = imcol.begin(), it1 = it0, it2 = it0;

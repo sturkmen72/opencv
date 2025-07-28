@@ -10,8 +10,7 @@ namespace opencv_test { namespace {
 static bool fillFrames(Animation& animation, bool hasAlpha, int n = 14)
 {
     // Set the path to the test image directory and filename for loading.
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/tp1n3p08.png";
+    const string filename = cvtest::findDataFile("pngsuite/tp1n3p08.png", false);
 
     if (!imreadanimation(filename, animation))
         return false;
@@ -594,8 +593,7 @@ TEST(Imgcodecs_APNG, imdecode_animation)
 {
     Animation gt_animation, mem_animation;
     // Set the path to the test image directory and filename for loading.
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/tp1n3p08.png";
+    const string filename = cvtest::findDataFile("pngsuite/tp1n3p08.png", false);
 
     ASSERT_TRUE(imreadanimation(filename, gt_animation));
     EXPECT_EQ(1000, gt_animation.durations.back());
@@ -618,8 +616,7 @@ TEST(Imgcodecs_APNG, imencode_animation)
 {
     Animation gt_animation, mem_animation;
     // Set the path to the test image directory and filename for loading.
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "pngsuite/tp1n3p08.png";
+    const string filename = cvtest::findDataFile("pngsuite/tp1n3p08.png", false);
 
     ASSERT_TRUE(imreadanimation(filename, gt_animation));
     EXPECT_EQ(1000, gt_animation.durations.back());
@@ -641,8 +638,7 @@ TEST(Imgcodecs_APNG, imencode_animation)
 TEST(Imgcodecs_APNG, animation_has_hidden_frame)
 {
     // Set the path to the test image directory and filename for loading.
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "readwrite/033.png";
+    const string filename = cvtest::findDataFile("readwrite/033.png", false);
     Animation animation1, animation2, animation3;
 
     ASSERT_TRUE(imreadanimation(filename, animation1));
@@ -670,8 +666,7 @@ TEST(Imgcodecs_APNG, animation_has_hidden_frame)
 TEST(Imgcodecs_APNG, animation_imread_preview)
 {
     // Set the path to the test image directory and filename for loading.
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "readwrite/034.png";
+    const string filename = cvtest::findDataFile("readwrite/034.png", false);
     cv::Mat imread_result;
     cv::imread(filename, imread_result, cv::IMREAD_UNCHANGED);
     EXPECT_FALSE(imread_result.empty());
@@ -691,8 +686,7 @@ TEST(Imgcodecs_APNG, animation_imread_preview)
 TEST(Imgcodecs_APNG, imread_animation_16u)
 {
     // Set the path to the test image directory and filename for loading.
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "readwrite/033.png";
+    const string filename = cvtest::findDataFile("readwrite/033.png", false);
 
     Mat img = imread(filename, IMREAD_UNCHANGED);
     ASSERT_FALSE(img.empty());

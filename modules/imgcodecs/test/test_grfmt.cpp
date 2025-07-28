@@ -49,8 +49,7 @@ typedef testing::TestWithParam<File_Mode> Imgcodecs_FileMode;
 
 TEST_P(Imgcodecs_FileMode, regression)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + get<0>(GetParam());
+    const string filename = findDataFile(get<0>(GetParam()), false);
     const int mode = get<1>(GetParam());
 
     const Mat single = imread(filename, mode);
@@ -477,7 +476,7 @@ TEST(Imgcodecs_Pam, read_write)
 #ifdef HAVE_IMGCODEC_PFM
 TEST(Imgcodecs_Pfm, read_write)
 {
-  Mat img = imread(findDataFile("readwrite/lena.pam"));
+  Mat img = imread(findDataFile("readwrite/lena.pam", false));
   ASSERT_FALSE(img.empty());
   img.convertTo(img, CV_32F, 1/255.0f);
 

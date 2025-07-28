@@ -302,7 +302,6 @@ TEST(Imgcodecs_Image, regression_9376)
 
 TEST(Imgcodecs_Image, imread_overload)
 {
-    const string root = cvtest::TS::ptr()->get_data_path();
     const string imgName = cvtest::findDataFile("../highgui/readwrite/ordinary.bmp", false);
 
     Mat ref = imread(imgName);

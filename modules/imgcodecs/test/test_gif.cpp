@@ -160,7 +160,7 @@ INSTANTIATE_TEST_CASE_P(/*nothing*/, Imgcodecs_Gif_GifSuite_SingleFrame,
                         testing::ValuesIn(gifsuite_files_read_single));
 
 TEST(Imgcodecs_Gif, read_gif_big){
-    const string filename = cvtest::findDataFile("gifsuite/gif_big.gif", false);
+    const string gif_filename = cvtest::findDataFile("gifsuite/gif_big.gif", false);
     const string png_filename = cvtest::findDataFile("gifsuite/gif_big.png", false);
     cv::Mat img_8UC4;
     ASSERT_NO_THROW(img_8UC4 = imread(gif_filename, IMREAD_UNCHANGED));

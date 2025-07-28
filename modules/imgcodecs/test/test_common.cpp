@@ -12,7 +12,7 @@ Mat generateTestImageBGR_()
     Size sz(640, 480);
     Mat result(sz, CV_8UC3, Scalar::all(0));
 
-    const string fname = cvtest::findDataFile("../cv/shared/baboon.png");
+    const string fname = cvtest::findDataFile("../cv/shared/baboon.png", false);
     Mat image = imread(fname, IMREAD_COLOR);
     CV_Assert(!image.empty());
     CV_CheckEQ(image.size(), Size(512, 512), "");
@@ -48,7 +48,7 @@ Mat generateTestImageGrayscale()
     return image;
 }
 
-void readFileBytes(const std::string& fname, std::vector<unsigned char>& buf)
+bool readFileBytes(const std::string& fname, std::vector<unsigned char>& buf)
 {
     FILE * wfile = fopen(fname.c_str(), "rb");
     if (wfile != NULL)
@@ -61,8 +61,10 @@ void readFileBytes(const std::string& fname, std::vector<unsigned char>& buf)
         size_t data_size = fread(&buf[0], 1, wfile_size, wfile);
         fclose(wfile);
 
-        EXPECT_EQ(data_size, wfile_size);
+        if (data_size == wfile_size)
+            return true;
     }
+    return false;
 }
 
 }  // namespace

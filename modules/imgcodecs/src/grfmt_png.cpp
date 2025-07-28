@@ -1614,7 +1614,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
         apngFrame.setMat(tmpframes[i], animation.durations[i]);
 
-        if (i > 0 && !getRect(width, height, frames.back().getPixels(), apngFrame.getPixels(), over1.data(), bpp, rowbytes, 0, 0, 0, 3))
+        if (i > 0 && (tmpframes[i].depth() == CV_8U && !getRect(width, height, frames.back().getPixels(), apngFrame.getPixels(), over1.data(), bpp, rowbytes, 0, 0, 0, 3)))
         {
             frames.back().setDelayNum(frames.back().getDelayNum() + apngFrame.getDelayNum());
             num_frames--;
@@ -1649,7 +1649,7 @@ bool PngEncoder::writeanimation(const Animation& animation, const std::vector<in
 
         png_save_uint_32(buf_IHDR, width);
         png_save_uint_32(buf_IHDR + 4, height);
-        buf_IHDR[8] = 8;
+        buf_IHDR[8] = animation.frames[0].depth() == CV_8U ? 8 : 16;
         buf_IHDR[9] = coltype;
         buf_IHDR[10] = 0;
         buf_IHDR[11] = 0;

@@ -218,6 +218,11 @@ vector<Rect> get_annotations(Mat input_image)
 
 int main( int argc, const char** argv )
 {
+    ExifEntry exifEntry;
+    exifEntry.tag = ExifTag::MAKE;
+    exifEntry.type = ExifTagType::TAG_TYPE_ASCII;
+    exifEntry.value.field_str = "OpenCV Annotation Tool";
+
     // Use the cmdlineparser to process input arguments
     CommandLineParser parser(argc, argv,
         "{ help h usage ? |      | show this message }"

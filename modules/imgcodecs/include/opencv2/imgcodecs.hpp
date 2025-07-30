@@ -317,6 +317,109 @@ struct CV_EXPORTS_W_SIMPLE Animation
     CV_WRAP Animation(int loopCount = 0, Scalar bgColor = Scalar());
 };
 
+enum ExifTagType
+{
+    TAG_TYPE_NOTYPE     = 0,  // Invalid or undefined type
+    TAG_TYPE_BYTE       = 1,  // 8-bit unsigned integer
+    TAG_TYPE_ASCII      = 2,  // 8-bit ASCII string, null-terminated
+    TAG_TYPE_SHORT      = 3,  // 16-bit unsigned integer
+    TAG_TYPE_LONG       = 4,  // 32-bit unsigned integer
+    TAG_TYPE_RATIONAL   = 5,  // Two LONGs: numerator and denominator (64-bit unsigned fraction)
+    TAG_TYPE_SBYTE      = 6,  // 8-bit signed integer
+    TAG_TYPE_UNDEFINED  = 7,  // 8-bit untyped data
+    TAG_TYPE_SSHORT     = 8,  // 16-bit signed integer
+    TAG_TYPE_SLONG      = 9,  // 32-bit signed integer
+    TAG_TYPE_SRATIONAL  = 10, // Two SLONGs: signed 64-bit fraction
+    TAG_TYPE_FLOAT      = 11, // IEEE 32-bit float
+    TAG_TYPE_DOUBLE     = 12, // IEEE 64-bit float
+    TAG_TYPE_IFD        = 13, // 32-bit offset to IFD
+    TAG_TYPE_LONG8      = 16, // BigTIFF: 64-bit unsigned integer
+    TAG_TYPE_SLONG8     = 17, // BigTIFF: 64-bit signed integer
+    TAG_TYPE_IFD8       = 18  // BigTIFF: 64-bit offset to IFD
+};
+
+/**
+ * @brief Base Exif tags used by IFD0 (main image)
+ */
+enum ExifTag
+{
+    TAG_EMPTY = 0,
+    IMAGE_DESCRIPTION       = 0x010E,   ///< Image Description: ASCII string
+    MAKE                    = 0x010F,   ///< Description of manufacturer: ASCII string
+    MODEL                   = 0x0110,   ///< Description of camera model: ASCII string
+    ORIENTATION             = 0x0112,   ///< Orientation of the image: unsigned short
+    XRESOLUTION             = 0x011A,   ///< Resolution of the image across X axis: unsigned rational
+    YRESOLUTION             = 0x011B,   ///< Resolution of the image across Y axis: unsigned rational
+    RESOLUTION_UNIT         = 0x0128,   ///< Resolution units. '1' no-unit, '2' inch, '3' centimeter
+    SOFTWARE                = 0x0131,   ///< Shows firmware(internal software of digicam) version number
+    DATE_TIME               = 0x0132,   ///< Date/Time of image was last modified
+    WHITE_POINT             = 0x013E,   ///< Chromaticity of white point of the image
+    PRIMARY_CHROMATICIES    = 0x013F,   ///< Chromaticity of the primaries of the image
+    Y_CB_CR_COEFFICIENTS    = 0x0211,   ///< constant to translate an image from YCbCr to RGB format
+    Y_CB_CR_POSITIONING     = 0x0213,   ///< Chroma sample point of subsampling pixel array
+    REFERENCE_BLACK_WHITE   = 0x0214,   ///< Reference value of black point/white point
+    COPYRIGHT               = 0x8298,   ///< Copyright information
+    EXIF_OFFSET             = 0x8769,   ///< Offset to Exif Sub IFD
+    INVALID_TAG             = 0xFFFF    ///< Shows that the tag was not recognized
+};
+
+enum class Endianness_t : uint8_t
+{
+    INTEL = 0x49,
+    MOTO = 0x4D,
+    NONE = 0x00
+};
+
+using u_rational_t = std::pair<uint32_t, uint32_t>;
+
+struct srational64_t
+{
+    int64_t num = 0, denom = 1;
+};
+
+/**
+ * @brief Entry which contains possible values for different exif tags
+ */
+struct ExifTagValue
+{
+    ExifTagValue()
+        : field_float(0.0f), field_double(0.0),
+          field_u32(0), field_s32(0),
+          tag(0),
+          field_u16(0), field_s16(0),
+          field_u8(0), field_s8(0)
+    {}
+
+    std::vector<u_rational_t> field_u_rational; ///< Vector of rational values
+    std::string field_str;                      ///< ASCII or undefined textual data
+
+    float    field_float;   ///< Currently unused
+    double   field_double;  ///< Currently unused
+
+    uint32_t field_u32;     ///< Unsigned 32-bit integer
+    int32_t  field_s32;     ///< Signed 32-bit integer
+
+    uint16_t tag;           ///< Tag ID
+
+    uint16_t field_u16;     ///< Unsigned 16-bit integer
+    int16_t  field_s16;     ///< Signed 16-bit integer
+    uint8_t  field_u8;      ///< Unsigned 8-bit integer
+    int8_t   field_s8;      ///< Signed 8-bit integer
+};
+
+struct CV_EXPORTS_W_SIMPLE ExifEntry
+{
+    uint16_t tag = TAG_EMPTY;
+    ExifTagType type = TAG_TYPE_NOTYPE;
+    ExifTagValue value;
+
+    bool empty() const {
+        return tag == TAG_EMPTY;
+    }
+    std::ostream& dump(std::ostream& strm) const;
+    size_t nvalues() const;
+};
+
 /** @brief Loads an image from a file.
 
 @anchor imread

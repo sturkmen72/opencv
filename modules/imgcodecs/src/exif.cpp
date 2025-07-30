@@ -91,16 +91,10 @@ static std::string HexStringToBytes(const char* hexstring,
     return raw_data;
 }
 
-ExifEntry_t::ExifEntry_t() :
-    field_float(0), field_double(0), field_u32(0), field_s32(0),
-    tag(INVALID_TAG), field_u16(0), field_s16(0), field_u8(0), field_s8(0)
-{
-}
-
 /**
  * @brief ExifReader constructor
  */
-ExifReader::ExifReader() : m_format(NONE)
+ExifReader::ExifReader() : m_format(Endianness_t::NONE)
 {
 }
 
@@ -117,13 +111,13 @@ ExifReader::~ExifReader()
  *
  *  @param [in] tag The tag number
  *
- *  @return ExifEntru_t structure. Caller has to know what tag it calls in order to extract proper field from the structure ExifEntry_t
+ *  @return ExifEntry structure. Caller has to know what tag it calls in order to extract proper field from the structure ExifEntry_t
  *
  */
-ExifEntry_t ExifReader::getTag(const ExifTagName tag) const
+ExifEntry ExifReader::getTag(const ExifTag tag) const
 {
-    ExifEntry_t entry;
-    std::map<int, ExifEntry_t>::const_iterator it = m_exif.find(tag);
+    ExifEntry entry;
+    std::map<uint16_t, ExifEntry>::const_iterator it = m_exif.find(tag);
 
     if( it != m_exif.end() )
     {
@@ -176,7 +170,7 @@ bool ExifReader::processRawProfile(const char* profile, size_t profile_len) {
  * @return  true if parsing was successful
  *          false in case of unsuccessful parsing
  */
-bool ExifReader::parseExif(unsigned char* data, const size_t size)
+bool ExifReader::parseExif(const unsigned char* data, size_t size)
 {
     // Populate m_data, then call parseExif() (private)
     if( data && size > 0 )
@@ -225,7 +219,7 @@ void ExifReader::parseExif()
 
     for( size_t entry = 0; entry < numEntry; entry++ )
     {
-        ExifEntry_t exifEntry = parseExifEntry( offset );
+        ExifEntry exifEntry = parseExifEntry( offset );
         m_exif.insert( std::make_pair( exifEntry.tag, exifEntry ) );
         offset += tiffFieldSize;
     }
@@ -240,24 +234,24 @@ void ExifReader::parseExif()
 Endianness_t ExifReader::getFormat() const
 {
     if (m_data.size() < 1)
-        return NONE;
+        return Endianness_t::NONE;
 
     if( m_data.size() > 1 && m_data[0] != m_data[1] )
     {
-        return NONE;
+        return Endianness_t::NONE;
     }
 
     if( m_data[0] == 'I' )
     {
-        return INTEL;
+        return Endianness_t::INTEL;
     }
 
     if( m_data[0] == 'M' )
     {
-        return MOTO;
+        return Endianness_t::MOTO;
     }
 
-    return NONE;
+    return Endianness_t::NONE;
 }
 
 /**
@@ -317,63 +311,19 @@ size_t ExifReader::getNumDirEntry(const size_t offsetNumDir) const
  * @return ExifEntry_t structure which corresponds to particular entry
  *
  */
-ExifEntry_t ExifReader::parseExifEntry(const size_t offset)
+ExifEntry ExifReader::parseExifEntry(const size_t offset)
 {
-    ExifEntry_t entry;
-    uint16_t tagNum = getExifTag( offset );
-    entry.tag = tagNum;
+    ExifEntry entry;
+    entry.tag = getExifTag( offset );
 
-    switch( tagNum )
+    switch( entry.tag )
     {
-        case IMAGE_DESCRIPTION:
-            entry.field_str = getString( offset );
-            break;
-        case MAKE:
-            entry.field_str = getString( offset );
-            break;
-        case MODEL:
-            entry.field_str = getString( offset );
-            break;
-        case ORIENTATION:
-            entry.field_u16 = getOrientation( offset );
-            break;
-        case XRESOLUTION:
-            entry.field_u_rational = getResolution( offset );
-            break;
-        case YRESOLUTION:
-            entry.field_u_rational = getResolution( offset );
-            break;
-        case RESOLUTION_UNIT:
-            entry.field_u16 = getResolutionUnit( offset );
-            break;
-        case SOFTWARE:
-            entry.field_str = getString( offset );
-            break;
-        case DATE_TIME:
-            entry.field_str = getString( offset );
-            break;
-        case WHITE_POINT:
-            entry.field_u_rational = getWhitePoint( offset );
-            break;
-        case PRIMARY_CHROMATICIES:
-            entry.field_u_rational = getPrimaryChromaticies( offset );
-            break;
-        case Y_CB_CR_COEFFICIENTS:
-            entry.field_u_rational = getYCbCrCoeffs( offset );
-            break;
-        case Y_CB_CR_POSITIONING:
-            entry.field_u16 = getYCbCrPos( offset );
-            break;
-        case REFERENCE_BLACK_WHITE:
-            entry.field_u_rational = getRefBW( offset );
-            break;
-        case COPYRIGHT:
-            entry.field_str = getString( offset );
-            break;
-        case EXIF_OFFSET:
+        case ExifTag::ORIENTATION:
+            entry.value.field_u16 = getOrientation( offset );
+            return entry;
             break;
         default:
-            entry.tag = INVALID_TAG;
+            entry.tag = ExifTag::INVALID_TAG;
             break;
     }
     return entry;
@@ -424,7 +374,7 @@ uint16_t ExifReader::getU16(const size_t offset) const
     if (offset + 1 >= m_data.size())
         throw ExifParsingError();
 
-    if( m_format == INTEL )
+    if( m_format == Endianness_t::INTEL )
     {
         return m_data[offset] + ( m_data[offset + 1] << 8 );
     }
@@ -442,7 +392,7 @@ uint32_t ExifReader::getU32(const size_t offset) const
     if (offset + 3 >= m_data.size())
         throw ExifParsingError();
 
-    if( m_format == INTEL )
+    if( m_format == Endianness_t::INTEL )
     {
         return m_data[offset] +
                 ( m_data[offset + 1] << 8 ) +
@@ -483,125 +433,6 @@ u_rational_t ExifReader::getURational(const size_t offset) const
 uint16_t ExifReader::getOrientation(const size_t offset) const
 {
     return getU16( offset + 8 );
-}
-
-/**
- * @brief Get resolution information from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return resolution value
- */
-std::vector<u_rational_t> ExifReader::getResolution(const size_t offset) const
-{
-    std::vector<u_rational_t> result;
-    uint32_t rationalOffset = getU32( offset + 8 );
-    result.push_back( getURational( rationalOffset ) );
-
-    return result;
-}
-
-/**
- * @brief Get resolution unit from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return resolution unit value
- */
-uint16_t ExifReader::getResolutionUnit(const size_t offset) const
-{
-    return getU16( offset + 8 );
-}
-
-/**
- * @brief Get White Point information from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return White Point value
- *
- * If the image uses CIE Standard Illumination D65(known as international
- * standard of 'daylight'), the values are '3127/10000,3290/10000'.
- */
-std::vector<u_rational_t> ExifReader::getWhitePoint(const size_t offset) const
-{
-    std::vector<u_rational_t> result;
-    uint32_t rationalOffset = getU32( offset + 8 );
-    result.push_back( getURational( rationalOffset ) );
-    result.push_back( getURational( rationalOffset + 8 ) );
-
-    return result;
-}
-
-/**
- * @brief Get Primary Chromaticies information from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return vector with primary chromaticies values
- *
- */
-std::vector<u_rational_t> ExifReader::getPrimaryChromaticies(const size_t offset) const
-{
-    std::vector<u_rational_t> result;
-    uint32_t rationalOffset = getU32( offset + 8 );
-    for( size_t i = 0; i < primaryChromaticiesComponents; i++ )
-    {
-        result.push_back( getURational( rationalOffset ) );
-        rationalOffset += 8;
-    }
-    return result;
-}
-
-/**
- * @brief Get YCbCr Coefficients information from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return vector with YCbCr coefficients values
- *
- */
-std::vector<u_rational_t> ExifReader::getYCbCrCoeffs(const size_t offset) const
-{
-    std::vector<u_rational_t> result;
-    uint32_t rationalOffset = getU32( offset + 8 );
-    for( size_t i = 0; i < ycbcrCoeffs; i++ )
-    {
-        result.push_back( getURational( rationalOffset ) );
-        rationalOffset += 8;
-    }
-    return result;
-}
-
-/**
- * @brief Get YCbCr Positioning information from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return vector with YCbCr positioning value
- *
- */
-uint16_t ExifReader::getYCbCrPos(const size_t offset) const
-{
-    return getU16( offset + 8 );
-}
-
-/**
- * @brief Get Reference Black&White point information from raw exif data
- *          This is internal function and is not exposed to client
- * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return vector with reference BW points
- *
- * In case of YCbCr format, first 2 show black/white of Y, next 2 are Cb,
- * last 2 are Cr. In case of RGB format, first 2 show black/white of R,
- * next 2 are G, last 2 are B.
- *
- */
-std::vector<u_rational_t> ExifReader::getRefBW(const size_t offset) const
-{
-    const size_t rationalFieldSize = 8;
-    std::vector<u_rational_t> result;
-    uint32_t rationalOffset = getU32( offset + rationalFieldSize );
-    for( size_t i = 0; i < refBWComponents; i++ )
-    {
-        result.push_back( getURational( rationalOffset ) );
-        rationalOffset += rationalFieldSize;
-    }
-    return result;
 }
 
 } //namespace cv

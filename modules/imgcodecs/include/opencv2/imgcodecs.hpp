@@ -44,7 +44,6 @@
 #define OPENCV_IMGCODECS_HPP
 
 #include "opencv2/core.hpp"
-#include <variant>
 
 /**
   @defgroup imgcodecs Image file reading and writing

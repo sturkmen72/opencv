@@ -88,7 +88,7 @@ public:
      * @param tag The EXIF tag to retrieve.
      * @return The EXIF entry corresponding to the tag.
      */
-    ExifEntry_t getExifTag(const ExifTagName tag) const;
+    ExifEntry getExifEntry(const ExifTagId tag) const;
 
     /**
      * @brief Set the image source from a file.

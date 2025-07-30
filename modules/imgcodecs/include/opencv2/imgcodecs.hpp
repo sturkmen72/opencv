@@ -276,6 +276,9 @@ enum ExifTagType
     TAG_TYPE_IFD8       = 18  // BigTIFF: 64-bit offset to IFD
 };
 
+/**
+ * @brief Base Exif tags used by IFD0 (main image)
+ */
 enum ExifTagId
 {
     TAG_EMPTY = 0,
@@ -367,6 +370,7 @@ enum ExifTagId
     TAG_FORWARD_MATRIX2 = 50965,
 
     TAG_NEXT_IFD = 65535,
+    TAG_INVALID_TAG = 65535
 };
 
 struct srational64_t
@@ -374,26 +378,61 @@ struct srational64_t
     int64_t num = 0, denom = 1;
 };
 
-typedef std::variant<int64_t, srational64_t, double, std::string, std::vector<int64_t>,
-    std::vector<srational64_t>, std::vector<double> > ExifTagValue;
-
-struct CV_EXPORTS_W_SIMPLE ExifTag
+enum class Endianness_t : uint8_t
 {
-    ExifTagId tagid = TAG_EMPTY;
+    INTEL = 0x49,
+    MOTO = 0x4D,
+    NONE = 0x00
+};
+
+using u_rational_t = std::pair<uint32_t, uint32_t>;
+
+/**
+ * @brief Entry which contains possible values for different exif tags
+ */
+struct ExifTagValue
+{
+    ExifTagValue()
+        : field_float(0.0f), field_double(0.0),
+        field_u32(0), field_s32(0),
+        tag(0),
+        field_u16(0), field_s16(0),
+        field_u8(0), field_s8(0)
+    {
+    }
+
+    std::vector<u_rational_t> field_u_rational; ///< Vector of rational values
+    std::string field_str;                      ///< ASCII or undefined textual data
+
+    float    field_float;   ///< Currently unused
+    double   field_double;  ///< Currently unused
+
+    int64_t  field_s64;     ///< Signed 64-bit integer
+    uint32_t field_u32;     ///< Unsigned 32-bit integer
+    int32_t  field_s32;     ///< Signed 32-bit integer
+
+    uint16_t tag;           ///< Tag ID
+
+    uint16_t field_u16;     ///< Unsigned 16-bit integer
+    int16_t  field_s16;     ///< Signed 16-bit integer
+    uint8_t  field_u8;      ///< Unsigned 8-bit integer
+    int8_t   field_s8;      ///< Signed 8-bit integer
+};
+
+struct CV_EXPORTS_W_SIMPLE ExifEntry
+{
+    ExifTagId tagId = TAG_EMPTY;
     ExifTagType type = TAG_TYPE_NOTYPE;
     ExifTagValue value;
 
     bool empty() const {
-        return tagid == TAG_EMPTY;
+        return tagId == TAG_EMPTY;
     }
     std::ostream& dump(std::ostream& strm) const;
     size_t nvalues() const;
 };
 
-CV_EXPORTS_W bool decodeExif(const std::vector<uchar>& data, size_t offset0,
-    std::vector<std::vector<ExifTag> >& exif);
 
-CV_EXPORTS void dumpExif(std::ostream& strm, const std::vector<std::vector<ExifTag> >& exif);
 
 enum ImageMetadataType
 {

@@ -64,7 +64,6 @@
 
 namespace cv {
 
-std::string tagTypeToString(ExifTagType type);
 size_t tagTypeSize(cv::ExifTagType);
 std::string exifTagIdToString(cv::ExifTagId);
 size_t tagValueSize(cv::ExifTagType, size_t);
@@ -404,13 +403,13 @@ static void ExifTransform(int orientation, OutputArray img)
     }
 }
 
-static void ApplyExifOrientation(ExifEntry_t orientationTag, OutputArray img)
+static void ApplyExifOrientation(ExifEntry exifEntry, OutputArray img)
 {
     int orientation = IMAGE_ORIENTATION_TL;
 
-    if (orientationTag.tag != INVALID_TAG)
+    if (exifEntry.tagId != ExifTagId::TAG_INVALID_TAG)
     {
-        orientation = orientationTag.field_u16; //orientation is unsigned short, so check field_u16
+        orientation = exifEntry.value.field_u16; //orientation is unsigned short, so check field_u16
         ExifTransform(orientation, img);
     }
 }
@@ -617,7 +616,7 @@ imread_( const String& filename, int flags, OutputArray mat,
     /// optionally rotate the data if EXIF orientation flag says so
     if (!mat.empty() && (flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED )
     {
-        ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+        ApplyExifOrientation(decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
     }
 
     return true;
@@ -717,7 +716,7 @@ imreadmulti_(const String& filename, int flags, std::vector<Mat>& mats, int star
         // optionally rotate the data if EXIF' orientation flag says so
         if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
         {
-            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+            ApplyExifOrientation(decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
         }
 
         mats.push_back(mat);
@@ -885,7 +884,7 @@ imreadanimation_(const String& filename, int flags, int start, int count, Animat
         // optionally rotate the data if EXIF' orientation flag says so
         if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
         {
-            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+            ApplyExifOrientation(decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
         }
 
         if (current >= start)
@@ -996,7 +995,7 @@ static bool imdecodeanimation_(InputArray buf, int flags, int start, int count, 
         // optionally rotate the data if EXIF' orientation flag says so
         if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
         {
-            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+            ApplyExifOrientation(decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
         }
 
         if (current >= start)
@@ -1396,7 +1395,7 @@ imdecode_( const Mat& buf, int flags, Mat& mat,
     /// optionally rotate the data if EXIF' orientation flag says so
     if (!mat.empty() && (flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
     {
-        ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+        ApplyExifOrientation(decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
     }
 
     return true;
@@ -1552,7 +1551,7 @@ imdecodemulti_(const Mat& buf, int flags, std::vector<Mat>& mats, int start, int
         // optionally rotate the data if EXIF' orientation flag says so
         if ((flags & IMREAD_IGNORE_ORIENTATION) == 0 && flags != IMREAD_UNCHANGED)
         {
-            ApplyExifOrientation(decoder->getExifTag(ORIENTATION), mat);
+            ApplyExifOrientation(decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
         }
 
         mats.push_back(mat);
@@ -1833,7 +1832,7 @@ Mat ImageCollection::Impl::readData() {
         return cv::Mat();
 
     if ((m_flags & IMREAD_IGNORE_ORIENTATION) == 0 && m_flags != IMREAD_UNCHANGED) {
-        ApplyExifOrientation(m_decoder->getExifTag(ORIENTATION), mat);
+        ApplyExifOrientation(m_decoder->getExifEntry(ExifTagId::TAG_ORIENTATION), mat);
     }
 
     return mat;
@@ -2118,71 +2117,14 @@ template <typename _Tp> void dumpVector(std::ostream& strm, const std::vector<_T
     strm << ']';
 }
 
-std::ostream& ExifTag::dump(std::ostream& strm) const
+std::ostream& ExifEntry::dump(std::ostream& strm) const
 {
     if (empty()) {
         strm << "<empty>";
         return strm;
     }
-    strm << exifTagIdToString(tagid) << ": ";
-    if (std::holds_alternative<std::string>(value)) {
-        strm << '\"' << std::get<std::string>(value) << '\"';
-    }
-    else if (tagid == TAG_APERTURE_VALUE) {
-        srational64_t r = std::get<srational64_t>(value);
-        strm << "f/" << pow(2., r.num * 0.5 / r.denom);
-    }
-    else if (tagid == TAG_SHUTTER_SPEED) {
-        srational64_t r = std::get<srational64_t>(value);
-        double ss = pow(2., -(double)r.num / r.denom);
-        if (ss < 1) {
-            ss = 1. / ss;
-            strm << "1/";
-        }
-        strm << cv::format("%.1fs", ss);
-    }
-    else if (tagid == TAG_EXIF_VERSION) {
-        const std::vector<int64_t>& ver = std::get<std::vector<int64_t> >(value);
-        CV_Assert(ver.size() == 4u);
-        strm << cv::format("%d.%d.%d",
-            (int)((ver[0] - '0') * 10 + (ver[1] - '0')),
-            (int)(ver[2] - '0'), int(ver[3] - '0'));
-    }
-    else if (std::holds_alternative<int64_t>(value)) {
-        dumpScalar(strm, std::get<int64_t>(value));
-    }
-    else if (std::holds_alternative<srational64_t>(value)) {
-        dumpScalar(strm, std::get<srational64_t>(value));
-    }
-    else if (std::holds_alternative<double>(value)) {
-        dumpScalar(strm, std::get<double>(value));
-    }
-    else if (std::holds_alternative<std::vector<int64_t> >(value)) {
-        dumpVector(strm, std::get<std::vector<int64_t> >(value));
-    }
-    else if (std::holds_alternative<std::vector<srational64_t> >(value)) {
-        dumpVector(strm, std::get<std::vector<srational64_t> >(value));
-    }
-    else if (std::holds_alternative<std::vector<double> >(value)) {
-        dumpVector(strm, std::get<std::vector<double> >(value));
-    }
-    else {
-        CV_Error(Error::StsNotImplemented, "");
-    }
+    strm << tagId << ": ";
     return strm;
-}
-
-size_t ExifTag::nvalues() const
-{
-    return empty() ? 0u :
-        std::holds_alternative<std::string>(value) ?
-        std::get<std::string>(value).size() + 1 :
-        std::holds_alternative<std::vector<int64_t> >(value) ?
-        std::get<std::vector<int64_t> >(value).size() :
-        std::holds_alternative<std::vector<srational64_t> >(value) ?
-        std::get<std::vector<srational64_t> >(value).size() :
-        std::holds_alternative<std::vector<double> >(value) ?
-        std::get<std::vector<double> >(value).size() : 1u;
 }
 
 static srational64_t doubleToRational(double v, int maxbits = 31)
@@ -2250,40 +2192,20 @@ static size_t computeOpcodeListSize(ExifTagId tagid, const std::vector<double>& 
     return size;
 }
 
-static size_t computeIFDSize(const std::vector<ExifTag>* ifds,
+static size_t computeIFDSize(const std::vector<ExifEntry>* ifds,
     size_t nifds, size_t idx, size_t& values_size)
 {
     CV_Assert(idx < nifds);
-    const std::vector<ExifTag>& ifd = ifds[idx];
+    const std::vector<ExifEntry>& ifd = ifds[idx];
     size_t i, ntags = ifd.size(), size = IFD_HDR_SIZE + IFD_ENTRY_SIZE * ntags;
-    for (i = 0; i < ntags; i++) {
-        const ExifTag& tag = ifd[i];
-        if (tag.tagid == TAG_NEXT_IFD) {
-            size -= IFD_ENTRY_SIZE;
-        }
-        else if (tag.tagid == TAG_OPCODE_LIST2) {
-            const std::vector<double>& v = std::get<std::vector<double> >(tag.value);
-            values_size += computeOpcodeListSize(tag.tagid, v);
-        }
-        else if (tag.type == TAG_TYPE_IFD) {
-            int64_t subifd_idx = std::get<int64_t>(tag.value);
-            CV_Assert_N(0 <= subifd_idx, (size_t)subifd_idx < nifds);
-            size += computeIFDSize(ifds, nifds, (size_t)subifd_idx, values_size);
-        }
-        else {
-            size_t tag_values_size = tagValueSize(tag.type, tag.nvalues());
-            if (tag_values_size > IFD_MAX_INLINE_SIZE)
-                values_size += tag_values_size;
-        }
-    }
     return size;
 }
 
-static size_t nextIFD(const std::vector<ExifTag>& ifd)
+static size_t nextIFD(const std::vector<ExifEntry>& ifd)
 {
-    for (const ExifTag& tag : ifd) {
-        if (tag.tagid == TAG_NEXT_IFD) {
-            return (size_t)std::get<int64_t>(tag.value);
+    for (const ExifEntry& tag : ifd) {
+        if (tag.tagId == TAG_NEXT_IFD) {
+            return tag.value.field_u32;
         }
     }
     return 0u;
@@ -2428,219 +2350,12 @@ static bool packGainMaps(std::vector<uchar>& data, size_t& offset,
     return true;
 }
 
-static void packIFD(const std::vector<ExifTag>* ifds, size_t nifds, size_t idx,
+static void packIFD(const std::vector<ExifEntry>* ifds, size_t nifds, size_t idx,
     std::vector<uchar>& data, size_t& offset,
     size_t& values_offset, size_t& image_data_offset,
     bool bigendian, bool sorttags, bool adjust_stripe_offsets)
 {
-    CV_Assert(idx < nifds);
-    const std::vector<ExifTag>& ifd = ifds[idx];
-    std::vector<int> sortedtags;
-    std::vector<std::pair<size_t, size_t> > subifds;
-    size_t ntags = ifd.size(), ntags_real = ntags - (nextIFD(ifd) > 0u);
-    size_t datasize = 0;
-    sortedtags.resize(ntags);
-
-    for (size_t i = 0; i < ntags; i++)
-        sortedtags[i] = (int)i;
-
-    if (sorttags) {
-        std::sort(sortedtags.begin(), sortedtags.end(), [&](int a, int b) {
-            auto tag_a = ifd[a].tagid, tag_b = ifd[b].tagid;
-            return tag_a < tag_b || (tag_a == tag_b && a < b);
-            });
-    }
-    size_t subifd_offset0 = offset + IFD_HDR_SIZE + ntags_real * IFD_ENTRY_SIZE;
-    size_t subifd_offset = subifd_offset0;
-    size_t next_offset = 0;
-    pack2(data, offset, (uint16_t)ntags_real, bigendian);
-
-    // first, pack the specified (by idx) IFD without subdirectories
-    for (int tagidx : sortedtags) {
-        const ExifTag& tag = ifd[tagidx];
-        if (tag.tagid == TAG_NEXT_IFD) {
-            CV_Assert(next_offset == 0u); // there can be only one "next" IFD.
-            next_offset = subifd_offset;
-            int64_t next_idx = std::get<int64_t>(tag.value);
-            CV_Assert_N(next_idx >= 0, (size_t)next_idx < nifds);
-            subifds.push_back({ (size_t)next_idx, subifd_offset });
-            continue;
-        }
-
-        pack2(data, offset, (uint16_t)tag.tagid, bigendian);
-
-        if (tag.tagid == TAG_OPCODE_LIST2) {
-            const std::vector<double>& v = std::get<std::vector<double> >(tag.value);
-            size_t nbytes = computeOpcodeListSize(tag.tagid, v);
-            pack2(data, offset, (uint16_t)TAG_TYPE_UNDEFINED, bigendian);
-            pack4(data, offset, (uint32_t)nbytes, bigendian);
-            pack4(data, offset, (uint32_t)values_offset, bigendian);
-            packGainMaps(data, values_offset, v, true);
-            continue;
-        }
-
-        ExifTagType type = tag.type == TAG_TYPE_IFD ? TAG_TYPE_LONG : tag.type;
-        pack2(data, offset, (uint16_t)type, bigendian);
-        size_t nvalues = tag.nvalues();
-
-        pack4(data, offset, (uint32_t)nvalues, bigendian);
-        if (tag.type == TAG_TYPE_IFD) {
-            int64_t sub_idx = std::get<int64_t>(tag.value);
-            CV_Assert_N(sub_idx >= 0, (size_t)sub_idx < nifds);
-            subifds.push_back({ (size_t)sub_idx, subifd_offset });
-            pack4(data, offset, (uint32_t)subifd_offset, bigendian);
-            const std::vector<ExifTag>& subifd = ifds[sub_idx];
-            size_t subifd_ntags = subifd.size() - (nextIFD(subifd) > 0u);
-            subifd_offset += IFD_HDR_SIZE + subifd_ntags * IFD_ENTRY_SIZE;
-            continue;
-        }
-        size_t tag_values_size = tagValueSize(type, nvalues);
-        int inline_values = tag_values_size <= 4u;
-        size_t tag_values_offset = inline_values ? offset : values_offset;
-        if (!inline_values) {
-            pack4(data, offset, (uint32_t)values_offset, bigendian);
-            data.resize(std::max(data.size(), tag_values_offset + tag_values_size));
-        }
-        else {
-            pack4(data, offset, 0u, bigendian);
-        }
-
-        if (tag.tagid == TAG_STRIP_BYTE_COUNTS && adjust_stripe_offsets) {
-            const int64_t* vptr = std::holds_alternative<int64_t>(tag.value) ?
-                &std::get<int64_t>(tag.value) :
-                std::holds_alternative<std::vector<int64_t> >(tag.value) ?
-                std::get<std::vector<int64_t> >(tag.value).data() : nullptr;
-            if (!vptr) {
-                CV_Error(Error::StsBadArg, "TAG_STRIPE_SIZE value must be int64_t or vector<int64_t>");
-            }
-            for (size_t i = 0; i < nvalues; i++)
-                datasize += (size_t)vptr[i];
-            // fall through, we need to store the stripe sizes
-        }
-
-        if (tag.tagid == TAG_STRIP_OFFSET && adjust_stripe_offsets) {
-            const int64_t* vptr = std::holds_alternative<int64_t>(tag.value) ?
-                &std::get<int64_t>(tag.value) :
-                std::holds_alternative<std::vector<int64_t> >(tag.value) ?
-                std::get<std::vector<int64_t> >(tag.value).data() : nullptr;
-            if (!vptr || (tag.type != TAG_TYPE_LONG && tag.type != TAG_TYPE_SLONG)) {
-                CV_Error(Error::StsBadArg, "TAG_STRIP_OFFSET value have type LONG and be represented by int64_t or vector<int64_t>");
-            }
-            int64_t offset_delta = (int64_t)image_data_offset - vptr[0];
-            for (size_t i = 0; i < nvalues; i++) {
-                int64_t new_offset = vptr[i] + offset_delta;
-                pack4(data, tag_values_offset, (uint32_t)new_offset, bigendian);
-            }
-        }
-        else if (type == TAG_TYPE_ASCII) {
-            const std::string& v = std::get<std::string>(tag.value);
-            size_t v_size = v.size();
-            memcpy(&data[tag_values_offset], v.data(), v_size);
-            data[tag_values_offset + v_size] = '\0';
-            if (((v_size + 1) & 1u) != 0) {
-                data[tag_values_offset + v_size + 1] = '\0';
-            }
-            tag_values_offset += tag_values_size;
-        }
-        else if (type == TAG_TYPE_BYTE || type == TAG_TYPE_SBYTE || type == TAG_TYPE_UNDEFINED ||
-            type == TAG_TYPE_SHORT || type == TAG_TYPE_SSHORT ||
-            type == TAG_TYPE_LONG || type == TAG_TYPE_SLONG) {
-            const int64_t* vptr = std::holds_alternative<int64_t>(tag.value) ?
-                &std::get<int64_t>(tag.value) :
-                std::holds_alternative<std::vector<int64_t> >(tag.value) ?
-                std::get<std::vector<int64_t> >(tag.value).data() : nullptr;
-            if (!vptr) {
-                CV_Error_(Error::StsBadArg, ("value variant of type int64_t or vector<int64_t> "
-                    "is expected for tag type %s",
-                    tagTypeToString(type).c_str()));
-            }
-            int64_t minval =
-                type == TAG_TYPE_SBYTE ? INT8_MIN :
-                type == TAG_TYPE_SSHORT ? INT16_MIN :
-                type == TAG_TYPE_SLONG ? INT32_MIN : 0;
-            int64_t maxval =
-                type == TAG_TYPE_BYTE || type == TAG_TYPE_UNDEFINED ? UINT8_MAX :
-                type == TAG_TYPE_SBYTE ? INT8_MAX :
-                type == TAG_TYPE_SHORT ? UINT16_MAX :
-                type == TAG_TYPE_SSHORT ? INT16_MAX :
-                type == TAG_TYPE_LONG ? UINT32_MAX :
-                type == TAG_TYPE_SLONG ? INT32_MAX : INT64_MAX;
-            for (size_t i = 0; i < nvalues; i++) {
-                int64_t v = std::min(std::max(vptr[i], minval), maxval);
-                if (type == TAG_TYPE_LONG || type == TAG_TYPE_SLONG)
-                    pack4(data, tag_values_offset, (uint32_t)v, bigendian);
-                else if (type == TAG_TYPE_SHORT || type == TAG_TYPE_SSHORT)
-                    pack2(data, tag_values_offset, (uint16_t)v, bigendian);
-                else
-                    pack1(data, tag_values_offset, (uint8_t)v);
-            }
-            if ((type == TAG_TYPE_BYTE || type == TAG_TYPE_SBYTE ||
-                type == TAG_TYPE_UNDEFINED) && (nvalues & 1) != 0)
-                pack1(data, tag_values_offset, (uint8_t)0);
-        }
-        else if (type == TAG_TYPE_RATIONAL || type == TAG_TYPE_SRATIONAL) {
-            const srational64_t* vptr = std::holds_alternative<srational64_t>(tag.value) ?
-                &std::get<srational64_t>(tag.value) :
-                std::holds_alternative<std::vector<srational64_t> >(tag.value) ?
-                std::get<std::vector<srational64_t> >(tag.value).data() : nullptr;
-            const double* vdbptr = std::holds_alternative<double>(tag.value) ?
-                &std::get<double>(tag.value) :
-                std::holds_alternative<std::vector<double> >(tag.value) ?
-                std::get<std::vector<double> >(tag.value).data() : nullptr;
-            if (!vptr && !vdbptr) {
-                CV_Error_(Error::StsBadArg, ("value variant of type srational64_t or vector<srational64_t> "
-                    "is expected for tag type %s",
-                    tagTypeToString(type).c_str()));
-            }
-            int64_t minval = type == TAG_TYPE_SRATIONAL ? INT32_MIN : 0;
-            int64_t maxval = type == TAG_TYPE_SRATIONAL ? INT32_MAX : UINT32_MAX;
-            for (size_t i = 0; i < nvalues; i++) {
-                srational64_t r = vptr ? vptr[i] :
-                    type == TAG_TYPE_RATIONAL ? doubleToRational(vdbptr[i]) :
-                    doubleToSRational(vdbptr[i]);
-                int64_t num = std::min(std::max(r.num, minval), maxval);
-                int64_t denom = std::min(std::max(r.denom, minval), maxval);
-                pack4(data, tag_values_offset, (uint32_t)num, bigendian);
-                pack4(data, tag_values_offset, (uint32_t)denom, bigendian);
-            }
-        }
-        else if (type == TAG_TYPE_FLOAT || type == TAG_TYPE_DOUBLE) {
-            const double* vptr = std::holds_alternative<double>(tag.value) ?
-                &std::get<double>(tag.value) :
-                std::holds_alternative<std::vector<double> >(tag.value) ?
-                std::get<std::vector<double> >(tag.value).data() : nullptr;
-            if (!vptr) {
-                CV_Error_(Error::StsBadArg, ("value variant of type double or vector<double> "
-                    "is expected for tag type %s",
-                    tagTypeToString(type).c_str()));
-            }
-            for (size_t i = 0; i < nvalues; i++) {
-                double v = vptr[i];
-                if (type == TAG_TYPE_FLOAT)
-                    packFloat(data, tag_values_offset, (float)v, bigendian);
-                else
-                    packDouble(data, tag_values_offset, v, bigendian);
-            }
-        }
-        else {
-            CV_Error_(Error::StsBadArg, ("unsupported tag type %s",
-                tagTypeToString(type).c_str()));
-        }
-
-        if (!inline_values)
-            values_offset = tag_values_offset;
-    }
-
-    pack4(data, offset, (uint32_t)next_offset, bigendian);
-    image_data_offset += datasize;
-
-    // now pack all sub-IFDs and the next one, if any
-    for (auto sub : subifds) {
-        size_t subofs = sub.second;
-        packIFD(ifds, nifds, sub.first, data, subofs, values_offset, image_data_offset,
-            bigendian, sorttags, adjust_stripe_offsets);
-    }
-}
+};
 
 static uint8_t unpack1(const std::vector<uchar>& data, size_t& offset)
 {
@@ -2787,174 +2502,20 @@ static bool unpackOpcodeList(ExifTagId tagid, const std::vector<uchar>& data, si
     return ngainmaps > 0;
 }
 
-static bool unpackIFD(const std::vector<uchar>& data, size_t offset, size_t offset0,
-    std::vector<std::vector<ExifTag> >& ifds, size_t idx, bool bigendian)
-{
-    std::vector<int64_t> vll;
-    std::vector<srational64_t> vr;
-    std::vector<double> vd;
-    std::vector<ExifTag> ifd;
-
-    ifds.resize(std::max(ifds.size(), idx + 1));
-    offset += offset0;
-    size_t ntags = unpack2(data, offset, bigendian);
-    if (offset + ntags * IFD_ENTRY_SIZE + sizeof(uint32_t) > data.size())
-        return false;
-
-    ifd.resize(ntags);
-
-    for (ExifTag& tag : ifd) {
-        tag.tagid = (ExifTagId)unpack2(data, offset, bigendian);
-        ExifTagType type = tag.type = (ExifTagType)unpack2(data, offset, bigendian);
-        size_t nvalues = unpack4(data, offset, bigendian);
-        size_t inline_offset = offset;
-        size_t values_offset = unpack4(data, offset, bigendian) + offset0;
-        size_t values_size = tagValueSize(type, nvalues);
-        bool inline_values = values_size <= 4;
-        if (inline_values)
-            values_offset = inline_offset;
-        if (tag.tagid == TAG_OPCODE_LIST2) {
-            std::vector<double> gainmaps;
-            if (!unpackOpcodeList(tag.tagid, data, values_offset, gainmaps, true))
-                return false;
-            tag.type = TAG_TYPE_DOUBLE;
-            tag.value = gainmaps;
-        }
-        else if (type == TAG_TYPE_ASCII) {
-            tag.value = std::string((char*)&data[values_offset], nvalues - 1);
-        }
-        else if (type == TAG_TYPE_BYTE || type == TAG_TYPE_SBYTE ||
-            type == TAG_TYPE_UNDEFINED ||
-            type == TAG_TYPE_SHORT || type == TAG_TYPE_SSHORT ||
-            type == TAG_TYPE_LONG || type == TAG_TYPE_SLONG) {
-            vll.resize(nvalues);
-            for (size_t i = 0; i < nvalues; i++) {
-                int64_t v{};
-                if (type == TAG_TYPE_BYTE ||
-                    type == TAG_TYPE_UNDEFINED ||
-                    type == TAG_TYPE_SBYTE) {
-                    v = unpack1(data, values_offset);
-                    if (type == TAG_TYPE_SBYTE)
-                        v = (int8_t)v;
-                }
-                else if (type == TAG_TYPE_SHORT || type == TAG_TYPE_SSHORT) {
-                    v = unpack2(data, values_offset, bigendian);
-                    if (type == TAG_TYPE_SSHORT)
-                        v = (int16_t)v;
-                }
-                else if (type == TAG_TYPE_LONG || type == TAG_TYPE_SLONG) {
-                    v = unpack4(data, values_offset, bigendian);
-                    if (type == TAG_TYPE_SLONG)
-                        v = (int32_t)v;
-                }
-                vll[i] = v;
-            }
-            if (nvalues == 1)
-                tag.value = vll[0];
-            else
-                tag.value = vll;
-        }
-        else if (type == TAG_TYPE_RATIONAL ||
-            type == TAG_TYPE_SRATIONAL) {
-            vr.resize(nvalues);
-            for (size_t i = 0; i < nvalues; i++) {
-                srational64_t v;
-                v.num = unpack4(data, values_offset, bigendian);
-                v.denom = unpack4(data, values_offset, bigendian);
-                if (type == TAG_TYPE_RATIONAL) {
-                    v.num = (int32_t)v.num;
-                    v.denom = (int32_t)v.denom;
-                }
-                vr[i] = v;
-            }
-            if (nvalues == 1)
-                tag.value = vr[0];
-            else
-                tag.value = vr;
-        }
-        else if (type == TAG_TYPE_FLOAT || type == TAG_TYPE_DOUBLE) {
-            vd.resize(nvalues);
-            for (size_t i = 0; i < nvalues; i++) {
-                double v;
-                if (type == TAG_TYPE_FLOAT)
-                    v = unpackFloat(data, values_offset, bigendian);
-                else
-                    v = unpackDouble(data, values_offset, bigendian);
-                vd[i] = v;
-            }
-            if (nvalues == 1)
-                tag.value = vd[0];
-            else
-                tag.value = vd;
-        }
-        else {
-            CV_Error_(Error::StsBadArg, ("unsupported tag type %s",
-                tagTypeToString(type).c_str()));
-        }
-        // [TODO] add support for other sub-IFDs
-        if (tag.tagid == TAG_EXIF_TAGS) {
-            tag.type = TAG_TYPE_IFD;
-        }
-        if (tag.type == TAG_TYPE_IFD) {
-            CV_Assert(nvalues == 1 && type == TAG_TYPE_LONG);
-            size_t subifd_offset = (size_t)std::get<int64_t>(tag.value);
-            size_t sub_idx = ifds.size();
-            tag.value = (int64_t)sub_idx;
-            bool ok = unpackIFD(data, subifd_offset, offset0, ifds, sub_idx, bigendian);
-            if (!ok)
-                return ok;
-        }
-    }
-    size_t next_offset = unpack4(data, offset, bigendian);
-    if (next_offset > 0) {
-        ExifTag tag;
-        size_t next_idx = ifds.size();
-        tag.tagid = TAG_NEXT_IFD;
-        tag.type = TAG_TYPE_IFD;
-        tag.value = (int64_t)next_idx;
-        ifd.push_back(tag);
-        bool ok = unpackIFD(data, next_offset, offset0, ifds, next_idx, bigendian);
-        if (!ok)
-            return ok;
-    }
-    ifds[idx] = ifd; // we copy the decoded IFD to the destination container in the very end,
-    // because by that time the whole subtree of IFDs and all subsequent IFDs
-    // have been decoded and stored. This way we reduce the number of
-    // std::vector<> copy operations.
-    return true;
-}
-
-bool decodeExif(const std::vector<uchar>& data, size_t offset0,
-    std::vector<std::vector<ExifTag> >& exif)
-{
-    exif.clear();
-    size_t offset = offset0;
-    char s1 = (char)unpack1(data, offset);
-    char s2 = (char)unpack1(data, offset);
-    if (s1 != s2 || (s1 != 'I' && s1 != 'M'))
-        return false;
-    bool bigendian = s1 == 'M';
-    uint16_t ver = unpack2(data, offset, bigendian);
-    if (ver != 42u)
-        return false;
-    size_t ifd0offset = unpack4(data, offset, bigendian);
-    return unpackIFD(data, ifd0offset, offset0, exif, 0u, bigendian);
-}
-
 static void dumpIFD(std::ostream& strm, int indent,
-    const std::vector<std::vector<ExifTag> >& exif, size_t idx)
+    const std::vector<std::vector<ExifEntry> >& exif, size_t idx)
 {
     CV_Assert(idx < exif.size());
-    const std::vector<ExifTag>& ifd = exif[idx];
+    const std::vector<ExifEntry>& ifd = exif[idx];
     size_t i, ntags = ifd.size();
     std::string subindent = std::string(indent + 3, ' ');
     strm << "{\n";
     for (i = 0; i < ntags; i++) {
-        const ExifTag& tag = ifd[i];
+        const ExifEntry& tag = ifd[i];
         strm << subindent;
         if (tag.type == TAG_TYPE_IFD) {
-            int64_t sub_idx = std::get<int64_t>(tag.value);
-            strm << exifTagIdToString(tag.tagid) << ": ";
+            int32_t sub_idx = tag.value.field_s32;
+            strm << exifTagIdToString(tag.tagId) << ": ";
             dumpIFD(strm, indent + 3, exif, (size_t)sub_idx);
         }
         else {
@@ -2967,7 +2528,7 @@ static void dumpIFD(std::ostream& strm, int indent,
     strm << std::string(indent, ' ') << "}";
 }
 
-void dumpExif(std::ostream& strm, const std::vector<std::vector<ExifTag> >& exif)
+void dumpExif(std::ostream& strm, const std::vector<std::vector<ExifEntry> >& exif)
 {
     if (exif.empty()) {
         strm << "{}";

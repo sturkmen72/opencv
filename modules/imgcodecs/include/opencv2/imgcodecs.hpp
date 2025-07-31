@@ -332,6 +332,7 @@ enum ExifTagId
     TAG_MODIFYDATE = 306,
 
     TAG_SAMPLEFORMAT = 339,
+    TAG_YCBCRPOSITIONING = 531,
 
     // DNG extension
     TAG_CFA_REPEAT_PATTERN_DIM = 33421,
@@ -341,7 +342,7 @@ enum ExifTagId
     TAG_EXPOSURE_TIME = 33434,
     TAG_FNUMBER = 33437,
 
-    TAG_EXIF_TAGS = 34665,
+    TAG_EXIF_OFFSET = 34665,
     TAG_ISOSPEED = 34855,
 
     TAG_EXIF_VERSION = 36864,
@@ -394,11 +395,7 @@ enum ExifTagId
     TAG_ACTIVE_AREA = 50829,
     TAG_FORWARD_MATRIX1 = 50964,
     TAG_FORWARD_MATRIX2 = 50965,
-
-    TAG_NEXT_IFD = 65535,
-
-    TAG_EXIF_OFFSET = 0x8769,   ///< Offset to Exif Sub IFD
-    TAG_INVALID_TAG = 0xFFFF    ///< Shows that the tag was not recognized
+    TAG_INVALID_TAG = 65535
 };
 
 enum class Endianness_t : uint8_t
@@ -419,39 +416,36 @@ struct srational64_t
 };
 
 /**
- * @brief Entry which contains possible values for different exif tags
+ * @brief Entry which contains possible values for different EXIF tags.
+ * Only the field matching the `type` in ExifEntry should be considered valid.
  */
 struct ExifTagValue
 {
-    ExifTagValue()
-        : field_float(0.0f), field_double(0.0),
+    ExifTagValue() :
+        field_float(0.0f), field_double(0.0),
         field_u32(0), field_s32(0),
-        tagId(0),
         field_u16(0), field_s16(0),
         field_u8(0), field_s8(0)
-    {
-    }
+    {}
 
-    srational64_t field_srational;
-    urational64_t field_urational; ///< Vector of rational values
-    std::string field_str;         ///< ASCII or undefined textual data
+    srational64_t field_srational; ///< Signed rational (e.g., ShutterSpeedValue)
+    urational64_t field_urational; ///< Unsigned rational (e.g., ExposureTime)
+    std::string   field_str;       ///< ASCII string or undefined textual data (e.g., Make, Model)
 
-    float    field_float;   ///< Currently unused
-    double   field_double;  ///< Currently unused
+    float    field_float;   ///< Not commonly used in standard EXIF
+    double   field_double;  ///< Not commonly used in standard EXIF
 
-    uint32_t field_u32;     ///< Unsigned 32-bit integer
+    uint32_t field_u32;     ///< Unsigned 32-bit integer (e.g., ImageWidth)
     int32_t  field_s32;     ///< Signed 32-bit integer
-    int64_t  field_s64;     ///< Signed 64-bit integer
 
-    uint16_t tagId;         ///< Tag ID
-
-    uint16_t field_u16;     ///< Unsigned 16-bit integer
+    uint16_t field_u16;     ///< Unsigned 16-bit integer (e.g., Orientation)
     int16_t  field_s16;     ///< Signed 16-bit integer
+
     uint8_t  field_u8;      ///< Unsigned 8-bit integer
     int8_t   field_s8;      ///< Signed 8-bit integer
 };
 
-struct CV_EXPORTS_W_SIMPLE ExifEntry
+struct ExifEntry
 {
     ExifEntry() {}
 

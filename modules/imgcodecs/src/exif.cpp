@@ -311,55 +311,55 @@ size_t ExifReader::getNumDirEntry(const size_t offsetNumDir) const
  *      Details can be found here: http://www.media.mit.edu/pia/Research/deepview/exif.html
  *
  * @param [in] offset Offset to entry in bytes inside raw exif data
- * @return ExifEntry_t structure which corresponds to particular entry
+ * @return ExifEntry structure which corresponds to particular entry
  *
  */
 ExifEntry ExifReader::parseExifEntry(const size_t offset)
 {
-    ExifEntry entry;
-    entry.tagId = ExifTagId(getU16(offset));
-    entry.type = ExifTagType(getU16(offset + 2));
-    entry.count = getU32(offset + 4);
+    ExifEntry exifentry;
+    exifentry.tagId = ExifTagId(getU16(offset));
+    exifentry.type = ExifTagType(getU16(offset + 2));
+    exifentry.count = getU32(offset + 4);
 
-    switch (entry.type)
+    switch (exifentry.type)
     {
     case TAG_TYPE_BYTE:
     case TAG_TYPE_SBYTE:
-        entry.value.field_u8 = m_data[offset + 8];
+        exifentry.value.field_u8 = m_data[offset + 8];
         break;
 
     case TAG_TYPE_ASCII:
-        entry.value.field_str = getString(offset);
+        exifentry.value.field_str = getString(offset);
         break;
 
     case TAG_TYPE_SHORT:
-        entry.value.field_u16 = getU16(offset + 8);
+        exifentry.value.field_u16 = getU16(offset + 8);
         break;
 
     case TAG_TYPE_LONG:
-        entry.value.field_u32 = getU32(offset + 8);
+        exifentry.value.field_u32 = getU32(offset + 8);
         break;
 
     case TAG_TYPE_SSHORT:
-        entry.value.field_s16 = (int16_t)getU16(offset + 8);
+        exifentry.value.field_s16 = (int16_t)getU16(offset + 8);
         break;
 
     case TAG_TYPE_SLONG:
-        entry.value.field_s32 = (int32_t)getU32(offset + 8);
+        exifentry.value.field_s32 = (int32_t)getU32(offset + 8);
         break;
 
     case TAG_TYPE_RATIONAL:
-        entry.value.field_urational = getURational(offset);
+        exifentry.value.field_urational = getURational(offset);
         break;
     case TAG_TYPE_SRATIONAL:
-        entry.value.field_srational = getSRational(offset);
+        exifentry.value.field_srational = getSRational(offset);
         break;
     default:
         // optionally: log unknown type
         break;
     }
 
-    return entry;
+    return exifentry;
 }
 
 /**
@@ -510,7 +510,8 @@ std::string exifTagIdToString(ExifTagId tag)
         tag == TAG_RESOLUTION_UNIT ? "ResolutionUnit" :
         tag == TAG_SOFTWARE ? "Software" :
         tag == TAG_MODIFYDATE ? "ModifyDate" :
-        tag == TAG_SAMPLEFORMAT ? "SampleFormat" :
+        tag == TAG_SAMPLEFORMAT ? "SampleFormat" :    
+        tag == TAG_YCBCRPOSITIONING ? "YCbCrPositioning" :
         tag == TAG_CFA_REPEAT_PATTERN_DIM ? "CFARepeatPatternDim" :
         tag == TAG_CFA_PATTERN ? "CFAPattern" :
 
@@ -518,7 +519,7 @@ std::string exifTagIdToString(ExifTagId tag)
         tag == TAG_EXPOSURE_TIME ? "ExposureTime" :
         tag == TAG_FNUMBER ? "FNumber" :
 
-        tag == TAG_EXIF_TAGS ? "ExifTags" :
+        tag == TAG_EXIF_OFFSET ? "ExifOffset" :
         tag == TAG_ISOSPEED ? "ISOSpeed" :
         tag == TAG_DATETIME_CREATE ? "CreateDate" :
         tag == TAG_DATETIME_ORIGINAL ? "DateTimeOriginal" :

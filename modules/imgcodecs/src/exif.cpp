@@ -53,6 +53,11 @@ namespace {
 
 namespace cv
 {
+bool decodeExif(const std::vector<uchar>& data, std::vector< std::vector<ExifEntry> >& exif_entries)
+{
+    ExifReader reader;
+    return reader.parseExif(data.data(), data.size(), exif_entries);
+}
 
 std::string exifTagIdToString(cv::ExifTagId);
 
@@ -172,7 +177,7 @@ bool ExifReader::processRawProfile(const char* profile, size_t profile_len) {
  * @return  true if parsing was successful
  *          false in case of unsuccessful parsing
  */
-bool ExifReader::parseExif(unsigned char* data, const size_t size)
+bool ExifReader::parseExif(const unsigned char* data, const size_t size)
 {
     // Populate m_data, then call parseExif() (private)
     if( data && size > 0 )
@@ -214,7 +219,6 @@ void ExifReader::parseExif()
     }
 
     uint32_t offset = getStartOffset();
-
     size_t numEntry = getNumDirEntry( offset );
 
     offset += 2; //go to start of tag fields
@@ -222,11 +226,46 @@ void ExifReader::parseExif()
     for( size_t entry = 0; entry < numEntry; entry++ )
     {
         ExifEntry exifEntry = parseExifEntry( offset );
-        exifEntry.dump(std::cout);
         m_exif.insert( std::make_pair( exifEntry.tagId, exifEntry ) );
         offset += tiffFieldSize;
     }
 }
+
+bool ExifReader::parseExif(const unsigned char* data, const size_t size, std::vector< std::vector<ExifEntry> >& exif_entries_vec)
+{
+    if (data && size > 0)
+    {
+        m_data.assign(data, data + size);
+    }
+    else
+    {
+        return false;
+    }
+
+    m_format = getFormat();
+
+    if (!checkTagMark())
+    {
+        return false;
+    }
+
+    uint32_t offset = getStartOffset();
+    size_t numEntry = getNumDirEntry(offset);
+
+    offset += 2; //go to start of tag fields
+
+    std::vector<ExifEntry> exif_entries;
+    for (size_t entry = 0; entry < numEntry; entry++)
+    {
+        ExifEntry exifEntry = parseExifEntry(offset);
+        exifEntry.dump(std::cout);
+        exif_entries.push_back(exifEntry);
+        offset += tiffFieldSize;
+    }
+    exif_entries_vec.push_back(exif_entries);
+    return true;
+}
+
 
 /**
  * @brief Get endianness of exif information
@@ -355,7 +394,7 @@ ExifEntry ExifReader::parseExifEntry(const size_t offset)
         exifentry.value.field_srational = getSRational(offset);
         break;
     default:
-        // optionally: log unknown type
+        CV_LOG_WARNING(NULL, "Undefined ExifTagValue type " << exifentry.type);
         break;
     }
 
@@ -518,9 +557,11 @@ std::string exifTagIdToString(ExifTagId tag)
         tag == TAG_COPYRIGHT ? "Copyright" :
         tag == TAG_EXPOSURE_TIME ? "ExposureTime" :
         tag == TAG_FNUMBER ? "FNumber" :
-
+        
         tag == TAG_EXIF_OFFSET ? "ExifOffset" :
+        tag == TAG_GPSINFO ? "GPSInfo" :
         tag == TAG_ISOSPEED ? "ISOSpeed" :
+
         tag == TAG_DATETIME_CREATE ? "CreateDate" :
         tag == TAG_DATETIME_ORIGINAL ? "DateTimeOriginal" :
 

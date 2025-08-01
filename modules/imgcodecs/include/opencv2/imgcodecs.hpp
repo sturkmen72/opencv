@@ -44,6 +44,7 @@
 #define OPENCV_IMGCODECS_HPP
 
 #include "opencv2/core.hpp"
+#include <map>
 
 /**
   @defgroup imgcodecs Image file reading and writing
@@ -343,6 +344,7 @@ enum ExifTagId
     TAG_FNUMBER = 33437,
 
     TAG_EXIF_OFFSET = 34665,
+    TAG_GPSINFO = 34853,
     TAG_ISOSPEED = 34855,
 
     TAG_EXIF_VERSION = 36864,
@@ -459,6 +461,9 @@ struct ExifEntry
     }
     std::ostream& dump(std::ostream& strm) const;
 };
+
+CV_EXPORTS_W bool decodeExif(const std::vector<uchar>& data, std::vector< std::vector<ExifEntry> >& exif_entries);
+CV_EXPORTS void dumpExif(std::ostream& strm, const std::vector< std::vector<ExifEntry> >& exif_entries);
 
 //! @} imgcodecs_flags
 

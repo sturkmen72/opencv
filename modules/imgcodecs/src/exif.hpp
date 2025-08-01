@@ -55,21 +55,6 @@
 namespace cv
 {
 
-/**
- * @brief Reading exif information from Jpeg file
- *
- * Usage example for getting the orientation of the image:
- *
- *      @code
- *      std::ifstream stream(filename,std::ios_base::in | std::ios_base::binary);
- *      ExifReader reader(stream);
- *      if( reader.parse() )
- *      {
- *          int orientation = reader.getTag(Orientation).field_u16;
- *      }
- *      @endcode
- *
- */
 class ExifReader
 {
 public:
@@ -91,8 +76,8 @@ public:
      *         false if parsing error
      */
 
-    bool parseExif(unsigned char* data, const size_t size);
-
+    bool parseExif(const unsigned char* data, const size_t size);
+    bool parseExif(const unsigned char* data, const size_t size, std::vector< std::vector<ExifEntry> >& exif_entries);
     /**
      * @brief Get tag info by tag number
      *

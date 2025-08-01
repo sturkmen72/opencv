@@ -189,6 +189,10 @@ bool ExifReader::parseExif(const unsigned char* data, const size_t size)
         return false;
     }
 
+    std::vector< std::vector<ExifEntry> > exif_entries_vec;
+    decodeExif(m_data, exif_entries_vec);
+    std::cout << "------------------------ decoded exif ifd count : " << (int)exif_entries_vec.size() << std::endl;
+
     try {
         parseExif();
         if( !m_exif.empty() )

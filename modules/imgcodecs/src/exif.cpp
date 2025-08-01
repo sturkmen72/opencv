@@ -249,23 +249,42 @@ bool ExifReader::parseExif(const unsigned char* data, const size_t size, std::ve
         return false;
     }
 
-    uint32_t offset = getStartOffset();
-    size_t numEntry = getNumDirEntry(offset);
-
-    offset += 2; //go to start of tag fields
-
-    std::vector<ExifEntry> exif_entries;
-    for (size_t entry = 0; entry < numEntry; entry++)
+    std::vector<uint32_t> ifd_offsets;
+    ifd_offsets.push_back(getStartOffset());
+    size_t current_ifd = 0;
+    while (current_ifd < ifd_offsets.size())
     {
-        ExifEntry exifEntry = parseExifEntry(offset);
-        exifEntry.dump(std::cout);
-        exif_entries.push_back(exifEntry);
-        offset += tiffFieldSize;
+        uint32_t offset = ifd_offsets[current_ifd];
+
+        size_t numEntry = getNumDirEntry(offset);
+        offset += 2; //go to start of tag fields
+
+        std::vector<ExifEntry> exif_entries;
+        for (size_t i = 0; i < numEntry; ++i)
+        {
+            ExifEntry exifEntry = parseExifEntry(offset);
+            exifEntry.dump(std::cout);
+            exif_entries.push_back(exifEntry);
+            if (exifEntry.tagId == 0x8769 || exifEntry.tagId == 0x8825) // Exif or GPS IFD pointer
+            {
+                uint32_t sub_ifd_offset = exifEntry.value.field_u32;
+                if (sub_ifd_offset < m_data.size())
+                    ifd_offsets.push_back(sub_ifd_offset);
+            }
+            offset += tiffFieldSize;
+        }
+        exif_entries_vec.push_back(exif_entries);
+        // Handle IFD1 (Next IFD offset at the end of current IFD)
+        if (offset + 4 <= m_data.size())
+        {
+            uint32_t next_ifd_offset = getU32(offset);
+            if (next_ifd_offset != 0 && next_ifd_offset < m_data.size())
+                ifd_offsets.push_back(next_ifd_offset);
+        }
+        current_ifd++;
     }
-    exif_entries_vec.push_back(exif_entries);
     return true;
 }
-
 
 /**
  * @brief Get endianness of exif information
@@ -364,6 +383,7 @@ ExifEntry ExifReader::parseExifEntry(const size_t offset)
     {
     case TAG_TYPE_BYTE:
     case TAG_TYPE_SBYTE:
+    case TAG_TYPE_UNDEFINED:
         exifentry.value.field_u8 = m_data[offset + 8];
         break;
 
@@ -551,6 +571,8 @@ std::string exifTagIdToString(ExifTagId tag)
         tag == TAG_MODIFYDATE ? "ModifyDate" :
         tag == TAG_SAMPLEFORMAT ? "SampleFormat" :    
         tag == TAG_YCBCRPOSITIONING ? "YCbCrPositioning" :
+        tag == TAG_JPGFROMRAWSTART ? "JpgFromRawStart " :
+        tag == TAG_JPGFROMRAWLENGTH ? "JpgFromRawLength" :
         tag == TAG_CFA_REPEAT_PATTERN_DIM ? "CFARepeatPatternDim" :
         tag == TAG_CFA_PATTERN ? "CFAPattern" :
 
@@ -571,7 +593,7 @@ std::string exifTagIdToString(ExifTagId tag)
 
         tag == TAG_SHUTTER_SPEED ? "Shutter Speed" :
         tag == TAG_APERTURE_VALUE ? "Aperture Value" :
-
+        tag == TAG_MAKERNOTE ? "MakerNote" :
         tag == TAG_SUBSECTIME ? "SubSec Time" :
         tag == TAG_SUBSECTIME_ORIGINAL ? "SubSec Original Time" :
         tag == TAG_SUBSECTIME_DIGITIZED ? "SubSec Digitized Time" :
@@ -631,6 +653,7 @@ std::ostream& ExifEntry::dump(std::ostream& strm) const
         strm << "\"" << value.field_str << "\"";
         break;
     case TAG_TYPE_BYTE:
+    case TAG_TYPE_UNDEFINED:
         strm << static_cast<int>(value.field_u8);
         break;
     case TAG_TYPE_SHORT:
